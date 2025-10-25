@@ -1,0 +1,11 @@
+{
+  "webhook": {
+    "enabled": true,
+    "url": "https://cvyagrunpypnznptkcsf.supabase.co/functions/v1/whatsapp-webhook/4e5fdd21-a712-4377-8942-5736ef62fcc0",
+    "webhook_by_events": false,
+    "webhook_base64": true,
+    "events": [
+      "MESSAGES_UPSERT"
+    ]
+  }
+}

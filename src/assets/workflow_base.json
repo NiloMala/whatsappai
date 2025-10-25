@@ -1,0 +1,1334 @@
+{
+  "name": "Atendimentosbase",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "atendimentobase",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -3024,
+        224
+      ],
+      "id": "17145b97-3b4b-46b0-a022-987cf061aebb",
+      "name": "Webhook",
+      "webhookId": "5b894309-5f6e-4d6e-85bc-010089f69500"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ddfc8c08-22d7-43e3-abad-b5cd3dfcdf13",
+              "name": "Nome",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "da577156-0336-4cb8-98cf-acb620856825",
+              "name": "Telefone",
+              "value": "={{ $json.body.data.key.remoteJid.replaceAll(\"@s.whatsapp.net\",\"\") }}",
+              "type": "string"
+            },
+            {
+              "id": "3ba0eaa2-46cc-41a9-ac24-1f91aba1acca",
+              "name": "tipoMensagem",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "e5af360f-3c55-4a41-bccf-0c764bdf6b4c",
+              "name": "fremMe",
+              "value": "={{ $json.body.data.key.fromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "0fd39744-4570-425b-9898-424733135a4e",
+              "name": "bloquearAgente",
+              "value": "BloquearAgente",
+              "type": "string"
+            },
+            {
+              "id": "64bd7c31-7555-4c11-a9dd-85cfb78b19b0",
+              "name": "Mensagem",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "7a421dfe-7db5-4ad6-be47-f3e6d7b01bc9",
+              "name": "msgPicotada",
+              "value": "=MensagemPicotada{{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "a8f21c3e-9d56-4e17-bc42-f1e8d9a7b5c1",
+              "name": "user_id",
+              "value": "USER_ID_PLACEHOLDER",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2816,
+        224
+      ],
+      "id": "0a9a1c07-e6b4-4414-9737-6fc2bda399ff",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Edit Fields').item.json.tipoMensagem }}",
+                    "rightValue": "conversation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b8a1042f-1d61-4a34-875b-25b15993a2d9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "87f39adc-b08d-453a-839f-7369a39afe1a",
+                    "leftValue": "={{ $('Edit Fields').item.json.tipoMensagem }}",
+                    "rightValue": "audioMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2c8628c6-657d-42ad-926c-6a355fda90bb",
+                    "leftValue": "={{ $('Edit Fields').item.json.tipoMensagem }}",
+                    "rightValue": "imageMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Imagem"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -2368,
+        224
+      ],
+      "id": "16525f8b-c6dc-4b18-9c5a-092b3cffc544",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "audio.mp3"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1888,
+        352
+      ],
+      "id": "489c1652-96ce-4bad-9bf5-12710908a1cd",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -1664,
+        352
+      ],
+      "id": "5d659471-92b9-488a-85b1-8c2705759eef",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "gahlUfagbJRgeNsl",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c91c0065-d17a-41f3-8a0f-21772a5670f1",
+              "name": "mensagemAudioemTexto",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "e771f841-569c-46fc-bfcd-df85f4e3298b",
+              "name": "mensagemImagememTexto",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1440,
+        208
+      ],
+      "id": "18ad5c48-41cb-4791-976c-5a1c7bbeb61b",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d74ff41-ebbc-4cbb-a1c5-f06801d577f0",
+              "leftValue": "={{ $('Edit Fields').item.json.fremMe }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1184,
+        320
+      ],
+      "id": "5d529439-4721-4fbb-a9a6-c5d6d8f49aac",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $('Edit Fields').item.json.bloquearAgente }}",
+        "value": "true",
+        "expire": true,
+        "ttl": 600
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        240
+      ],
+      "id": "916b47fa-f2c0-4a4c-9dd7-783a1aa5f75a",
+      "name": "Redis",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Edit Fields').item.json.user_id }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Edit Fields1').item.json.mensagemAudioemTexto || $('Edit Fields1').item.json.mensagemImagememTexto || $('Edit Fields').item.json.Mensagem }}"
+            },
+            {
+              "fieldId": "sender_type",
+              "fieldValue": "customer"
+            },
+            {
+              "fieldId": "is_ai_generated",
+              "fieldValue": "false"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "received"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        400
+      ],
+      "id": "b1c2d3e4-f5a6-7890-bcde-f12345678901",
+      "name": "Save Customer Message",
+      "credentials": {
+        "supabaseApi": {
+          "id": "sQw0N1EVFGS7nGKf",
+          "name": "whatsappai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cvyagrunpypnznptkcsf.supabase.co/rest/v1/rpc/upsert_conversation",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"p_user_id\": $('Edit Fields').item.json.user_id,\n  \"p_contact_phone\": $('Edit Fields').item.json.Telefone,\n  \"p_contact_name\": $('Edit Fields').item.json.Nome\n} }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        400
+      ],
+      "id": "c1d2e3f4-a5b6-7890-cdef-123456789abc",
+      "name": "Upsert Conversation",
+      "credentials": {
+        "supabaseApi": {
+          "id": "sQw0N1EVFGS7nGKf",
+          "name": "whatsappai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "keys",
+        "keyPattern": "={{ $('Edit Fields').item.json.bloquearAgente }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        352
+      ],
+      "id": "ea548803-3d8f-47fa-977b-d8dbec3b0047",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7093cc34-f209-4ea9-a755-721b3486cdab",
+              "leftValue": "={{ $json.BloquearAgente }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -496,
+        224
+      ],
+      "id": "4296ec47-9d74-4bb9-9fb1-93da0580bed6",
+      "name": "If2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        128
+      ],
+      "id": "ce85c868-0393-4938-8e34-15499140f880",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Edit Fields').item.json.msgPicotada }}",
+        "messageData": "={{ $json.mensagemAudioMaisTexto }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        32,
+        288
+      ],
+      "id": "380408bd-9ca5-46d7-a1ec-dc48eb65f4e7",
+      "name": "Redis2",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "547a1227-9df2-4b0b-9c91-465326c0364f",
+              "name": "mensagemAudioMaisTexto",
+              "value": "={{ $('Edit Fields').item.json.Mensagem }}{{ $('Edit Fields1').item.json.mensagemAudioemTexto }}{{ $('Edit Fields1').item.json.mensagemImagememTexto }}\n\n\n\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -288,
+        288
+      ],
+      "id": "87fdc1e5-69d6-4c3a-a6d5-8cbf64109a5b",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        288
+      ],
+      "id": "946a1e43-a645-4785-9c79-b0643dfecdbb",
+      "name": "Wait",
+      "webhookId": "dbce8f72-8813-4fea-8f07-ff42ab93cd75"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ $('Edit Fields').item.json.msgPicotada }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        464,
+        288
+      ],
+      "id": "6ae27bda-2daf-4344-8603-13326ff2a15e",
+      "name": "Redis3",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Edit Fields').item.json.msgPicotada }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        688,
+        288
+      ],
+      "id": "8a4aa078-7ba3-4b3e-b4e3-29c582e13cf5",
+      "name": "Redis4",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.toString }}",
+        "options": {
+          "systemMessage": "="
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1232,
+        288
+      ],
+      "id": "d8bc64af-c66a-4c86-94dc-43cc9468c1c2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        992,
+        592
+      ],
+      "id": "75e36582-8172-49f5-8c1c-355a3a765bbc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gahlUfagbJRgeNsl",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        992,
+        752
+      ],
+      "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "h6NAjjnyhHL7WSVc",
+          "name": "Groq WhatsappAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "messages",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Edit Fields3').item.json.user_id }}"
+            },
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('AI Agent').item.json.output }}"
+            },
+            {
+              "fieldId": "sender_type",
+              "fieldValue": "agent"
+            },
+            {
+              "fieldId": "is_ai_generated",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "sent"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        288
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Save Agent Message",
+      "credentials": {
+        "supabaseApi": {
+          "id": "qcMFbuaAlYaqddtF",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "instance_21408e07_1760709979075",
+        "remoteJid": "={{ $('Edit Fields').item.json.Telefone }}",
+        "messageText": "={{ $('AI Agent').item.json.output }}",
+        "options_message": {
+          "delay": 2000
+        }
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        160
+      ],
+      "id": "038a01ac-1b5a-44b6-8fe2-1a83be9d3d5a",
+      "name": "Evolution API1",
+      "credentials": {
+        "evolutionApi": {
+          "id": "wh0cEVhJu2A0Gkrm",
+          "name": "atendimentos"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').item.json.Telefone }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        592
+      ],
+      "id": "4864bbf4-e8cf-411f-a71c-0af18f64af0f",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "rqMjL0iZoMNeOyxw",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c321c7c8-addc-4912-b1b4-316cc0bab974",
+              "name": "toString",
+              "value": "={{ $('Redis3').item.json.propertyName.toJsonString() }}",
+              "type": "string"
+            },
+            {
+              "id": "f7a8b9c0-d1e2-3f45-6789-a0b1c2d3e4f5",
+              "name": "user_id",
+              "value": "={{ $('Edit Fields').item.json.user_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        288
+      ],
+      "id": "ec4acab6-190f-4ff5-adc1-2ad262546379",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes_auroratech",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "keyValue": "={{ $json.Telefone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2576,
+        224
+      ],
+      "id": "6dce956b-f84d-4d17-b495-8354327318b8",
+      "name": "Supabase",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "qcMFbuaAlYaqddtF",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Create a row in Supabase",
+        "tableId": "clientes_auroratech",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `Aqui vai ser inserido o nome do cliente para cadastra na coluna nome da tabela clientes`, 'string') }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}\n"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        592
+      ],
+      "id": "3ce26a6a-c1a0-445b-965d-46fc2896eac4",
+      "name": "Cadastra Cliente",
+      "credentials": {
+        "supabaseApi": {
+          "id": "qcMFbuaAlYaqddtF",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "clientes_auroratech",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}\n"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        592
+      ],
+      "id": "f804f5d0-5f9e-4773-ac42-0a9716797d68",
+      "name": "Consulta cliente",
+      "credentials": {
+        "supabaseApi": {
+          "id": "qcMFbuaAlYaqddtF",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## BLOCO 3\n1- NÓ AVALIA SE MSG É DO NUMERO DO PRÓPRIO AGENTE \n2- NÓ SE VERDADEIRO BLOQUEIA AGENTE POR DETERMINADO TEMPPO\n3- NÓ CONSULTA SE AGENTE AINDA ESTÁ BLOQUEADO \n4- NÓ CONFIRMA SE AGENTE ESTÁ BLOQUEADO ENTÃO NÃO OPERA SE NÃO TIVER SEGUE O FLUXO\n",
+        "height": 480,
+        "width": 1420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1264,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "50bbd16b-238a-4c63-bcbe-192adf898f29",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## BLOCO 1\n1- NÓ WEBHOOK ESCUTA MSG QUE VEM API EVOLUTION\n2- NÓ EDITFILDS FILTRA O NUMERO DO CONTATO E FAZ UM REPLACE OBTER SOMENTE NUMERO\n3- MÓ SUPABDE FAZ UM GET BUSCA SE JA EXISTE NUMERO NO BANCO DE DADOS \n",
+        "height": 480,
+        "width": 920
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3328,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "b91d4c7f-c53c-4a63-9f12-0e2bf607d019",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## BLOCO 2\n1- NÓ SWITCH VERIFICA SE A MSG É AUDIO OU TEXTO\n2- NÓ EVOLUTION RECEBE MSG SE FOR AUDIO E FAZ TRATAMENTO BASE64\n3- NÓ CONVERTE ARQUIBO EM AUDIO MP3\n4- NÓ TRANSCREVE AUDIO PARA TEXTO\n5- NÓ TRANSMITE ESSA MSG EM STRING TEXTO \n",
+        "height": 680,
+        "width": 1100
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2384,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "b3fd829f-736f-4c0d-9fa3-a90fbbe69559",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## BLOCO 4\n1- NÓ FAZ A PAUDA PARA JUNTAR MSG\n2- NÓ PEGA MSG PICOTADAS NO EDIT FIELDS DO 1ºBLOCO\n3- NÓ DELETA MSG PICOTADAS NO EDIT FIELDS DO 1ºBLOCO\n4- NÓ RECEBE MSG DO REDIS 3 MSG JUNTADAS\n5- NÓ AGENTE IA CONFIGURADO COM O PROMPT\n6- NÓ EVOLUTION ENVIA TEXTO\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n## PARTE DE BAIXO\n8- NÓ MODELO DE INTELIGENCIA OPENAI\n9- NÓ MEMÓRIA REDIS ARMAZENA CONTEXTO CONVERSA\n10- NÓ MCP CLIENTE FAZ A CONEXÃO COM MCP SERVER",
+        "height": 820,
+        "width": 1960
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        224,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "b3a3388c-5adb-49a9-8ca0-f26bb8638d2c",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data",
+        "options": {
+          "fileName": "file.png",
+          "mimeType": "image/png"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1888,
+        560
+      ],
+      "id": "5a2dd337-10df-4c81-befd-f985336af0d6",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini-2024-07-18",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI-2024-07-18"
+        },
+        "text": "Resumo curto da imagem. Responda sem acento, sem hifens",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -1664,
+        560
+      ],
+      "id": "3b9eb232-39d6-4cec-91ba-6719a0c4fb71",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "gahlUfagbJRgeNsl",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c5ccbc9-69d1-4b13-a7c3-e6945bc8c655",
+              "name": "data",
+              "value": "={{ $('Webhook').item.json.body.data.message.base64 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0001a8dd-cdd0-4062-880d-5a77c6db38e9",
+      "name": "Edit Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2144,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c5ccbc9-69d1-4b13-a7c3-e6945bc8c655",
+              "name": "data",
+              "value": "={{ $('Webhook').item.json.body.data.message.base64 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2454c7c-e43b-4016-94ab-07d413b6a291",
+      "name": "Edit Fields7",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2144,
+        352
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Customer Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Customer Message": {
+      "main": [
+        [
+          {
+            "node": "Upsert Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Conversation": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Redis3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis3": {
+      "main": [
+        [
+          {
+            "node": "Redis4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis4": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Save Agent Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Agent Message": {
+      "main": [
+        [
+          {
+            "node": "Evolution API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cadastra Cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consulta cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ff1a6b5d-7d7e-4f7c-8e63-f0ad79624dc0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "00987bf612b2f6101acb781219ad05b34e06bee3d8510ea69d2f35a1ea6a5968"
+  },
+  "id": "GG7AxItHPOJw88gi",
+  "tags": [
+    {
+      "createdAt": "2025-05-30T14:40:26.050Z",
+      "updatedAt": "2025-05-30T14:40:26.050Z",
+      "id": "kfOhDneVktTEK4Yj",
+      "name": "AuroraTech"
+    }
+  ]
+}

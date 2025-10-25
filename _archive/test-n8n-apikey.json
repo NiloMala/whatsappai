@@ -1,0 +1,25 @@
+{
+  "workflow": {
+    "nodes": [
+      {
+        "id": "test-webhook",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [250, 300],
+        "webhookId": "test-123",
+        "parameters": {
+          "path": "test-webhook",
+          "responseMode": "lastNode",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {},
+    "settings": {},
+    "staticData": null
+  },
+  "workflowName": "Test Workflow API Key",
+  "n8nUrl": "https://n8n.auroratech.tech",
+  "n8nApiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY"
+}
