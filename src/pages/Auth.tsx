@@ -50,6 +50,16 @@ const Auth = () => {
 
     try {
       if (mode === "signup") {
+        // Frontend validation: company name is required before calling signup
+        if (!formData.companyName || formData.companyName.trim().length === 0) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O nome da empresa é obrigatório.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
