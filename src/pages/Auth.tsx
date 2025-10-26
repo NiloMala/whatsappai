@@ -31,6 +31,7 @@ const Auth = () => {
     email: "",
     password: "",
     companyName: "",
+    phone: "",
   });
 
   useEffect(() => {
@@ -70,6 +71,7 @@ const Auth = () => {
               id: authData.user.id,
               company_name: formData.companyName,
               email: formData.email,
+              phone: formData.phone,
             });
 
           if (profileError) throw profileError;
@@ -148,18 +150,34 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Nome da Empresa</Label>
-              <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                required
-                placeholder="Sua empresa"
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Nome da Empresa</Label>
+                <Input
+                  id="companyName"
+                  value={formData.companyName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, companyName: e.target.value })
+                  }
+                  required
+                  placeholder="Sua empresa"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  required
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+            </>
           )}
 
           <div className="space-y-2">
