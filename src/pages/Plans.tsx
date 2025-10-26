@@ -62,10 +62,11 @@ const Plans = () => {
     }
 
     // Fetch active or trial plan. Use maybeSingle() to avoid PostgREST 406 when no rows.
-    const { data, error } = await (supabase.from as any)("user_plans")
-      .select("*")
-      .eq("user_id", user.id)
-      .in("status", ["active", "trial"]) 
+    const { data, error } = await supabase
+      .from('user_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trial'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -87,28 +88,22 @@ const Plans = () => {
 
     // Update existing plan or insert new one
     if (userPlan) {
-      const { error } = await (supabase.from as any)("user_plans")
+      const { error } = await supabase
+        .from('user_plans')
         .update({ plan_type: planType })
-        .eq("id", userPlan.id);
+        .eq('id', userPlan.id);
 
       if (error) {
-        toast({
-          title: "Erro",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast({ title: 'Erro', description: error.message, variant: 'destructive' });
         return;
       }
     } else {
-      const { error } = await (supabase.from as any)("user_plans")
+      const { error } = await supabase
+        .from('user_plans')
         .insert({ user_id: user.id, plan_type: planType });
 
       if (error) {
-        toast({
-          title: "Erro",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast({ title: 'Erro', description: error.message, variant: 'destructive' });
         return;
       }
     }
@@ -128,7 +123,8 @@ const Plans = () => {
     const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
     if (userPlan) {
-      const { error } = await (supabase.from as any)('user_plans')
+      const { error } = await supabase
+        .from('user_plans')
         .update({ plan_type: planType, status: 'trial', trial_expires_at: expiresAt })
         .eq('id', userPlan.id);
 
@@ -137,7 +133,8 @@ const Plans = () => {
         return;
       }
     } else {
-      const { error } = await (supabase.from as any)
+      const { error } = await supabase
+        .from('user_plans')
         .insert({ user_id: user.id, plan_type: planType, status: 'trial', trial_expires_at: expiresAt });
 
       if (error) {
@@ -218,24 +215,12 @@ const Plans = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Carregando planos...</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold mb-2">Planos</h1>
-          <p className="text-muted-foreground">
-            Escolha o plano ideal para o seu negócio
-          </p>
+          <p className="text-muted-foreground">Escolha o plano ideal para o seu negócio</p>
           {userPlan && (
             <p className="mt-2 text-sm text-primary font-medium">
               Plano atual: {plans.find(p => p.plan_type === userPlan.plan_type)?.name}
