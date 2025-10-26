@@ -16,19 +16,43 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
-    // Verifica se há um hash na URL (token de reset)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const checkRecoveryToken = async () => {
+      // Verifica se há um hash na URL (token de reset)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
 
-    if (!accessToken || type !== 'recovery') {
-      toast({
-        title: "Link inválido",
-        description: "Este link de redefinição é inválido ou expirou.",
-        variant: "destructive",
-      });
-      navigate("/auth");
-    }
+      console.log('Recovery check:', { accessToken: !!accessToken, type });
+
+      // Se não tem token de recovery, verifica se está autenticado normalmente
+      if (type !== 'recovery') {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Se está autenticado normalmente (não via recovery), redireciona
+        if (session && !accessToken) {
+          toast({
+            title: "Link inválido",
+            description: "Este link de redefinição é inválido ou expirou.",
+            variant: "destructive",
+          });
+          navigate("/dashboard");
+          return;
+        }
+        
+        // Se não tem token nem sessão, volta para login
+        if (!accessToken) {
+          toast({
+            title: "Link inválido",
+            description: "Este link de redefinição é inválido ou expirou.",
+            variant: "destructive",
+          });
+          navigate("/auth");
+          return;
+        }
+      }
+    };
+    
+    checkRecoveryToken();
   }, [navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +84,9 @@ const ResetPassword = () => {
       });
 
       if (error) throw error;
+
+      // Fazer logout após redefinir a senha para forçar novo login
+      await supabase.auth.signOut();
 
       toast({
         title: "Senha alterada!",
