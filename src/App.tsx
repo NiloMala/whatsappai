@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
 import Plans from "./pages/Plans";
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/dashboard/templates" element={<Templates />} />
             <Route path="/dashboard/whatsapp" element={<WhatsAppIntegration />} />
             <Route path="/dashboard/messages" element={<Messages />} />
+            <Route path="/dashboard/profile" element={<Profile />} />
             <Route
               path="/dashboard/leads"
               element={

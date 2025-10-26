@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   MessageCircle,
+  Users,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -100,10 +101,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="text-sm hidden sm:block">
+            <Button variant="ghost" onClick={() => navigate('/dashboard/profile')} className="text-sm hidden sm:block text-left">
               <p className="font-medium">{profile?.company_name}</p>
               <p className="text-muted-foreground text-xs">{profile?.email}</p>
-            </div>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/profile')} title="Perfil">
+              <Users className="h-5 w-5" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate('/faq')} title="FAQ">
               <HelpCircle className="h-5 w-5" />
             </Button>
