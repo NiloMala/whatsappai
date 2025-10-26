@@ -12,9 +12,8 @@ import Plans from "./pages/Plans";
 import Templates from "./pages/Templates";
 import WhatsAppIntegration from "./pages/WhatsAppIntegration";
 import Messages from "./pages/Messages";
-// legacy non-DnD Leads page removed; DnD version is the default at /dashboard/leads
-// import React, { Suspense, lazy } from "react";
-// const LeadsDnd = lazy(() => import("./pages/LeadsDnd"));
+import React, { Suspense, lazy } from "react";
+const LeadsDnd = lazy(() => import("./pages/LeadsDnd"));
 import Statistics from "./pages/Statistics";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -39,16 +38,14 @@ const App = () => (
             <Route path="/dashboard/templates" element={<Templates />} />
             <Route path="/dashboard/whatsapp" element={<WhatsAppIntegration />} />
             <Route path="/dashboard/messages" element={<Messages />} />
-            {/* Swap pages: make the DnD page the default at /dashboard/leads */}
-            {/* <Route
+            <Route
               path="/dashboard/leads"
               element={
-                <Suspense>
+                <Suspense fallback={<div>Loading...</div>}>
                   <LeadsDnd />
                 </Suspense>
               }
-            /> */}
-            {/* legacy route removed */}
+            />
             <Route path="/dashboard/statistics" element={<Statistics />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/cancel" element={<PaymentCancel />} />
