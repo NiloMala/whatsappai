@@ -101,9 +101,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate('/dashboard/profile')} className="text-sm hidden sm:block text-left">
-              <p className="font-medium">{profile?.company_name}</p>
-              <p className="text-muted-foreground text-xs">{profile?.email}</p>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard/profile')}
+              className="text-sm hidden sm:block text-left max-w-[220px] py-1"
+            >
+              <p className="font-medium truncate max-w-full -mt-0.5 leading-tight">{profile?.company_name}</p>
+              <p className="text-muted-foreground text-xs truncate max-w-full -mt-1">{profile?.email}</p>
             </Button>
             <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/profile')} title="Perfil">
               <Users className="h-5 w-5" />
