@@ -22,7 +22,9 @@ export default {
         headers["Authorization"] = `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`;
       }
 
-      const res = await fetch(`/api/openai-agent-proxy`, {
+      // Usa a URL do Supabase Edge Functions
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/openai-agent-proxy`, {
         method: "POST",
         headers,
         body: JSON.stringify({ input, history, opts }),
