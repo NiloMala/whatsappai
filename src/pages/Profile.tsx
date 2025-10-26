@@ -17,6 +17,7 @@ const Profile: React.FC = () => {
     email: "",
     company_name: "",
     phone: "",
+    updated_at: '' as string | null,
   });
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const Profile: React.FC = () => {
 
         const { data, error } = await (supabase as any)
           .from('profiles')
-          .select('id, email, company_name, phone')
+          .select('id, email, company_name, phone, updated_at')
           .eq('id', user.id)
           .single();
 
@@ -41,6 +42,7 @@ const Profile: React.FC = () => {
           email: data.email || user.email || '',
           company_name: data.company_name || '',
           phone: data.phone || '',
+          updated_at: data.updated_at || null,
         });
       } catch (err: any) {
         console.error('Error loading profile', err);
@@ -57,9 +59,18 @@ const Profile: React.FC = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      // Validate phone format (BR: (00) 00000-0000 or 00000000000) - simple check
+      const phone = (profile.phone || '').trim();
+      const phoneRegex = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+      if (phone && !phoneRegex.test(phone)) {
+        toast({ title: 'Telefone inválido', description: 'Digite um telefone no formato (00) 90000-0000 ou 00900000000', variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+
       const updates: any = {
         company_name: profile.company_name,
-        phone: profile.phone,
+        phone: phone,
       };
 
       const { error } = await (supabase as any)
@@ -69,7 +80,7 @@ const Profile: React.FC = () => {
 
       if (error) throw error;
 
-      toast({ title: 'Salvo', description: 'Perfil atualizado com sucesso.' });
+  toast({ title: 'Salvo', description: 'Perfil atualizado com sucesso.' });
       // Após salvar, voltar para o dashboard
       navigate('/dashboard');
     } catch (err: any) {
@@ -101,6 +112,13 @@ const Profile: React.FC = () => {
             <Label htmlFor="phone">Telefone</Label>
             <Input id="phone" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: (e.target as HTMLInputElement).value })} />
           </div>
+
+          {profile.updated_at && (
+            <div>
+              <Label htmlFor="updated">Última atualização</Label>
+              <Input id="updated" value={new Date(profile.updated_at).toLocaleString('pt-BR')} readOnly />
+            </div>
+          )}
 
           <div className="flex gap-2 justify-end">
             <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>Voltar ao Dashboard</Button>
