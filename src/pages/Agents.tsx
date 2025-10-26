@@ -94,27 +94,38 @@ const Agents = () => {
   const fetchUserPlan = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    // Fetch user's active plan
+    // Fetch user's active or trial plan (prefer active, fall back to trial)
     const { data: userPlanData } = await supabase
       .from("user_plans")
       .select("*")
       .eq("user_id", user.id)
-      .eq("status", "active")
+      .in("status", ["active", "trial"]) // include trial rows
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!userPlanData) return;
+
+    // If it's a trial, verify it hasn't expired
+    if (userPlanData.status === 'trial' && userPlanData.trial_expires_at) {
+      const expires = new Date(userPlanData.trial_expires_at);
+      const now = new Date();
+      if (expires < now) {
+        // trial expired — treat as no plan
+        return;
+      }
+    }
+
+    setUserPlan(userPlanData);
+
+    // Fetch plan details
+    const { data: planData } = await supabase
+      .from("plans")
+      .select("*")
+      .eq("plan_type", userPlanData.plan_type)
       .single();
 
-    if (userPlanData) {
-      setUserPlan(userPlanData);
-
-      // Fetch plan details
-      const { data: planData } = await supabase
-        .from("plans")
-        .select("*")
-        .eq("plan_type", userPlanData.plan_type)
-        .single();
-
-      setCurrentPlan(planData);
-    }
+    setCurrentPlan(planData);
   };
 
   const fetchAgents = async () => {
