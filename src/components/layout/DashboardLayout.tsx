@@ -10,6 +10,7 @@ import {
   FileText,
   MessageSquare,
   BarChart3,
+  Calendar,
   CreditCard,
   HelpCircle,
   LogOut,
@@ -76,7 +77,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Bot, label: "Agentes IA", path: "/dashboard/agents" },
     { icon: MessageSquare, label: "Mensagens", path: "/dashboard/messages" },
     { icon: BarChart3, label: "Estatísticas", path: "/dashboard/statistics" },
-    { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
+  { icon: Calendar, label: "Calendário", path: "/dashboard/calendar" },
+  { icon: Users, label: "Perfil", path: "/dashboard/profile" },
+  { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
     { icon: HelpCircle, label: "FAQ", path: "/faq" },
   ];
 

@@ -21,6 +21,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
+import Calendar from "./pages/Calendar";
+import DailyAgenda from "./pages/DailyAgenda";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,8 @@ const App = () => (
               }
             />
             <Route path="/dashboard/statistics" element={<Statistics />} />
+            <Route path="/dashboard/calendar" element={<Calendar />} />
+            <Route path="/dashboard/calendar/:date" element={<DailyAgenda />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/faq" element={<FAQ />} />
