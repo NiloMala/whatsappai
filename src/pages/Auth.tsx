@@ -115,13 +115,27 @@ const Auth = () => {
                 phone: formData.phone,
               });
 
-            if (profileError) throw profileError;
-
-            toast({
-              title: "Conta criada com sucesso!",
-              description: "Você já está logado e pode começar.",
-            });
-            navigate("/dashboard");
+            if (profileError) {
+              // If profile insertion fails (403 / RLS or similar), the user
+              // account may still have been created and the confirmation
+              // email delivered. Show a clear message and navigate to
+              // dashboard so user can continue; request them to complete
+              // profile manually.
+              console.error('Profile insert failed after signup:', profileError);
+              toast({
+                title: 'Conta criada (parcial)',
+                description:
+                  'Sua conta foi criada e o e-mail de confirmação enviado, mas não foi possível criar seu perfil automaticamente. Após confirmar o e-mail, acesse Perfil para completar seus dados.',
+                variant: 'destructive',
+              });
+              navigate('/dashboard');
+            } else {
+              toast({
+                title: "Conta criada com sucesso!",
+                description: "Você já está logado e pode começar.",
+              });
+              navigate("/dashboard");
+            }
           } else {
             // No session (likely email confirmation required) — do not call
             // the REST insert to avoid 401. Inform the user to confirm email.
