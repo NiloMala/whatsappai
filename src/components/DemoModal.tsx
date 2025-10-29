@@ -70,7 +70,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ open, onOpenChange }) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby="demo-description" className="w-[90vw] max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Demonstração — Vídeo e Chat</DialogTitle>
+          <DialogTitle>Demonstração — Chat e Vídeo</DialogTitle>
           <p id="demo-description" className="sr-only">Assista o vídeo de demonstração ou teste o chat interativo</p>
         </DialogHeader>
 
