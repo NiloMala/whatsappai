@@ -72,15 +72,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const menuItems = [
     { icon: LayoutDashboard, label: "Visão Geral", path: "/dashboard" },
     { icon: MessageCircle, label: "WhatsApp", path: "/dashboard/whatsapp" },
-    { icon: FileText, label: "Leads", path: "/dashboard/leads" },
     { icon: FileText, label: "Templates", path: "/dashboard/templates" },
     { icon: Bot, label: "Agentes IA", path: "/dashboard/agents" },
     { icon: MessageSquare, label: "Mensagens", path: "/dashboard/messages" },
+    { icon: FileText, label: "Leads", path: "/dashboard/leads" },
     { icon: BarChart3, label: "Estatísticas", path: "/dashboard/statistics" },
-  { icon: Calendar, label: "Calendário", path: "/dashboard/calendar" },
-  { icon: Users, label: "Perfil", path: "/dashboard/profile" },
-  { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
+    { icon: Calendar, label: "Calendário", path: "/dashboard/calendar" },
+    { icon: Users, label: "Perfil", path: "/dashboard/profile" },
+    { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
     { icon: HelpCircle, label: "FAQ", path: "/faq" },
+  
   ];
 
   return (
