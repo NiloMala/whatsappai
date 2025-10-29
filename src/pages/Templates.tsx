@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -34,6 +35,8 @@ const Templates = () => {
     category: "comercial",
     prompt: "",
   });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<any | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -139,7 +142,19 @@ const Templates = () => {
     fetchTemplates();
   };
 
-  const handleDelete = async (id: string) => {
+  // Open delete confirmation modal (replaces native confirm)
+  const handleDelete = (template: any) => {
+    setTemplateToDelete(template);
+    setDeleteModalOpen(true);
+  };
+
+  // Called when user confirms deletion in modal
+  const confirmDeleteTemplate = async () => {
+    const id = templateToDelete?.id;
+    setDeleteModalOpen(false);
+    setTemplateToDelete(null);
+    if (!id) return;
+
     const { error } = await supabase.from("templates").delete().eq("id", id);
 
     if (error) {
@@ -274,6 +289,23 @@ const Templates = () => {
               </form>
             </DialogContent>
           </Dialog>
+            {/* Delete confirmation modal for templates */}
+            <Dialog open={deleteModalOpen} onOpenChange={(open) => { if (!open) setTemplateToDelete(null); setDeleteModalOpen(open); }}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirmar exclusão</DialogTitle>
+                </DialogHeader>
+                <div className="mt-2">
+                  <p>Tem certeza que deseja excluir o template <strong>{templateToDelete?.name}</strong>? Esta ação não pode ser desfeita.</p>
+                </div>
+                <DialogFooter>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => { setDeleteModalOpen(false); setTemplateToDelete(null); }}>Cancelar</Button>
+                    <Button variant="destructive" onClick={() => void confirmDeleteTemplate()}>Excluir template</Button>
+                  </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         </div>
 
         <div className="grid gap-6">
@@ -328,7 +360,7 @@ const Templates = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => handleDelete(template.id)}
+                          onClick={() => handleDelete(template)}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
