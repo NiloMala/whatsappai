@@ -74,23 +74,42 @@ const Auth = () => {
         if (signUpError) throw signUpError;
 
         if (authData.user) {
-          // Create profile
-          const { error: profileError } = await (supabase as any)
-            .from("profiles")
-            .insert({
-              id: authData.user.id,
-              company_name: formData.companyName,
-              email: formData.email,
-              phone: formData.phone,
+          // After sign up, a session may or may not be created depending on
+          // Supabase auth settings (email confirmations). If there's an
+          // active session we create the profile immediately. Otherwise we
+          // skip creating the profile here (user must confirm email first)
+          // to avoid unauthenticated REST calls which return 401.
+          const { data: sessionData } = await supabase.auth.getSession();
+          const session = sessionData?.session;
+
+          if (session) {
+            // Create profile now that we have an authenticated session
+            const { error: profileError } = await (supabase as any)
+              .from("profiles")
+              .insert({
+                id: authData.user.id,
+                company_name: formData.companyName,
+                email: formData.email,
+                phone: formData.phone,
+              });
+
+            if (profileError) throw profileError;
+
+            toast({
+              title: "Conta criada com sucesso!",
+              description: "Você já está logado e pode começar.",
             });
-
-          if (profileError) throw profileError;
-
-          toast({
-            title: "Conta criada com sucesso!",
-            description: "Você já está logado e pode começar.",
-          });
-          navigate("/dashboard");
+            navigate("/dashboard");
+          } else {
+            // No session (likely email confirmation required) — do not call
+            // the REST insert to avoid 401. Inform the user to confirm email.
+            toast({
+              title: "Confirme seu e-mail",
+              description:
+                "Verifique seu e-mail e confirme a conta antes de prosseguir. Após confirmação, acesse o app para completar seu perfil.",
+            });
+            navigate("/auth");
+          }
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
