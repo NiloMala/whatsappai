@@ -336,16 +336,12 @@ const CalendarPage = () => {
   const fetchEvents = async (start: Date, end: Date) => {
     try {
       setLoading(true);
-      // Normalize range: if start and end refer to the same instant/day, expand
-      // to cover the full day (00:00:00 -> 23:59:59.999 local) so the RPC which
-      // compares timestamptz ranges will include events occurring that day.
-      let queryStart = start;
-      let queryEnd = end;
-      const sameDay = start && end && start.getFullYear() === end.getFullYear() && start.getMonth() === end.getMonth() && start.getDate() === end.getDate();
-      if (sameDay) {
-        queryStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
-        queryEnd = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59, 999);
-      }
+      // Normalize range: expand start to start-of-day and end to end-of-day
+      // to ensure RPC receives a full-day inclusive range. This avoids
+      // off-by-one issues where end timestamps at 00:00:00 exclude events
+      // occurring on that final date.
+      const queryStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+      const queryEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
       console.log('Calendar.fetchEvents called', { start: start?.toISOString(), end: end?.toISOString(), queryStart: queryStart?.toISOString(), queryEnd: queryEnd?.toISOString(), currentView });
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
