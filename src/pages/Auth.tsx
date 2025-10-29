@@ -71,7 +71,29 @@ const Auth = () => {
           },
         });
 
-        if (signUpError) throw signUpError;
+        // Handle common signup errors explicitly (rate limits, etc.) so we
+        // can show user-friendly messages in Portuguese and avoid throwing
+        // raw errors that bubble up to the generic catch below.
+        if (signUpError) {
+          console.error('signUp error:', signUpError);
+          const msg = (signUpError.message || '').toLowerCase();
+          const status = (signUpError as any)?.status;
+
+          if (status === 429 || /rate limit|too many requests/.test(msg)) {
+            toast({
+              title: 'Muitas solicitações',
+              description:
+                'Limite de envio de e-mails atingido. Aguarde alguns minutos antes de tentar novamente. Se o problema persistir, verifique a configuração do provedor de email (SMTP) no painel do Supabase ou entre em contato com o suporte.',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
+
+          // Fallback: rethrow to be handled by outer catch which shows a
+          // friendly generic message (already localized).
+          throw signUpError;
+        }
 
         if (authData.user) {
           // After sign up, a session may or may not be created depending on
