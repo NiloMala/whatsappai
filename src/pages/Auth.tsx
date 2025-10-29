@@ -126,9 +126,10 @@ const Auth = () => {
         navigate("/dashboard");
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro. Tente novamente.",
+        description: "Ocorreu um erro ao processar sua solicitação. Verifique os dados e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -154,9 +155,10 @@ const Auth = () => {
       setResetDialogOpen(false);
       setResetEmail("");
     } catch (error: any) {
+      console.error('Password reset error:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível enviar o email.",
+        description: "Não foi possível enviar o e-mail de redefinição. Tente novamente mais tarde.",
         variant: "destructive",
       });
     } finally {
