@@ -68,7 +68,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ open, onOpenChange }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby="demo-description">
+      <DialogContent aria-describedby="demo-description" className="w-[90vw] max-w-5xl">
         <DialogHeader>
           <DialogTitle>Demonstração — Vídeo e Chat</DialogTitle>
           <p id="demo-description" className="sr-only">Assista o vídeo de demonstração ou teste o chat interativo</p>
@@ -91,7 +91,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ open, onOpenChange }) => {
               />
             </div>
           ) : (
-            <div className="flex flex-col h-96">
+            <div className="flex flex-col h-96 w-[85%] mx-auto">
               <div ref={scrollRef} className="flex-1 overflow-auto p-3 space-y-3 bg-muted/40 rounded">
                 {messages.map((m) => (
                   <div key={m.id} className={`max-w-[80%] p-2 rounded ${m.sender === "bot" ? "bg-slate-700 text-white self-start" : "bg-emerald-600 text-white self-end"}`}>{m.text}</div>
