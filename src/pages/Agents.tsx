@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -56,6 +57,8 @@ const Agents = () => {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const [missingCredentials, setMissingCredentials] = useState<string[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<any | null>(null);
 
   useEffect(() => {
     fetchAgents();
@@ -551,7 +554,24 @@ const Agents = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  // Open delete confirmation modal (replaces native confirm)
+  const handleDelete = (idOrAgent: string | any) => {
+    if (typeof idOrAgent === 'object') {
+      setAgentToDelete(idOrAgent);
+    } else {
+      const found = agents.find(a => a.id === idOrAgent) || { id: idOrAgent };
+      setAgentToDelete(found);
+    }
+    setDeleteModalOpen(true);
+  };
+
+  // Called when user confirms deletion in modal
+  const confirmDeleteAgent = async () => {
+    const id = agentToDelete?.id;
+    setDeleteModalOpen(false);
+    setAgentToDelete(null);
+    if (!id) return;
+
     // Buscar o agente para pegar o workflow_id (se existir)
     const { data: agent } = await supabase
       .from("agents")
@@ -1031,7 +1051,7 @@ const Agents = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleReconfigureWebhook(agent)}
+                        onClick={() => handleReconfigureWebhook(agent)}
                       title="Reconfigurar Webhook"
                     >
                       <RefreshCw className="h-4 w-4" />
@@ -1046,7 +1066,7 @@ const Agents = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleDelete(agent.id)}
+                        onClick={() => handleDelete(agent)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -1058,6 +1078,26 @@ const Agents = () => {
         </div>
       </div>
     </DashboardLayout>
+      {/* Delete confirmation modal for agents */}
+      <Dialog open={deleteModalOpen} onOpenChange={(open) => { if (!open) setAgentToDelete(null); setDeleteModalOpen(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar exclusão do agente</DialogTitle>
+            <DialogDescription>
+              Esta ação removerá o agente e possivelmente o workflow associado no n8n. Tem certeza que deseja continuar?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2">
+            <p>Agente: <strong>{agentToDelete?.name || agentToDelete?.id}</strong></p>
+          </div>
+          <DialogFooter>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => { setDeleteModalOpen(false); setAgentToDelete(null); }}>Cancelar</Button>
+              <Button variant="destructive" onClick={() => void confirmDeleteAgent()}>Excluir agente</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     <CredentialsDialog
       open={credentialsDialogOpen}
