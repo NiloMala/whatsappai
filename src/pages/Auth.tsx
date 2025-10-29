@@ -142,7 +142,7 @@ const Auth = () => {
             toast({
               title: "Confirme seu e-mail",
               description:
-                "Verifique seu e-mail e confirme a conta antes de prosseguir. Após confirmação, acesse o app para completar seu perfil.",
+                "Verifique seu e-mail caixa de entrada e spam, confirme a conta antes de prosseguir. Após confirmação, acesse o app.",
             });
             navigate("/auth");
           }
