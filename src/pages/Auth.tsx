@@ -163,7 +163,17 @@ const Auth = () => {
           password: formData.password,
         });
 
-        if (signInError) throw signInError;
+        if (signInError) {
+          console.error('signIn error:', signInError);
+          // Mostrar mensagem específica para credenciais inválidas
+          toast({
+            title: "E-mail ou senha incorretos",
+            description: "Verifique suas credenciais e tente novamente.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
 
         toast({
           title: "Login realizado!",
