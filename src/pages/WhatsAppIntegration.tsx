@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MessageCircle, QrCode, RefreshCw, X } from "lucide-react";
@@ -14,6 +15,8 @@ const WhatsAppIntegration = () => {
   const [loading, setLoading] = useState(false);
   const [userPlanInfo, setUserPlanInfo] = useState<{ planType?: string; maxInstances: number; existingCount: number } | null>(null);
   const [notifiedConnections, setNotifiedConnections] = useState<Set<string>>(new Set());
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [instanceToDelete, setInstanceToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConnections();
@@ -386,10 +389,18 @@ const WhatsAppIntegration = () => {
     }
   };
 
-  const handleDeleteInstance = async (instanceKey: string) => {
-    if (!confirm(`Tem certeza que deseja deletar a instância ${instanceKey}?`)) {
-      return;
-    }
+  // Open the confirmation modal (replaces native confirm())
+  const handleDeleteInstance = (instanceKey: string) => {
+    setInstanceToDelete(instanceKey);
+    setDeleteModalOpen(true);
+  };
+
+  // Called when user confirms deletion in modal
+  const confirmDeleteInstance = async () => {
+    const instanceKey = instanceToDelete;
+    setDeleteModalOpen(false);
+    setInstanceToDelete(null);
+    if (!instanceKey) return;
 
     setLoading(true);
     try {
@@ -690,6 +701,24 @@ const WhatsAppIntegration = () => {
             ))}
           </div>
         )}
+
+        {/* Delete confirmation modal */}
+        <Dialog open={deleteModalOpen} onOpenChange={(open) => { if (!open) { setInstanceToDelete(null); } setDeleteModalOpen(open); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar exclusão</DialogTitle>
+            </DialogHeader>
+            <div className="mt-2">
+              <p>Tem certeza que deseja deletar a instância <strong>{instanceToDelete}</strong>? Esta ação removerá a instância do seu painel e pode remover dados relacionados.</p>
+            </div>
+            <DialogFooter>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => { setDeleteModalOpen(false); setInstanceToDelete(null); }}>Cancelar</Button>
+                <Button variant="destructive" onClick={() => void confirmDeleteInstance()}>Deletar instância</Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Aviso de limite atingido */}
         {userPlanInfo && userPlanInfo.existingCount >= userPlanInfo.maxInstances && (
