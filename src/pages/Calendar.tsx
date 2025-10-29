@@ -290,6 +290,28 @@ const CalendarPage = () => {
     };
   }, []);
 
+  // Ensure agenda table shows full grid borders in Agenda view
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Agenda view: table grid lines */
+      .rbc-agenda-view .rbc-agenda-content table,
+      .rbc-agenda-view .rbc-agenda-content table th,
+      .rbc-agenda-view .rbc-agenda-content table td,
+      .rbc-agenda-table,
+      .rbc-agenda-table th,
+      .rbc-agenda-table td {
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        border-collapse: collapse !important;
+        padding: 8px !important;
+      }
+      .rbc-agenda-view .rbc-agenda-content table { width: 100% !important; }
+    `;
+    document.head.appendChild(style);
+
+    return () => { document.head.removeChild(style); };
+  }, []);
+
   // Custom renderer for events in week/day views to keep time and title
   // on a single line. react-big-calendar allows passing a component via
   // the `components` prop named `event`.
