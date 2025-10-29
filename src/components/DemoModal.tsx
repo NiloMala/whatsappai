@@ -82,7 +82,13 @@ const DemoModal: React.FC<DemoModalProps> = ({ open, onOpenChange }) => {
 
           {tab === "video" ? (
             <div className="w-full aspect-video bg-black rounded overflow-hidden">
-              <iframe title="Demo video" className="w-full h-full" src="https://www.youtube.com/embed/ysz5S6PUM-U" frameBorder={0} allowFullScreen />
+              <iframe
+                title="Demo video"
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/n1hb9FF6lF8"
+                frameBorder={0}
+                allowFullScreen
+              />
             </div>
           ) : (
             <div className="flex flex-col h-96">
