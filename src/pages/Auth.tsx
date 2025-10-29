@@ -50,11 +50,21 @@ const Auth = () => {
 
     try {
       if (mode === "signup") {
-        // Frontend validation: company name is required before calling signup
+        // Frontend validation: company name and phone are required before calling signup
         if (!formData.companyName || formData.companyName.trim().length === 0) {
           toast({
             title: "Campo obrigatório",
             description: "O nome da empresa é obrigatório.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!formData.phone || formData.phone.trim().length === 0) {
+          toast({
+            title: "Campo obrigatório",
+            description: "O telefone é obrigatório.",
             variant: "destructive",
           });
           setLoading(false);
