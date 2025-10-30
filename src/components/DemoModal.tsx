@@ -85,7 +85,7 @@ const DemoModal: React.FC<DemoModalProps> = ({ open, onOpenChange }) => {
               <iframe
                 title="Demo video"
                 className="w-full h-full"
-                src="https://www.youtube.com/embed/n1hb9FF6lF8"
+                src="https://www.youtube.com/embed/HuzSRrNY74M"
                 frameBorder={0}
                 allowFullScreen
               />
