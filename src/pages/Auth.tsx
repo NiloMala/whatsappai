@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { TermsContent } from "./Terms";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -33,6 +35,8 @@ const Auth = () => {
     companyName: "",
     phone: "",
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -65,6 +69,15 @@ const Auth = () => {
           toast({
             title: "Campo obrigatório",
             description: "O telefone é obrigatório.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        if (!acceptedTerms) {
+          toast({
+            title: "Aceite necessário",
+            description: "Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.",
             variant: "destructive",
           });
           setLoading(false);
@@ -234,6 +247,16 @@ const Auth = () => {
               : "Crie sua conta e comece agora"}
           </p>
         </div>
+        <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Termos de Uso e Política de Privacidade</DialogTitle>
+            </DialogHeader>
+            <div className="mt-2">
+                <TermsContent onClose={() => setTermsOpen(false)} />
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
@@ -263,6 +286,16 @@ const Auth = () => {
                   required
                   placeholder="(00) 00000-0000"
                 />
+              </div>
+              <div className="flex items-start gap-2 mt-3">
+                <Checkbox
+                  id="acceptedTerms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(val: any) => setAcceptedTerms(!!val)}
+                />
+                <label htmlFor="acceptedTerms" className="text-sm text-gray-600 dark:text-gray-300">
+                  Li e concordo com os <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Termos de Uso</button> e a <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Política de Privacidade</button>.
+                </label>
               </div>
             </>
           )}
