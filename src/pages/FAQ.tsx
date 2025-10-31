@@ -147,13 +147,13 @@ export default function FAQ() {
 
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 id="support" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Suporte</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">Abra um ticket pelo e-mail <a href="mailto:support@yourcompany.com" className="text-blue-600 dark:text-blue-400">support@yourcompany.com</a> ou use o formulário no painel. Para questões críticas, informe prioridade no assunto.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Abra um ticket pelo e-mail <a href="mailto:suporte@auroratech.tech" className="text-blue-600 dark:text-blue-400">suporte@auroratech.tech</a> ou use o formulário no painel. Para questões críticas, informe prioridade no assunto.</p>
 
             <div className="flex gap-3 flex-col sm:flex-row">
               <Link to="/dashboard/plans" className="w-full sm:w-auto">
                 <Button className="w-full">Ver Planos</Button>
               </Link>
-              <a href="mailto:support@yourcompany.com" className="w-full sm:w-auto">
+              <a href="mailto:suporte@auroratech.tech" className="w-full sm:w-auto">
                 <Button variant="outline" className="w-full">Contactar Suporte</Button>
               </a>
             </div>
