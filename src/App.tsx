@@ -20,6 +20,7 @@ import Statistics from "./pages/Statistics";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import FAQ from "./pages/FAQ";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Calendar from "./pages/Calendar";
 import DailyAgenda from "./pages/DailyAgenda";
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/payment/success" element={<PaymentSuccess />} />
             <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

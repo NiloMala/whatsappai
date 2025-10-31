@@ -80,7 +80,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: Calendar, label: "Calendário", path: "/dashboard/calendar" },
     { icon: Users, label: "Perfil", path: "/dashboard/profile" },
     { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
-    { icon: HelpCircle, label: "FAQ", path: "/faq" },
+  { icon: HelpCircle, label: "FAQ", path: "/faq" },
+  { icon: FileText, label: "Termos", path: "/terms" },
   
   ];
 
