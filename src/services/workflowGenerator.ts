@@ -184,6 +184,7 @@ export class WorkflowGenerator {
   /**
    * Atualiza o system prompt no nó AI Agent
    * SEMPRE injeta o trecho de data/hora no início do prompt
+   * SEMPRE injeta o trecho de calendário no final do prompt
    */
   updateSystemPrompt(prompt: string): void {
     const aiAgentNode = this.workflow.nodes.find(node =>
@@ -195,8 +196,11 @@ export class WorkflowGenerator {
         aiAgentNode.parameters.options = {};
       }
 
-      // Trecho fixo de data/hora que SEMPRE será injetado
+      // Trecho fixo de data/hora que SEMPRE será injetado no INÍCIO
       const dateTimePrefix = `=Hoje é {{ $now.toFormat('EEEE, dd/MM/yyyy HH:mm') }} (horário de Brasília, UTC−03:00).\nSempre use essa data e horário como base para responder perguntas sobre tempo, "hoje", "amanhã", "semana que vem", etc.\n\n`;
+
+      // Trecho fixo de calendário que SEMPRE será injetado no FINAL
+      const calendarSuffix = `\n\n📅 GERENCIAMENTO DE CALENDÁRIO\n\nVocê gerencia o calendário de eventos do cliente. Siga estas regras:\n\nHORÁRIO DE ATENDIMENTO:\n- Segunda a Sexta: 8:00 às 17:00 (último horário 17:00-18:00)\n- Sempre agende em horários cheios (ex: 9:00, 10:00, 11:00)\n- NUNCA agende em horários quebrados (ex: 9:30, 10:15)\n- NUNCA agende fora do horário de atendimento\n- NUNCA agende em finais de semana\n\n**CRIAR EVENTOS:**\nANTES de criar, SEMPRE siga este fluxo:\n1. Liste os eventos existentes usando "Listar Eventos Calendário" para verificar disponibilidade\n2. Confirme com o cliente: data, hora e título do evento\n3. Verifique se o horário solicitado está livre (sem conflitos)\n4. Se houver conflito, sugira horários alternativos disponíveis\n5. NUNCA agende para datas/horas passadas\n6. Use a tool "Criar Evento Calendário" com os campos:\n   - title: Título do evento (ex: "Consulta Médica", "Reunião")\n   - start_time: Data/hora início no formato ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n   - end_time: Data/hora fim (sempre 1 hora após start_time)\n   - description: Observações do cliente (opcional)\n   \nExemplo: Para agendamento dia 28/10/2024 às 14:00:\n- start_time: 2024-10-28T14:00:00-03:00\n- end_time: 2024-10-28T15:00:00-03:00\n\nApós criar: "Perfeito! Agendei [título] para [dia/mês] às [hora]h. ✅"\n\n**LISTAR EVENTOS:**\n- Use "Listar Eventos Calendário" quando o cliente perguntar sobre agendamentos\n- Exemplos: "quais são minhas consultas?", "o que tenho agendado?", "estou livre amanhã?"\n- Mostre em formato legível: "📅 [Título] - [dia/mês] às [hora]h"\n- Se vazio: "Você não tem eventos agendados."\n\n**ATUALIZAR EVENTOS:**\nSEMPRE siga este fluxo:\n1. Liste os eventos com "Listar Eventos Calendário"\n2. Mostre opções para o cliente escolher qual alterar\n3. Confirme a nova data/hora desejada\n4. Verifique disponibilidade (liste novamente se necessário)\n5. Se houver conflito, sugira alternativas\n6. Use "Atualizar Evento do Calendário" alterando start_time e end_time\n7. NUNCA reagende para datas passadas\n8. Após atualizar: "Evento atualizado com sucesso! ✅"\n\n**EXCLUIR EVENTOS:**\n1. Liste eventos para o cliente identificar qual cancelar\n2. SEMPRE confirme: "Tem certeza que deseja cancelar [título] do dia [data]?"\n3. Aguarde confirmação explícita (sim/confirmo/pode cancelar)\n4. Use "Excluir Evento Calendário"\n5. Após exclusão: "Evento cancelado com sucesso. ❌"\n\n**CÁLCULO DE DATAS:**\n- Use a data/hora atual fornecida no início do prompt\n- "amanhã" = data atual + 1 dia\n- "próxima semana" = data atual + 7 dias\n- "segunda-feira" = próxima segunda a partir de hoje\n- SEMPRE calcule corretamente com base na data atual\n- Se cliente não especificar hora: pergunte\n- Se não especificar duração: assuma 1 hora\n\nIMPORTANTE:\n- Timezone SEMPRE -03:00 (Brasília)\n- Formato obrigatório ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n- Intervalos sempre de 1 hora (ex: 14:00-15:00)\n- Nunca sobreponha eventos no mesmo horário`;
 
       // Remove o trecho de data do prompt se já existir (para evitar duplicação)
       let cleanPrompt = prompt;
@@ -212,11 +216,25 @@ export class WorkflowGenerator {
         cleanPrompt = cleanPrompt.replace(pattern, '');
       });
 
+      // Remover variações do trecho de calendário que podem existir no template
+      const calendarPatterns = [
+        /📅 GERENCIAMENTO DE CALENDÁRIO[\s\S]*?- Nunca sobreponha eventos no mesmo horário/g,
+        /\*\*CRIAR EVENTOS:\*\*[\s\S]*?\*\*DATAS E HORÁRIOS:\*\*[\s\S]*?- Data atual:[^\n]*\n?/g,
+        /Horário de atendimentos:[\s\S]*?SEMPRE use formato ISO 8601:[^\n]*\n?/g
+      ];
+
+      calendarPatterns.forEach(pattern => {
+        cleanPrompt = cleanPrompt.replace(pattern, '');
+      });
+
       // Remover o '=' inicial se existir no prompt limpo
       cleanPrompt = cleanPrompt.replace(/^=/, '');
 
-      // Combinar: prefixo de data + prompt do usuário
-      aiAgentNode.parameters.options.systemMessage = dateTimePrefix + cleanPrompt;
+      // Remover espaços em branco extras no final
+      cleanPrompt = cleanPrompt.trim();
+
+      // Combinar: prefixo de data + prompt do usuário + sufixo de calendário
+      aiAgentNode.parameters.options.systemMessage = dateTimePrefix + cleanPrompt + calendarSuffix;
     }
   }
 
