@@ -1114,15 +1114,6 @@
         "operation": "getAll",
         "tableId": "events",
         "returnAll": true,
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "user_id",
-              "condition": "eq",
-              "keyValue": "c1676e45-d57d-4e57-a11a-8d878621cea9"
-            }
-          ]
-        },
         "options": {}
       },
       "type": "n8n-nodes-base.supabase",

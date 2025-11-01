@@ -336,20 +336,42 @@ export class WorkflowGenerator {
    */
 
   /**
-   * Atualiza o user_id no nó Edit Fields
+   * Atualiza o user_id no nó Edit Fields e no nó Get many rows1
    */
   updateUserId(userId: string): void {
-    const editFieldsNode = this.workflow.nodes.find(node => 
+    // Atualizar no nó Edit Fields
+    const editFieldsNode = this.workflow.nodes.find(node =>
       node.name === 'Edit Fields' && node.type === 'n8n-nodes-base.set'
     );
 
     if (editFieldsNode && editFieldsNode.parameters?.assignments?.assignments) {
       const assignments = editFieldsNode.parameters.assignments.assignments;
       const userIdAssignment = assignments.find((a: any) => a.name === 'user_id');
-      
+
       if (userIdAssignment) {
         userIdAssignment.value = userId;
       }
+    }
+
+    // Atualizar no nó Get many rows1 (para filtro de eventos agendados)
+    const getManyRowsNode = this.workflow.nodes.find(node =>
+      node.name === 'Get many rows1' && node.type === 'n8n-nodes-base.supabase'
+    );
+
+    if (getManyRowsNode) {
+      // Adicionar filtro por user_id
+      if (!getManyRowsNode.parameters.filters) {
+        getManyRowsNode.parameters.filters = { conditions: [] };
+      }
+      if (!getManyRowsNode.parameters.filters.conditions) {
+        getManyRowsNode.parameters.filters.conditions = [];
+      }
+
+      getManyRowsNode.parameters.filters.conditions.push({
+        keyName: 'user_id',
+        condition: 'eq',
+        keyValue: userId
+      });
     }
   }
 
