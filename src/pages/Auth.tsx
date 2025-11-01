@@ -194,7 +194,7 @@ const Auth = () => {
         });
         navigate("/dashboard");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Auth error:', error);
       toast({
         title: "Erro",
@@ -223,11 +223,11 @@ const Auth = () => {
       });
       setResetDialogOpen(false);
       setResetEmail("");
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password reset error:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível enviar o e-mail de redefinição. Tente novamente mais tarde.",
+        description: (error as any)?.message || "Não foi possível enviar o e-mail de redefinição. Tente novamente mais tarde.",
         variant: "destructive",
       });
     } finally {

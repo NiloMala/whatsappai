@@ -121,15 +121,15 @@ serve(async (req) => {
       }
     );
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Erro ao importar workflow:', error);
-    console.error('Stack trace:', error?.stack);
+    console.error('Stack trace:', (error as any)?.stack);
 
     return new Response(
       JSON.stringify({
         success: false,
-        error: error?.message || String(error) || 'Erro desconhecido',
-        details: error?.stack || '',
+        error: (error as any)?.message || String(error) || 'Erro desconhecido',
+        details: (error as any)?.stack || '',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

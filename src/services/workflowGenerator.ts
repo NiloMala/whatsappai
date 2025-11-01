@@ -1,4 +1,5 @@
 import { AIModelProvider } from '@/types/ai-models';
+import { ScheduleConfig, Holiday, WEEK_DAYS } from '@/types/schedule';
 import workflowTemplate from '@/assets/workflow_base.json';
 
 interface WorkflowNode {
@@ -62,12 +63,14 @@ export class WorkflowGenerator {
     credentials: Record<string, string>,
     webhookUrl: string,
     instanceApiKey?: string, // Mantido para compatibilidade, mas não usado aqui
-    userId?: string
+    userId?: string,
+    scheduleConfig?: ScheduleConfig,
+    holidays?: Holiday[]
   ): { workflow: any; webhookPath: string } {
     const generator = new WorkflowGenerator();
 
     generator.replaceAIModel(model);
-    generator.updateSystemPrompt(systemPrompt);
+    generator.updateSystemPrompt(systemPrompt, scheduleConfig, holidays);
     generator.updateInstanceName(instanceName);
     const webhookPath = generator.updateWebhookUrl(webhookUrl);
     generator.injectCredentials(credentials);
@@ -182,11 +185,83 @@ export class WorkflowGenerator {
   }
 
   /**
+   * Formata os dias da semana habilitados em texto legível
+   */
+  private formatDays(config: ScheduleConfig): string {
+    const enabledDays = WEEK_DAYS.filter(day => config[day.key as keyof ScheduleConfig]);
+
+    if (enabledDays.length === 0) return 'Nenhum dia configurado';
+    if (enabledDays.length === 7) return 'Todos os dias';
+
+    // Check for consecutive weekdays (Mon-Fri)
+    const isWeekdays = config.monday && config.tuesday && config.wednesday &&
+                       config.thursday && config.friday && !config.saturday && !config.sunday;
+    if (isWeekdays) return 'Segunda a Sexta';
+
+    // Check for weekend
+    const isWeekend = !config.monday && !config.tuesday && !config.wednesday &&
+                      !config.thursday && !config.friday && config.saturday && config.sunday;
+    if (isWeekend) return 'Sábado e Domingo';
+
+    // Otherwise, list all days
+    return enabledDays.map(d => d.label).join(', ');
+  }
+
+  /**
+   * Gera instruções de calendário dinamicamente baseadas na configuração
+   */
+  private generateScheduleInstructions(config: ScheduleConfig, holidays?: Holiday[]): string {
+    if (!config.scheduling_enabled) {
+      return ''; // Não injeta instruções de calendário se não habilitado
+    }
+
+    const days = this.formatDays(config);
+    const hours = `${config.start_time} às ${config.end_time}`;
+    const slotDurationText = config.slot_duration === 60 ? '1 hora' :
+                             config.slot_duration === 30 ? '30 minutos' :
+                             config.slot_duration === 90 ? '1 hora e 30 minutos' :
+                             config.slot_duration === 120 ? '2 horas' :
+                             `${config.slot_duration} minutos`;
+
+    const hoursType = config.allow_partial_hours
+      ? 'qualquer horário dentro do intervalo'
+      : 'horários cheios (ex: 9:00, 10:00, 11:00)';
+
+    const formatDisplayDate = (d: any) => {
+      if (!d) return d;
+      // If already YYYY-MM-DD
+      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        const [y, m, day] = d.split('-');
+        return `${day}-${m}-${y}`;
+      }
+      // Try Date parsing
+      try {
+        const dt = new Date(d);
+        if (!isNaN(dt.getTime())) {
+          const day = String(dt.getDate()).padStart(2, '0');
+          const month = String(dt.getMonth() + 1).padStart(2, '0');
+          const year = dt.getFullYear();
+          return `${day}-${month}-${year}`;
+        }
+      } catch (e) {
+        // ignore
+      }
+      return String(d);
+    };
+
+    const holidayText = holidays && holidays.length > 0
+      ? `\n\n**FERIADOS E DATAS BLOQUEADAS:**\nNUNCA agende nos seguintes dias:\n${holidays.map(h => `- ${formatDisplayDate(h.date)}: ${h.description}`).join('\n')}`
+      : '';
+
+    return `\n\n📅 GERENCIAMENTO DE CALENDÁRIO\n\nVocê gerencia o calendário de eventos do cliente. Siga estas regras:\n\nHORÁRIO DE ATENDIMENTO:\n- Dias disponíveis: ${days}\n- Horário: ${hours}\n- Intervalos de: ${slotDurationText}\n- Agendar em: ${hoursType}\n- NUNCA agende fora desses horários\n- NUNCA agende em dias não configurados${holidayText}\n\n**CRIAR EVENTOS:**\nANTES de criar, SEMPRE siga este fluxo:\n1. Liste os eventos existentes usando "Listar Eventos Calendário" para verificar disponibilidade\n2. Confirme com o cliente: data, hora e título do evento\n3. Verifique se o horário solicitado está livre (sem conflitos)\n4. Se houver conflito, sugira horários alternativos disponíveis\n5. NUNCA agende para datas/horas passadas\n6. Use a tool "Criar Evento Calendário" com os campos:\n   - title: Título do evento (ex: "Consulta Médica", "Reunião")\n   - start_time: Data/hora início no formato ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n   - end_time: Data/hora fim (sempre ${slotDurationText} após start_time)\n   - description: Observações do cliente (opcional)\n   \nExemplo: Para agendamento dia 28/10/2024 às 14:00:\n- start_time: 2024-10-28T14:00:00-03:00\n- end_time: 2024-10-28T${config.slot_duration === 60 ? '15' : config.slot_duration === 30 ? '14:30' : '16'}:00:00-03:00\n\nApós criar: "Perfeito! Agendei [título] para [dia/mês] às [hora]h. ✅"\n\n**LISTAR EVENTOS:**\n- Use "Listar Eventos Calendário" quando o cliente perguntar sobre agendamentos\n- Exemplos: "quais são minhas consultas?", "o que tenho agendado?", "estou livre amanhã?"\n- Mostre em formato legível: "📅 [Título] - [dia/mês] às [hora]h"\n- Se vazio: "Você não tem eventos agendados."\n\n**ATUALIZAR EVENTOS:**\nSEMPRE siga este fluxo:\n1. Liste os eventos com "Listar Eventos Calendário"\n2. Mostre opções para o cliente escolher qual alterar\n3. Confirme a nova data/hora desejada\n4. Verifique disponibilidade (liste novamente se necessário)\n5. Se houver conflito, sugira alternativas\n6. Use "Atualizar Evento do Calendário" alterando start_time e end_time\n7. NUNCA reagende para datas passadas\n8. Após atualizar: "Evento atualizado com sucesso! ✅"\n\n**EXCLUIR EVENTOS:**\n1. Liste eventos para o cliente identificar qual cancelar\n2. SEMPRE confirme: "Tem certeza que deseja cancelar [título] do dia [data]?"\n3. Aguarde confirmação explícita (sim/confirmo/pode cancelar)\n4. Use "Excluir Evento Calendário"\n5. Após exclusão: "Evento cancelado com sucesso. ❌"\n\n**CÁLCULO DE DATAS:**\n- Use a data/hora atual fornecida no início do prompt\n- "amanhã" = data atual + 1 dia\n- "próxima semana" = data atual + 7 dias\n- "segunda-feira" = próxima segunda a partir de hoje\n- SEMPRE calcule corretamente com base na data atual\n- Se cliente não especificar hora: pergunte\n- Se não especificar duração: assuma ${slotDurationText}\n\nIMPORTANTE:\n- Timezone SEMPRE -03:00 (Brasília)\n- Formato obrigatório ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n- Intervalos sempre de ${slotDurationText}\n- Nunca sobreponha eventos no mesmo horário`;
+  }
+
+  /**
    * Atualiza o system prompt no nó AI Agent
    * SEMPRE injeta o trecho de data/hora no início do prompt
-   * SEMPRE injeta o trecho de calendário no final do prompt
+   * OPCIONALMENTE injeta o trecho de calendário no final (se scheduling_enabled)
    */
-  updateSystemPrompt(prompt: string): void {
+  updateSystemPrompt(prompt: string, scheduleConfig?: ScheduleConfig, holidays?: Holiday[]): void {
     const aiAgentNode = this.workflow.nodes.find(node =>
       node.name === 'AI Agent' || node.type.includes('agent')
     );
@@ -199,8 +274,10 @@ export class WorkflowGenerator {
       // Trecho fixo de data/hora que SEMPRE será injetado no INÍCIO
       const dateTimePrefix = `=Hoje é {{ $now.toFormat('EEEE, dd/MM/yyyy HH:mm') }} (horário de Brasília, UTC−03:00).\nSempre use essa data e horário como base para responder perguntas sobre tempo, "hoje", "amanhã", "semana que vem", etc.\n\n`;
 
-      // Trecho fixo de calendário que SEMPRE será injetado no FINAL
-      const calendarSuffix = `\n\n📅 GERENCIAMENTO DE CALENDÁRIO\n\nVocê gerencia o calendário de eventos do cliente. Siga estas regras:\n\nHORÁRIO DE ATENDIMENTO:\n- Segunda a Sexta: 8:00 às 17:00 (último horário 17:00-18:00)\n- Sempre agende em horários cheios (ex: 9:00, 10:00, 11:00)\n- NUNCA agende em horários quebrados (ex: 9:30, 10:15)\n- NUNCA agende fora do horário de atendimento\n- NUNCA agende em finais de semana\n\n**CRIAR EVENTOS:**\nANTES de criar, SEMPRE siga este fluxo:\n1. Liste os eventos existentes usando "Listar Eventos Calendário" para verificar disponibilidade\n2. Confirme com o cliente: data, hora e título do evento\n3. Verifique se o horário solicitado está livre (sem conflitos)\n4. Se houver conflito, sugira horários alternativos disponíveis\n5. NUNCA agende para datas/horas passadas\n6. Use a tool "Criar Evento Calendário" com os campos:\n   - title: Título do evento (ex: "Consulta Médica", "Reunião")\n   - start_time: Data/hora início no formato ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n   - end_time: Data/hora fim (sempre 1 hora após start_time)\n   - description: Observações do cliente (opcional)\n   \nExemplo: Para agendamento dia 28/10/2024 às 14:00:\n- start_time: 2024-10-28T14:00:00-03:00\n- end_time: 2024-10-28T15:00:00-03:00\n\nApós criar: "Perfeito! Agendei [título] para [dia/mês] às [hora]h. ✅"\n\n**LISTAR EVENTOS:**\n- Use "Listar Eventos Calendário" quando o cliente perguntar sobre agendamentos\n- Exemplos: "quais são minhas consultas?", "o que tenho agendado?", "estou livre amanhã?"\n- Mostre em formato legível: "📅 [Título] - [dia/mês] às [hora]h"\n- Se vazio: "Você não tem eventos agendados."\n\n**ATUALIZAR EVENTOS:**\nSEMPRE siga este fluxo:\n1. Liste os eventos com "Listar Eventos Calendário"\n2. Mostre opções para o cliente escolher qual alterar\n3. Confirme a nova data/hora desejada\n4. Verifique disponibilidade (liste novamente se necessário)\n5. Se houver conflito, sugira alternativas\n6. Use "Atualizar Evento do Calendário" alterando start_time e end_time\n7. NUNCA reagende para datas passadas\n8. Após atualizar: "Evento atualizado com sucesso! ✅"\n\n**EXCLUIR EVENTOS:**\n1. Liste eventos para o cliente identificar qual cancelar\n2. SEMPRE confirme: "Tem certeza que deseja cancelar [título] do dia [data]?"\n3. Aguarde confirmação explícita (sim/confirmo/pode cancelar)\n4. Use "Excluir Evento Calendário"\n5. Após exclusão: "Evento cancelado com sucesso. ❌"\n\n**CÁLCULO DE DATAS:**\n- Use a data/hora atual fornecida no início do prompt\n- "amanhã" = data atual + 1 dia\n- "próxima semana" = data atual + 7 dias\n- "segunda-feira" = próxima segunda a partir de hoje\n- SEMPRE calcule corretamente com base na data atual\n- Se cliente não especificar hora: pergunte\n- Se não especificar duração: assuma 1 hora\n\nIMPORTANTE:\n- Timezone SEMPRE -03:00 (Brasília)\n- Formato obrigatório ISO 8601: YYYY-MM-DDTHH:mm:ss-03:00\n- Intervalos sempre de 1 hora (ex: 14:00-15:00)\n- Nunca sobreponha eventos no mesmo horário`;
+      // Trecho de calendário DINÂMICO (apenas se scheduling_enabled)
+      const calendarSuffix = scheduleConfig && scheduleConfig.scheduling_enabled
+        ? this.generateScheduleInstructions(scheduleConfig, holidays)
+        : '';
 
       // Remove o trecho de data do prompt se já existir (para evitar duplicação)
       let cleanPrompt = prompt;

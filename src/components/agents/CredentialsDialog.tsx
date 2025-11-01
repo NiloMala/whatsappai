@@ -68,11 +68,11 @@ export function CredentialsDialog({ open, onOpenChange, serviceNames, onSaved }:
 
       onSaved();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving credentials:', error);
       toast({
         title: 'Erro ao salvar',
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: 'destructive'
       });
     } finally {

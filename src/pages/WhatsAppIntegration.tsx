@@ -255,11 +255,11 @@ const WhatsAppIntegration = () => {
       });
 
       fetchConnections();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating instance:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: "destructive",
       });
     } finally {
@@ -301,11 +301,11 @@ const WhatsAppIntegration = () => {
       });
 
       fetchConnections();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error refreshing QR:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: "destructive",
       });
     } finally {
@@ -337,11 +337,11 @@ const WhatsAppIntegration = () => {
       });
 
       fetchConnections();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error disconnecting:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: "destructive",
       });
     } finally {
@@ -378,10 +378,10 @@ const WhatsAppIntegration = () => {
       setTimeout(() => {
         fetchConnections();
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: "destructive",
       });
     } finally {
@@ -434,11 +434,11 @@ const WhatsAppIntegration = () => {
       });
 
       fetchConnections();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting instance:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: (error as any)?.message || String(error),
         variant: "destructive",
       });
     } finally {

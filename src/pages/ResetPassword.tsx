@@ -94,10 +94,10 @@ const ResetPassword = () => {
       });
       
       navigate("/auth");
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível redefinir a senha.",
+        description: (error as any)?.message || "Não foi possível redefinir a senha.",
         variant: "destructive",
       });
     } finally {

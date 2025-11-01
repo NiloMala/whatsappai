@@ -26,11 +26,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bot, Plus, Pencil, Trash2, Sparkles, RefreshCw, Info } from "lucide-react";
+import { Bot, Plus, Pencil, Trash2, Sparkles, RefreshCw, Info, Calendar, Settings } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AIModelProvider, AI_MODEL_OPTIONS } from "@/types/ai-models";
 import { WorkflowGenerator } from "@/services/workflowGenerator";
 import { CredentialsDialog } from "@/components/agents/CredentialsDialog";
+import { ScheduleConfigModal } from "@/components/agents/ScheduleConfigModal";
+import { ScheduleConfig, Holiday, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
 
 const Agents = () => {
   const { toast } = useToast();
@@ -53,6 +55,10 @@ const Agents = () => {
     ai_model: "openai" as AIModelProvider,
     instance_name: "",
   });
+
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const [missingCredentials, setMissingCredentials] = useState<string[]>([]);
@@ -347,11 +353,15 @@ const Agents = () => {
 
       const instanceApiKey = instanceData?.instance_token || import.meta.env.VITE_EVOLUTION_API_KEY;
 
-      console.log('🔍 DEBUG: Dados da instância:');
+  console.log('🔍 DEBUG: Dados da instância:');
       console.log('   - instanceName:', instanceName);
       console.log('   - instanceData:', instanceData);
       console.log('   - instance_token obtido:', instanceData?.instance_token ? `SIM (***${instanceData.instance_token.slice(-4)})` : 'NÃO');
       console.log('   - instanceApiKey final:', instanceApiKey ? `SIM (***${instanceApiKey.slice(-4)})` : 'NÃO');
+
+  // DEBUG: log do scheduleConfig atual antes de gerar workflow / salvar
+  console.log('🔍 DEBUG: scheduleConfig at submit:', scheduleConfig);
+  console.log('🔍 DEBUG: holidays at submit:', holidays);
 
       // Gerar workflow
       const { workflow, webhookPath } = WorkflowGenerator.generate(
@@ -361,7 +371,9 @@ const Agents = () => {
         credentialsMap,
         webhookUrl,
         instanceApiKey, // Passar API Key da instância
-        user.id // Passar user_id para injetar no workflow
+        user.id, // Passar user_id para injetar no workflow
+        scheduleConfig.scheduling_enabled ? scheduleConfig : undefined, // Configuração de horários
+        scheduleConfig.scheduling_enabled ? holidays : undefined // Feriados
       );
 
       console.log('🔍 Workflow gerado:', {
@@ -390,6 +402,183 @@ const Agents = () => {
             variant: "destructive",
           });
           return;
+        }
+
+        // Salvar/atualizar configuração de agendamento
+          if (scheduleConfig.scheduling_enabled) {
+          const payload = {
+            agent_id: editingAgent.id,
+            user_id: user.id,
+            ...scheduleConfig
+          };
+
+          console.log('DEBUG: upserting agent_schedule_config payload:', payload);
+
+          const { data: scheduleData, error: scheduleError } = await supabase
+            .from('agent_schedule_config')
+            .upsert(payload, { onConflict: 'agent_id' });
+
+          console.log('DEBUG: upsert response agent_schedule_config:', { scheduleData, scheduleError });
+
+          if (scheduleError) {
+            console.error('Erro ao salvar configuração de agendamento:', scheduleError);
+            toast({
+              title: 'Erro ao salvar agendamento',
+              description: scheduleError.message || JSON.stringify(scheduleError),
+              variant: 'destructive',
+            });
+          } else {
+            console.log('Configuração de agendamento salva (upsert):', scheduleData);
+          }
+
+          // Backup existing holidays before modifying so we can restore on failure
+          const { data: existingHolidays, error: existingHolidaysError } = await supabase
+            .from('agent_holidays')
+            .select('*')
+            .eq('agent_id', editingAgent.id);
+
+          if (existingHolidaysError) {
+            console.error('Erro ao buscar feriados existentes (backup):', existingHolidaysError);
+          } else {
+            console.log('Feriados existentes (backup):', existingHolidays);
+          }
+
+          // Deletar feriados antigos
+          const { data: deletedHolidaysData, error: deletedHolidaysError } = await supabase
+            .from('agent_holidays')
+            .delete()
+            .eq('agent_id', editingAgent.id);
+
+          if (deletedHolidaysError) {
+            console.error('Erro ao deletar feriados antigos:', deletedHolidaysError);
+            toast({
+              title: 'Erro ao atualizar feriados',
+              description: deletedHolidaysError.message || JSON.stringify(deletedHolidaysError),
+              variant: 'destructive',
+            });
+          } else {
+            console.log('Feriados antigos deletados:', deletedHolidaysData);
+          }
+
+          // Inserir novos feriados
+          if (holidays.length > 0) {
+            const formatDate = (s: any) => {
+              if (!s) return s;
+              // If already YYYY-MM-DD, return as is
+              if (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+              try {
+                const d = new Date(s);
+                if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+              } catch (e) {
+                // fallback
+              }
+              // Try to split if it contains T
+              if (typeof s === 'string' && s.includes('T')) return s.split('T')[0];
+              return s;
+            };
+
+            const builtPayload: any[] = [];
+            const invalidHolidays: any[] = [];
+
+            holidays.forEach(h => {
+              const fd = formatDate(h.date);
+              const desc = (h.description || '').slice(0, 255);
+              if (!fd) {
+                invalidHolidays.push({ original: h, reason: 'invalid date' });
+                return;
+              }
+              builtPayload.push({
+                agent_id: editingAgent.id,
+                user_id: user.id,
+                holiday_date: fd,
+                description: desc,
+              });
+            });
+
+            if (invalidHolidays.length > 0) {
+              console.warn('Alguns feriados foram ignorados por data inválida:', invalidHolidays);
+              toast({
+                title: 'Alguns feriados não foram salvos',
+                description: `Datas inválidas: ${invalidHolidays.map(i => i.original.date).join(', ')}`,
+                variant: 'destructive',
+              });
+            }
+
+            console.log('DEBUG: inserindo feriados payload:', builtPayload);
+
+            const { data: insertedHolidaysData, error: holidaysError } = await supabase
+              .from('agent_holidays')
+              .insert(builtPayload);
+
+            console.log('DEBUG: insert holidays response:', { insertedHolidaysData, holidaysError });
+
+            if (holidaysError) {
+              console.error('Erro ao salvar feriados:', holidaysError);
+              toast({
+                title: 'Erro ao salvar feriados',
+                description: holidaysError.message || JSON.stringify(holidaysError),
+                variant: 'destructive',
+              });
+
+              // Attempt to restore backup if available
+              if (existingHolidays && existingHolidays.length > 0) {
+                try {
+                  const restorePayload = existingHolidays.map((h: any) => ({
+                    agent_id: h.agent_id,
+                    user_id: h.user_id,
+                    holiday_date: h.holiday_date || h.date || h.holiday_date,
+                    description: h.description
+                  }));
+                  console.log('DEBUG: restaurando feriados a partir do backup:', restorePayload);
+                  const { data: restoreData, error: restoreError } = await supabase
+                    .from('agent_holidays')
+                    .insert(restorePayload);
+
+                  console.log('DEBUG: restore holidays response:', { restoreData, restoreError });
+                  if (restoreError) {
+                    console.error('Erro ao restaurar feriados do backup:', restoreError);
+                  }
+                } catch (restoreErr) {
+                  console.error('Erro inesperado ao restaurar feriados:', restoreErr);
+                }
+              }
+            } else {
+              console.log('Feriados inseridos:', insertedHolidaysData);
+            }
+          }
+        } else {
+          // Se desabilitou agendamento, deletar configurações existentes
+          const { data: deletedScheduleData, error: deletedScheduleError } = await supabase
+            .from('agent_schedule_config')
+            .delete()
+            .eq('agent_id', editingAgent.id);
+
+          if (deletedScheduleError) {
+            console.error('Erro ao deletar configuração de agendamento existente:', deletedScheduleError);
+            toast({
+              title: 'Erro ao deletar configuração de agendamento',
+              description: deletedScheduleError.message || JSON.stringify(deletedScheduleError),
+              variant: 'destructive',
+            });
+          } else {
+            console.log('Configuração de agendamento deletada:', deletedScheduleData);
+          }
+
+          const { data: deletedAllHolidays, error: deletedAllHolidaysError } = await supabase
+            .from('agent_holidays')
+            .delete()
+            .eq('agent_id', editingAgent.id);
+
+          if (deletedAllHolidaysError) {
+            console.error('Erro ao deletar feriados existentes:', deletedAllHolidaysError);
+            toast({
+              title: 'Erro ao deletar feriados',
+              description: deletedAllHolidaysError.message || JSON.stringify(deletedAllHolidaysError),
+              variant: 'destructive',
+            });
+          } else {
+            console.log('Feriados deletados:', deletedAllHolidays);
+          }
         }
 
         // Reimportar workflow atualizado no n8n
@@ -476,6 +665,37 @@ const Agents = () => {
             variant: "destructive",
           });
           return;
+        }
+
+        // Salvar configuração de agendamento se habilitada
+        if (scheduleConfig.scheduling_enabled && insertedAgent?.id) {
+          const { error: scheduleError } = await supabase
+            .from('agent_schedule_config')
+            .insert({
+              agent_id: insertedAgent.id,
+              user_id: user.id,
+              ...scheduleConfig
+            });
+
+          if (scheduleError) {
+            console.error('Erro ao salvar configuração de agendamento:', scheduleError);
+          }
+
+          // Salvar feriados
+          if (holidays.length > 0) {
+            const { error: holidaysError } = await supabase
+              .from('agent_holidays')
+              .insert(holidays.map(h => ({
+                agent_id: insertedAgent.id,
+                user_id: user.id,
+                holiday_date: h.date,
+                description: h.description
+              })));
+
+            if (holidaysError) {
+              console.error('Erro ao salvar feriados:', holidaysError);
+            }
+          }
         }
 
         // Importar workflow no n8n
@@ -565,7 +785,7 @@ const Agents = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchAgents();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving agent:', error);
       toast({
         title: "Erro",
@@ -716,7 +936,7 @@ const Agents = () => {
         title: "Webhook reconfigurado!",
         description: `Webhook configurado para ${instanceName}`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao reconfigurar webhook:', error);
       toast({
         title: "Erro",
@@ -739,10 +959,12 @@ const Agents = () => {
       ai_model: "openai",
       instance_name: "",
     });
+    setScheduleConfig(DEFAULT_SCHEDULE_CONFIG);
+    setHolidays([]);
     setEditingAgent(null);
   };
 
-  const openEditDialog = (agent: any) => {
+  const openEditDialog = async (agent: any) => {
     setEditingAgent(agent);
     setFormData({
       name: agent.name,
@@ -756,6 +978,73 @@ const Agents = () => {
       ai_model: agent.ai_model || "openai",
       instance_name: agent.instance_name || "",
     });
+
+    // Carregar configuração de horários se existir
+    try {
+      const scheduleResp = await supabase
+        .from('agent_schedule_config')
+        .select('*')
+        .eq('agent_id', agent.id)
+        .maybeSingle();
+
+      console.log('DEBUG: resposta agent_schedule_config GET:', scheduleResp);
+
+      const scheduleData = scheduleResp.data;
+      const scheduleError = scheduleResp.error;
+
+      if (scheduleError) {
+        console.error('Erro ao buscar agent_schedule_config:', scheduleError);
+      }
+
+      if (scheduleData) {
+        setScheduleConfig({
+          scheduling_enabled: scheduleData.scheduling_enabled,
+          monday: scheduleData.monday,
+          tuesday: scheduleData.tuesday,
+          wednesday: scheduleData.wednesday,
+          thursday: scheduleData.thursday,
+          friday: scheduleData.friday,
+          saturday: scheduleData.saturday,
+          sunday: scheduleData.sunday,
+          start_time: scheduleData.start_time,
+          end_time: scheduleData.end_time,
+          slot_duration: scheduleData.slot_duration,
+          allow_partial_hours: scheduleData.allow_partial_hours,
+        });
+      } else {
+        setScheduleConfig(DEFAULT_SCHEDULE_CONFIG);
+      }
+
+      // Carregar feriados
+      const holidaysResp = await supabase
+        .from('agent_holidays')
+        .select('*')
+        .eq('agent_id', agent.id)
+        .order('holiday_date');
+
+      console.log('DEBUG: resposta agent_holidays GET:', holidaysResp);
+
+      const holidaysData = holidaysResp.data;
+      const holidaysError = holidaysResp.error;
+
+      if (holidaysError) {
+        console.error('Erro ao buscar agent_holidays:', holidaysError);
+      }
+
+      // Normalize DB rows to the UI Holiday shape { date, description }
+      const normalizedHolidays = (holidaysData || []).map((h: any) => ({
+        // PostgREST returns holiday_date column; UI expects `date`
+        date: h.holiday_date || h.date || h.holidayDate || null,
+        description: h.description || h.desc || "",
+      }));
+
+      setHolidays(normalizedHolidays);
+    } catch (error) {
+      console.error('Erro ao carregar configurações de agendamento:', error);
+      setScheduleConfig(DEFAULT_SCHEDULE_CONFIG);
+      setHolidays([]);
+    }
+
     setIsDialogOpen(true);
   };
 
@@ -888,6 +1177,40 @@ const Agents = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Seção de Agendamentos */}
+                <div className="space-y-3 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="scheduling_enabled" className="text-base flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Este agente fará agendamentos?
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Habilite para configurar horários de atendimento personalizados
+                      </p>
+                    </div>
+                    <Switch
+                      id="scheduling_enabled"
+                      checked={scheduleConfig.scheduling_enabled}
+                      onCheckedChange={(checked) =>
+                        setScheduleConfig({ ...scheduleConfig, scheduling_enabled: checked })
+                      }
+                    />
+                  </div>
+
+                  {scheduleConfig.scheduling_enabled && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setScheduleModalOpen(true)}
+                      className="w-full"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurar Horários e Feriados
+                    </Button>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1147,6 +1470,17 @@ const Agents = () => {
         setCredentialsDialogOpen(false);
         const event = new Event('submit');
         handleSubmit(event as any);
+      }}
+    />
+
+    <ScheduleConfigModal
+      open={scheduleModalOpen}
+      onOpenChange={setScheduleModalOpen}
+      scheduleConfig={scheduleConfig}
+      holidays={holidays}
+      onSave={(config, newHolidays) => {
+        setScheduleConfig(config);
+        setHolidays(newHolidays);
       }}
     />
     </>
