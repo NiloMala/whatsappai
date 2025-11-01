@@ -612,6 +612,25 @@ const Agents = () => {
       return;
     }
 
+    // Deletar webhook da tabela webhooks se existir instance_name
+    if (agent?.instance_name) {
+      try {
+        console.log('Deletando webhook da tabela webhooks...', agent.instance_name);
+        const { error: webhookError } = await supabase
+          .from('webhooks')
+          .delete()
+          .eq('instance_id', agent.instance_name);
+
+        if (webhookError) {
+          console.error('Erro ao deletar webhook:', webhookError);
+        } else {
+          console.log('Webhook deletado da tabela webhooks');
+        }
+      } catch (err) {
+        console.error('Erro ao deletar webhook:', err);
+      }
+    }
+
     // Tentar deletar o workflow do n8n se existir workflow_id
     if (agent?.workflow_id) {
       try {
