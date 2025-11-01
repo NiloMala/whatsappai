@@ -183,9 +183,10 @@ export class WorkflowGenerator {
 
   /**
    * Atualiza o system prompt no nó AI Agent
+   * SEMPRE injeta o trecho de data/hora no início do prompt
    */
   updateSystemPrompt(prompt: string): void {
-    const aiAgentNode = this.workflow.nodes.find(node => 
+    const aiAgentNode = this.workflow.nodes.find(node =>
       node.name === 'AI Agent' || node.type.includes('agent')
     );
 
@@ -193,7 +194,29 @@ export class WorkflowGenerator {
       if (!aiAgentNode.parameters.options) {
         aiAgentNode.parameters.options = {};
       }
-      aiAgentNode.parameters.options.systemMessage = prompt;
+
+      // Trecho fixo de data/hora que SEMPRE será injetado
+      const dateTimePrefix = `=Hoje é {{ $now.toFormat('EEEE, dd/MM/yyyy HH:mm') }} (horário de Brasília, UTC−03:00).\nSempre use essa data e horário como base para responder perguntas sobre tempo, "hoje", "amanhã", "semana que vem", etc.\n\n`;
+
+      // Remove o trecho de data do prompt se já existir (para evitar duplicação)
+      let cleanPrompt = prompt;
+
+      // Remover variações do trecho de data que podem existir no template
+      const datePatterns = [
+        /=?Hoje é \{\{ \$now[^}]*\}\}[^\n]*\n[^\n]*\n\n/g,
+        /Hoje é \{\{ \$now[^}]*\}\}[^\n]*\n/g,
+        /Data atual: \{\{ \$now[^}]*\}\}[^\n]*\n?/g
+      ];
+
+      datePatterns.forEach(pattern => {
+        cleanPrompt = cleanPrompt.replace(pattern, '');
+      });
+
+      // Remover o '=' inicial se existir no prompt limpo
+      cleanPrompt = cleanPrompt.replace(/^=/, '');
+
+      // Combinar: prefixo de data + prompt do usuário
+      aiAgentNode.parameters.options.systemMessage = dateTimePrefix + cleanPrompt;
     }
   }
 
