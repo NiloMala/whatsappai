@@ -20,13 +20,22 @@ serve(async (req) => {
     console.log('🔗 Workflow connections:', Object.keys(workflow?.connections || {}).length);
     console.log('🔑 N8N URL:', n8nUrl);
     console.log('🔐 N8N API Key presente:', !!n8nApiKey);
+    console.log('🆔 Workflow ID para update:', workflowId || 'novo workflow');
+    console.log('📱 Instance Name:', instanceName);
 
     if (!workflow || !workflow.nodes) {
+      console.error('❌ Workflow inválido - nodes ausentes');
       throw new Error('Workflow inválido: nodes não encontrados');
     }
 
     if (!n8nApiKey) {
+      console.error('❌ N8N API Key ausente');
       throw new Error('N8N API Key não fornecida');
+    }
+
+    if (!n8nUrl) {
+      console.error('❌ N8N URL ausente');
+      throw new Error('N8N URL não fornecida');
     }
 
     // Atualizar instanceName nos nós Evolution API
@@ -74,6 +83,11 @@ serve(async (req) => {
 
       workflowResult = await updateWorkflowResponse.json();
     } else {
+      console.log('📤 Enviando workflow para n8n...');
+      console.log('🔗 URL:', `${n8nUrl}/api/v1/workflows`);
+      console.log('📋 Workflow name:', cleanWorkflow.name);
+      console.log('📊 Nodes count:', cleanWorkflow.nodes.length);
+
       const createWorkflowResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
         method: 'POST',
         headers: {
@@ -83,12 +97,27 @@ serve(async (req) => {
         body: JSON.stringify(cleanWorkflow),
       });
 
+      console.log('📥 Resposta do n8n:', createWorkflowResponse.status, createWorkflowResponse.statusText);
+
       if (!createWorkflowResponse.ok) {
         const errorText = await createWorkflowResponse.text();
+        console.error('❌ Erro ao criar workflow no n8n:');
+        console.error('  Status:', createWorkflowResponse.status);
+        console.error('  Response:', errorText);
+
+        // Tentar parsear como JSON para obter mais detalhes
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error('  Error details:', JSON.stringify(errorJson, null, 2));
+        } catch (e) {
+          // Não é JSON, já logamos o texto
+        }
+
         throw new Error(`Criar workflow falhou: ${createWorkflowResponse.status} - ${errorText}`);
       }
 
       workflowResult = await createWorkflowResponse.json();
+      console.log('✅ Workflow criado com sucesso:', workflowResult.id);
     }
 
     const createdWorkflow = workflowResult;
