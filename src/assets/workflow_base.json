@@ -48,7 +48,7 @@
             {
               "id": "0fd39744-4570-425b-9898-424733135a4e",
               "name": "bloquearAgente",
-              "value": "BloquearAgente",
+              "value": "={{ \"BloquearAgente:\" + $json.body.data.key.remoteJid }}",
               "type": "string"
             },
             {
