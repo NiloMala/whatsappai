@@ -287,16 +287,7 @@ const Auth = () => {
                   placeholder="(00) 00000-0000"
                 />
               </div>
-              <div className="flex items-start gap-2 mt-3">
-                <Checkbox
-                  id="acceptedTerms"
-                  checked={acceptedTerms}
-                  onCheckedChange={(val: any) => setAcceptedTerms(!!val)}
-                />
-                <label htmlFor="acceptedTerms" className="text-sm text-gray-600 dark:text-gray-300">
-                  Li e concordo com os <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Termos de Uso</button> e a <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Política de Privacidade</button>.
-                </label>
-              </div>
+              
             </>
           )}
 
@@ -328,6 +319,19 @@ const Auth = () => {
               minLength={6}
             />
           </div>
+
+          {mode === 'signup' && (
+            <div className="flex items-start gap-2 mt-3">
+              <Checkbox
+                id="acceptedTerms"
+                checked={acceptedTerms}
+                onCheckedChange={(val: any) => setAcceptedTerms(!!val)}
+              />
+              <label htmlFor="acceptedTerms" className="text-sm text-gray-600 dark:text-gray-300">
+                Li e concordo com os <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Termos de Uso</button> e a <button type="button" onClick={() => setTermsOpen(true)} className="text-blue-600 dark:text-blue-400 underline">Política de Privacidade</button>.
+              </label>
+            </div>
+          )}
 
           <Button
             type="submit"
