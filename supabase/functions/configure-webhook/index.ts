@@ -75,25 +75,69 @@ serve(async (req) => {
     let data;
     try {
       data = JSON.parse(responseText);
-      console.log('✅ Webhook configurado:', JSON.stringify(data, null, 2));
+      console.log('✅ Webhook configurado na Evolution:', JSON.stringify(data, null, 2));
     } catch {
       data = { message: responseText };
       console.log('✅ Resposta (não-JSON):', responseText);
     }
 
+    // Salvar webhook na tabela webhooks do Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const authHeader = req.headers.get('authorization');
+
+    if (supabaseUrl && supabaseKey && authHeader) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Extrair user_id do token JWT
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+        if (userError || !user) {
+          console.warn('⚠️ Não foi possível obter user_id:', userError);
+        } else {
+          console.log('💾 Salvando webhook no Supabase para user:', user.id);
+
+          const { data: webhookData, error: webhookError } = await supabase
+            .from('webhooks')
+            .upsert({
+              instance_id: instanceName,
+              user_id: user.id,
+              url: webhookUrl,
+              ativo: true,
+              webhook_base64: false,
+              messages_upsert: true
+            }, {
+              onConflict: 'instance_id'
+            })
+            .select()
+            .single();
+
+          if (webhookError) {
+            console.error('⚠️ Erro ao salvar webhook no Supabase:', webhookError);
+          } else {
+            console.log('✅ Webhook salvo no Supabase:', webhookData);
+          }
+        }
+      } catch (dbError) {
+        console.error('⚠️ Erro ao conectar com Supabase:', dbError);
+      }
+    }
+
     console.log('🔵 ======================================');
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Webhook configurado com sucesso',
         instanceName,
         webhookUrl,
-        evolutionResponse: data 
+        evolutionResponse: data
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     );
 
