@@ -1113,15 +1113,17 @@
       "parameters": {
         "operation": "getAll",
         "tableId": "events",
+        "returnAll": true,
         "filters": {
           "conditions": [
             {
-              "keyName": "start_time",
-              "condition": "lt",
-              "keyValue": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 2 }).startOf('day').toUTC().toISO() }}"
+              "keyName": "user_id",
+              "condition": "eq",
+              "keyValue": "c1676e45-d57d-4e57-a11a-8d878621cea9"
             }
           ]
-        }
+        },
+        "options": {}
       },
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -1137,6 +1139,47 @@
           "name": "whatsappai"
         }
       }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "filter-tomorrow-events",
+              "leftValue": "={{ DateTime.fromISO($json.start_time).toFormat('yyyy-MM-dd') }}",
+              "rightValue": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 1 }).toFormat('yyyy-MM-dd') }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "filter-has-remotejid",
+              "leftValue": "={{ $json.remoteJid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1100,
+        1184
+      ],
+      "id": "filter-tomorrow-events-node",
+      "name": "Filter Tomorrow Events"
     },
     {
       "parameters": {},
@@ -1242,7 +1285,7 @@
       "parameters": {
         "resource": "messages-api",
         "instanceName": "instance_c1676e45_1761140681509",
-        "remoteJid": "={{ $('Json avisos').item.json.remoteJid }}",
+        "remoteJid": "={{ String($('Json avisos').item.json.remoteJid).trim().replace(/[\\r\\n\\t]/g, '') }}@s.whatsapp.net",
         "messageText": "={{ $json.output }}",
         "options_message": {
           "delay": 2000
@@ -1732,6 +1775,17 @@
       ]
     },
     "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "Filter Tomorrow Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Tomorrow Events": {
       "main": [
         [
           {
