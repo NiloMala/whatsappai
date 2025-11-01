@@ -253,7 +253,7 @@
             {
               "id": "5d74ff41-ebbc-4cbb-a1c5-f06801d577f0",
               "leftValue": "={{ $('Edit Fields').item.json.fremMe }}",
-              "rightValue": "false",
+              "rightValue": "true",
               "operator": {
                 "type": "string",
                 "operation": "equals",
@@ -1426,12 +1426,18 @@
       "main": [
         [
           {
-            "node": "Save Customer Message",
+            "node": "Redis",
             "type": "main",
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Save Customer Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Save Customer Message": {
@@ -1460,7 +1466,7 @@
       "main": [
         [
           {
-            "node": "Redis1",
+            "node": "Save Customer Message",
             "type": "main",
             "index": 0
           }
