@@ -12,33 +12,52 @@ serve(async (req) => {
   }
 
   try {
-    const { workflow, workflowName, n8nUrl, n8nApiKey, workflowId } = await req.json();
+    const requestBody = await req.json();
+    const { workflow, workflowName, n8nUrl, n8nApiKey, workflowId, instanceName } = requestBody;
 
-    console.log('🔧 Importando/Atualizando workflow no n8n:', workflowName);
-    console.log('🆔 Workflow ID existente:', workflowId || 'Novo workflow');
+    console.log('🔧 Importando workflow:', workflowName);
+    console.log('📦 Workflow nodes:', workflow?.nodes?.length || 0);
+    console.log('🔗 Workflow connections:', Object.keys(workflow?.connections || {}).length);
+    console.log('🔑 N8N URL:', n8nUrl);
+    console.log('🔐 N8N API Key presente:', !!n8nApiKey);
+
+    if (!workflow || !workflow.nodes) {
+      throw new Error('Workflow inválido: nodes não encontrados');
+    }
+
+    if (!n8nApiKey) {
+      throw new Error('N8N API Key não fornecida');
+    }
+
+    // Atualizar instanceName nos nós Evolution API
+    if (instanceName && workflow.nodes) {
+      let updatedCount = 0;
+      workflow.nodes.forEach((node: any) => {
+        if (node.type === 'n8n-nodes-evolution-api.evolutionApi' && node.parameters) {
+          node.parameters.instanceName = instanceName;
+          updatedCount++;
+        }
+      });
+      console.log('📝 Nós Evolution API atualizados:', updatedCount);
+    }
 
     // Remover campos read-only que o n8n não aceita na criação
     const cleanWorkflow = {
       name: workflowName,
       nodes: workflow.nodes || [],
       connections: workflow.connections || {},
-      settings: workflow.settings || {
-        executionOrder: 'v1',
+      settings: {
+        executionOrder: workflow.settings?.executionOrder || 'v1',
       },
       staticData: workflow.staticData || null,
-      // NÃO incluir: active, id, versionId, meta, tags, createdAt, updatedAt
     };
-
-    console.log('📦 Workflow limpo:', JSON.stringify(cleanWorkflow, null, 2));
 
     let workflowResult;
     let isUpdate = false;
 
     // Se tiver workflowId, atualizar; senão, criar novo
     if (workflowId) {
-      console.log('🔄 Atualizando workflow existente:', workflowId);
       isUpdate = true;
-      
       const updateWorkflowResponse = await fetch(`${n8nUrl}/api/v1/workflows/${workflowId}`, {
         method: 'PUT',
         headers: {
@@ -50,15 +69,11 @@ serve(async (req) => {
 
       if (!updateWorkflowResponse.ok) {
         const errorText = await updateWorkflowResponse.text();
-        console.error('❌ Erro ao atualizar workflow:', errorText);
         throw new Error(`Atualizar workflow falhou: ${updateWorkflowResponse.status} - ${errorText}`);
       }
 
       workflowResult = await updateWorkflowResponse.json();
-      console.log('✅ Workflow atualizado no n8n:', workflowResult.id);
     } else {
-      console.log('➕ Criando novo workflow');
-      
       const createWorkflowResponse = await fetch(`${n8nUrl}/api/v1/workflows`, {
         method: 'POST',
         headers: {
@@ -70,20 +85,15 @@ serve(async (req) => {
 
       if (!createWorkflowResponse.ok) {
         const errorText = await createWorkflowResponse.text();
-        console.error('❌ Erro ao criar workflow:', errorText);
         throw new Error(`Criar workflow falhou: ${createWorkflowResponse.status} - ${errorText}`);
       }
 
       workflowResult = await createWorkflowResponse.json();
-      console.log('✅ Workflow criado no n8n:', workflowResult.id);
     }
 
     const createdWorkflow = workflowResult;
 
-    // Ativar o workflow usando endpoint específico
-    console.log('🔄 Ativando workflow:', createdWorkflow.id);
-    
-    // Tentar endpoint /activate
+    // Ativar o workflow
     const activateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${createdWorkflow.id}/activate`, {
       method: 'POST',
       headers: {
@@ -92,15 +102,9 @@ serve(async (req) => {
       },
     });
 
-    console.log('📊 Status da ativação:', activateResponse.status);
-
     if (!activateResponse.ok) {
       const errorText = await activateResponse.text();
-      console.error('⚠️ Aviso ao ativar workflow:', activateResponse.status, errorText);
-      // Não falha se não conseguir ativar, pois o workflow foi criado
-    } else {
-      const activateResult = await activateResponse.json();
-      console.log('✅ Workflow ativado com sucesso:', activateResult);
+      console.warn('Aviso ao ativar workflow:', errorText);
     }
 
     // Retornar informações do workflow criado/atualizado
@@ -117,13 +121,15 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro ao importar workflow:', error);
-    
+    console.error('Stack trace:', error?.stack);
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error?.message || String(error) || 'Erro desconhecido',
+        details: error?.stack || '',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

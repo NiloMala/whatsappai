@@ -335,13 +335,23 @@ const Agents = () => {
       const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
 
       // Buscar API Key da instância Evolution
-      const { data: instanceData } = await supabase
+      const { data: instanceData, error: instanceError } = await supabase
         .from('whatsapp_connections')
         .select('instance_token')
         .eq('instance_key', instanceName)
         .single();
-      
+
+      if (instanceError) {
+        console.error('Erro ao buscar instance_token:', instanceError);
+      }
+
       const instanceApiKey = instanceData?.instance_token || import.meta.env.VITE_EVOLUTION_API_KEY;
+
+      console.log('🔍 DEBUG: Dados da instância:');
+      console.log('   - instanceName:', instanceName);
+      console.log('   - instanceData:', instanceData);
+      console.log('   - instance_token obtido:', instanceData?.instance_token ? `SIM (***${instanceData.instance_token.slice(-4)})` : 'NÃO');
+      console.log('   - instanceApiKey final:', instanceApiKey ? `SIM (***${instanceApiKey.slice(-4)})` : 'NÃO');
 
       // Gerar workflow
       const { workflow, webhookPath } = WorkflowGenerator.generate(
@@ -353,6 +363,12 @@ const Agents = () => {
         instanceApiKey, // Passar API Key da instância
         user.id // Passar user_id para injetar no workflow
       );
+
+      console.log('🔍 Workflow gerado:', {
+        totalNodes: workflow?.nodes?.length,
+        hasConnections: !!workflow?.connections,
+        nodeTypes: workflow?.nodes?.map((n: any) => n.type).slice(0, 5)
+      });
 
       const agentData = {
         ...formData,
@@ -385,8 +401,10 @@ const Agents = () => {
                 workflow: workflow,
                 workflowName: `Agent: ${formData.name} (${instanceName})`,
                 n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
-                n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY',
+                n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6Oa',
                 workflowId: editingAgent.workflow_id, // ID do workflow existente para atualizar
+                instanceApiKey: instanceApiKey,
+                instanceName: instanceName,
               }
             });
 
@@ -468,15 +486,18 @@ const Agents = () => {
               workflow: workflow,
               workflowName: `Agent: ${formData.name} (${instanceName})`,
               n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
-              n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY',
+              n8nApiKey: import.meta.env.VITE_N8N_API_KEY,
+              instanceApiKey: instanceApiKey,
+              instanceName: instanceName,
             }
           });
 
           if (n8nError) {
             console.error('Erro ao importar workflow no n8n:', n8nError);
+            console.error('Resposta da Edge Function:', n8nResponse);
             toast({
               title: "Workflow não importado",
-              description: "Agente salvo, mas workflow não foi importado no n8n. Importe manualmente.",
+              description: `Erro: ${n8nResponse?.error || n8nError.message}`,
               variant: "destructive",
             });
           } else {

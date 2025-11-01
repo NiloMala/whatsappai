@@ -61,22 +61,21 @@ export class WorkflowGenerator {
     systemPrompt: string,
     credentials: Record<string, string>,
     webhookUrl: string,
-    instanceApiKey?: string,
+    instanceApiKey?: string, // Mantido para compatibilidade, mas não usado aqui
     userId?: string
   ): { workflow: any; webhookPath: string } {
     const generator = new WorkflowGenerator();
-    
+
     generator.replaceAIModel(model);
     generator.updateSystemPrompt(systemPrompt);
     generator.updateInstanceName(instanceName);
     const webhookPath = generator.updateWebhookUrl(webhookUrl);
     generator.injectCredentials(credentials);
-    
-    // Atualizar API Key da instância Evolution se fornecida
-    if (instanceApiKey) {
-      generator.updateEvolutionApiKey(instanceApiKey);
-    }
-    
+
+    // NOTA: instanceApiKey é passado para a função Edge n8n-import-workflow
+    // e NÃO é usado aqui no gerador. As credenciais da Evolution API são
+    // criadas dinamicamente pela função Edge com base nesse parâmetro.
+
     // Atualizar user_id no Edit Fields se fornecido
     if (userId) {
       generator.updateUserId(userId);
@@ -96,6 +95,7 @@ export class WorkflowGenerator {
 
   /**
    * Atualiza as credenciais dos serviços no workflow
+   * Mantém as credenciais que já vêm do template
    */
   private updateCredentials(): void {
     this.workflow.nodes.forEach(node => {
@@ -108,16 +108,9 @@ export class WorkflowGenerator {
           }
         };
       }
-      
-      // Atualizar credenciais da Evolution API
-      if (node.type === 'n8n-nodes-evolution-api.evolutionApi') {
-        node.credentials = {
-          evolutionApi: {
-            id: 'wh0cEVhJu2A0Gkrm',
-            name: 'Evolution API'
-          }
-        };
-      }
+
+      // Manter credenciais da Evolution API do template
+      // As credenciais já vêm configuradas no workflow_base.json
 
       // Atualizar credenciais do Supabase
       if (node.type === 'n8n-nodes-base.supabase' || node.type === 'n8n-nodes-base.supabaseTool') {
@@ -218,28 +211,11 @@ export class WorkflowGenerator {
   }
 
   /**
-   * Atualiza a API Key da instância Evolution nas credenciais
+   * REMOVIDO: updateEvolutionApiKey
+   * As credenciais da Evolution API agora são criadas dinamicamente pela função Edge
+   * n8n-import-workflow, que cria uma credencial dedicada para cada instância.
+   * Não é mais necessário definir credenciais aqui no gerador de workflow.
    */
-  updateEvolutionApiKey(instanceApiKey: string): void {
-    this.workflow.nodes.forEach(node => {
-      if (node.type === 'n8n-nodes-evolution-api.evolutionApi') {
-        if (!node.credentials) {
-          node.credentials = {};
-        }
-        // Atualizar credencial com a API Key da instância
-        node.credentials.evolutionApi = {
-          id: 'wh0cEVhJu2A0Gkrm', // ID da credencial no n8n (será atualizada)
-          name: 'Evolution API'
-        };
-        
-        // Adicionar a API key como parâmetro customizado se o nó suportar
-        if (node.parameters) {
-          node.parameters.authentication = 'apiKey';
-          node.parameters.apiKey = instanceApiKey;
-        }
-      }
-    });
-  }
 
   /**
    * Atualiza o user_id no nó Edit Fields
