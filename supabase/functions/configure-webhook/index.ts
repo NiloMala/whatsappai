@@ -86,6 +86,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const authHeader = req.headers.get('authorization');
 
+    console.log('🔍 Verificando variáveis para salvar webhook:');
+    console.log('   - SUPABASE_URL:', !!supabaseUrl);
+    console.log('   - SUPABASE_SERVICE_ROLE_KEY:', !!supabaseKey);
+    console.log('   - Authorization header:', !!authHeader);
+
     if (supabaseUrl && supabaseKey && authHeader) {
       try {
         const supabase = createClient(supabaseUrl, supabaseKey);
@@ -99,30 +104,64 @@ serve(async (req) => {
         } else {
           console.log('💾 Salvando webhook no Supabase para user:', user.id);
 
-          const { data: webhookData, error: webhookError } = await supabase
+          // Verificar se já existe um webhook para essa instância
+          const { data: existingWebhook } = await supabase
             .from('webhooks')
-            .upsert({
-              instance_id: instanceName,
-              user_id: user.id,
-              url: webhookUrl,
-              ativo: true,
-              webhook_base64: false,
-              messages_upsert: true
-            }, {
-              onConflict: 'instance_id'
-            })
-            .select()
+            .select('*')
+            .eq('instance_id', instanceName)
+            .eq('user_id', user.id)
             .single();
 
-          if (webhookError) {
-            console.error('⚠️ Erro ao salvar webhook no Supabase:', webhookError);
+          if (existingWebhook) {
+            console.log('🔄 Atualizando webhook existente:', existingWebhook.id);
+            // Atualizar webhook existente
+            const { data: webhookData, error: webhookError } = await supabase
+              .from('webhooks')
+              .update({
+                url: webhookUrl,
+                ativo: true,
+                webhook_base64: false,
+                messages_upsert: true
+              })
+              .eq('id', existingWebhook.id)
+              .select()
+              .single();
+
+            if (webhookError) {
+              console.error('⚠️ Erro ao atualizar webhook no Supabase:', webhookError);
+            } else {
+              console.log('✅ Webhook atualizado no Supabase:', webhookData);
+            }
           } else {
-            console.log('✅ Webhook salvo no Supabase:', webhookData);
+            console.log('➕ Criando novo webhook');
+            // Criar novo webhook
+            const { data: webhookData, error: webhookError } = await supabase
+              .from('webhooks')
+              .insert({
+                instance_id: instanceName,
+                user_id: user.id,
+                url: webhookUrl,
+                ativo: true,
+                webhook_base64: false,
+                messages_upsert: true
+              })
+              .select()
+              .single();
+
+            if (webhookError) {
+              console.error('⚠️ Erro ao inserir webhook no Supabase:', webhookError);
+              console.error('⚠️ Detalhes do erro:', JSON.stringify(webhookError, null, 2));
+            } else {
+              console.log('✅ Webhook inserido no Supabase:', webhookData);
+            }
           }
         }
       } catch (dbError) {
         console.error('⚠️ Erro ao conectar com Supabase:', dbError);
+        console.error('⚠️ Stack trace:', dbError.stack);
       }
+    } else {
+      console.warn('⚠️ Não foi possível salvar webhook - credenciais ausentes');
     }
 
     console.log('🔵 ======================================');
