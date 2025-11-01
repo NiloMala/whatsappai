@@ -706,7 +706,7 @@ const Agents = () => {
               workflow: workflow,
               workflowName: `Agent: ${formData.name} (${instanceName})`,
               n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
-              n8nApiKey: import.meta.env.VITE_N8N_API_KEY,
+              n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY',
               instanceApiKey: instanceApiKey,
               instanceName: instanceName,
             }
