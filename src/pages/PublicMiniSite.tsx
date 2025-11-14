@@ -369,39 +369,35 @@ const PublicMiniSite = () => {
             </div>
           )}
 
-          <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-3 md:-bottom-6 lg:-bottom-10 w-full px-4">
-            <div
-              className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5 rounded-md shadow-lg overflow-hidden"
-              style={{ backgroundColor: miniSite.background_color || miniSite.theme_color }}
-            >
-              <div className="flex flex-col items-center text-center py-6 px-6" style={{ color: miniSite.text_color || '#ffffff' }}>
-                {miniSite.logo ? (
-                  <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3">
-                    <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-12 w-12 object-cover" />
-                  </div>
-                ) : null}
-
-                <h2 className="text-2xl font-bold">{miniSite.name}</h2>
-                {miniSite.description ? (
-                  <p className="text-sm mt-1" style={{ color: miniSite.text_color || 'rgba(255,255,255,0.9)' }}>{miniSite.description}</p>
-                ) : (
-                  <p className="text-sm mt-1" style={{ color: miniSite.text_color || 'rgba(255,255,255,0.9)' }}>Bem vindo a {miniSite.name}</p>
-                )}
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-3 text-sm">
-                  {miniSite.whatsapp_number && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      <span>{miniSite.whatsapp_number}</span>
-                    </div>
-                  )}
-                  {miniSite.address && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span>{miniSite.address}</span>
-                    </div>
-                  )}
+          {/* Business info — rendered as a simple block below the banner (no card) */}
+          <div className="w-full px-4 mt-3">
+            <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5 text-center py-4 px-4" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>
+              {miniSite.logo ? (
+                <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3 mx-auto">
+                  <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-12 w-12 object-cover" />
                 </div>
+              ) : null}
+
+              <h2 className="text-2xl font-bold">{miniSite.name}</h2>
+              {miniSite.description ? (
+                <p className="text-sm mt-1">{miniSite.description}</p>
+              ) : (
+                <p className="text-sm mt-1">Bem vindo a {miniSite.name}</p>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-3 text-sm">
+                {miniSite.whatsapp_number && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>{miniSite.whatsapp_number}</span>
+                  </div>
+                )}
+                {miniSite.address && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{miniSite.address}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
