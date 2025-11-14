@@ -370,7 +370,7 @@ const PublicMiniSite = () => {
           )}
 
           {/* Business info — rendered as a simple block below the banner (no card) */}
-          <div className="w-full px-4 mt-3">
+          <div className="w-full px-4 mt-0">
             <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5 text-center py-4 px-4" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>
               {miniSite.logo ? (
                 <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3 mx-auto">
@@ -404,7 +404,7 @@ const PublicMiniSite = () => {
         </div>
       ) : null}
 
-  <main className="container mx-auto px-4 py-8 pt-16">
+  <main className="container mx-auto px-4 py-8 pt-8">
         <div className="grid gap-8">
           {/* Menu/Serviços */}
           <div className="space-y-6">

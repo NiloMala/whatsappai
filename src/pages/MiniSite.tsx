@@ -364,41 +364,40 @@ const MiniSitePage = () => {
           </p>
         </div>
 
-        {miniSite && (
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ExternalLink className="h-5 w-5" />
-                Link Público do seu Mini Site
-              </CardTitle>
-              <CardDescription>
-                Compartilhe este link com seus clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                <Input
-                  value={publicUrl}
-                  readOnly
-                  className="font-mono text-sm"
-                />
-                <Button onClick={copyToClipboard} variant="outline">
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => window.open(publicUrl, "_blank")}
-                  variant="default"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Visualizar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* public link moved to bottom for layout preference */}
 
+        {/* Tipo de Negócio shown first so user selects business type before tabs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tipo de Negócio</CardTitle>
+            <CardDescription>Escolha entre serviço (agendamentos) ou delivery (produtos)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={formData.template === "booking" ? "default" : "outline"}
+                onClick={() => setFormData({ ...formData, template: "booking" })}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Serviço (agendamentos)
+              </Button>
+
+              <Button
+                size="sm"
+                variant={formData.template === "delivery" ? "default" : "outline"}
+                onClick={() => setFormData({ ...formData, template: "delivery" })}
+              >
+                <Store className="h-4 w-4 mr-2" />
+                Delivery / Produtos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Now place the page-level tabs below Tipo de Negócio */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 mt-6">
             <TabsTrigger value="config" className="gap-2">
               <Settings className="h-4 w-4" />
               Configurações
@@ -409,44 +408,7 @@ const MiniSitePage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="config" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tipo de Negócio</CardTitle>
-            <CardDescription>Escolha o template ideal para seu negócio</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs
-              value={formData.template}
-              onValueChange={(value) =>
-                setFormData({ ...formData, template: value as "booking" | "delivery" })
-              }
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="booking" className="gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Agendamento (Serviços)
-                </TabsTrigger>
-                <TabsTrigger value="delivery" className="gap-2">
-                  <Store className="h-4 w-4" />
-                  Cardápio/Delivery
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="booking" className="mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Ideal para: Salões, barbearias, clínicas, consultorias, serviços agendados
-                </p>
-              </TabsContent>
-              <TabsContent value="delivery" className="mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Ideal para: Lanchonetes, pizzarias, restaurantes, lojas, e-commerce
-                </p>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
+        <TabsContent value="config" className="space-y-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle>Informações Básicas</CardTitle>
@@ -829,6 +791,40 @@ const MiniSitePage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Moved: Link Público do seu Mini Site (mostrar ao final da página) */}
+        {miniSite && (
+          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20 mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ExternalLink className="h-5 w-5" />
+                Link Público do seu Mini Site
+              </CardTitle>
+              <CardDescription>
+                Compartilhe este link com seus clientes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  value={publicUrl}
+                  readOnly
+                  className="font-mono text-sm"
+                />
+                <Button onClick={copyToClipboard} variant="outline">
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => window.open(publicUrl, "_blank")}
+                  variant="default"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Visualizar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Modal para adicionar/editar item */}
         <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
