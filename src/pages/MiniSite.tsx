@@ -571,16 +571,16 @@ const MiniSitePage = () => {
               <div className="space-y-2">
                 <Label htmlFor="agent">Agente IA para Pedidos</Label>
                 <Select
-                  value={formData.agent_id || ""}
+                  value={formData.agent_id || "none"}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, agent_id: value || null })
+                    setFormData({ ...formData, agent_id: value === "none" ? null : value })
                   }
                 >
                   <SelectTrigger id="agent">
                     <SelectValue placeholder="Selecione um agente (opcional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhum (envio direto ao WhatsApp)</SelectItem>
+                    <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
                     {agents.map((agent) => (
                       <SelectItem key={agent.id} value={agent.id}>
                         {agent.name}
