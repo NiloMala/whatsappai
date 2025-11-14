@@ -55,6 +55,45 @@ export class WorkflowGenerator {
     });
   }
 
+  /**
+   * Remove nós relacionados à funcionalidade de voz
+   * Usado quando voice_response_mode === "text_only"
+   */
+  private removeVoiceNodes(): void {
+    const voiceNodeNames = [
+      'Check If Audio',
+      'OpenAI TTS',
+      'Extract from File',
+      'Envia Audio'
+    ];
+
+    // Remover os nós de voz
+    this.workflow.nodes = this.workflow.nodes.filter(
+      node => !voiceNodeNames.includes(node.name)
+    );
+
+    // Atualizar conexões: Save Agent Message deve conectar direto ao Code in JavaScript
+    const connections = this.workflow.connections;
+
+    if (connections['Save Agent Message']?.main) {
+      // Remover conexão com Check If Audio e conectar direto ao Code in JavaScript
+      connections['Save Agent Message'].main = [
+        [
+          {
+            node: 'Code in JavaScript',
+            type: 'main',
+            index: 0
+          }
+        ]
+      ];
+    }
+
+    // Remover conexões dos nós de voz que foram deletados
+    voiceNodeNames.forEach(nodeName => {
+      delete connections[nodeName];
+    });
+  }
+
   // Método estático para criar uma nova instância
   public static generate(
     model: AIModelProvider,
@@ -65,7 +104,8 @@ export class WorkflowGenerator {
     instanceApiKey?: string, // Mantido para compatibilidade, mas não usado aqui
     userId?: string,
     scheduleConfig?: ScheduleConfig,
-    holidays?: Holiday[]
+    holidays?: Holiday[],
+    voiceResponseMode?: 'auto' | 'text_only'
   ): { workflow: any; webhookPath: string } {
     const generator = new WorkflowGenerator();
 
@@ -83,7 +123,12 @@ export class WorkflowGenerator {
     if (userId) {
       generator.updateUserId(userId);
     }
-    
+
+    // Remover nós de voz se o modo for "text_only"
+    if (voiceResponseMode === 'text_only') {
+      generator.removeVoiceNodes();
+    }
+
     // Validar workflow antes de retornar
     const isValid = generator.validateWorkflow();
     if (!isValid) {
@@ -142,17 +187,17 @@ export class WorkflowGenerator {
    */
   replaceAIModel(provider: AIModelProvider): void {
     const openaiNode = this.workflow.nodes.find(n => n.type === '@n8n/n8n-nodes-langchain.lmChatOpenAi');
-    const groqNode = this.workflow.nodes.find(n => n.type === '@n8n/n8n-nodes-langchain.lmChatGroq');
-    
+    const geminiNode = this.workflow.nodes.find(n => n.type === '@n8n/n8n-nodes-langchain.lmChatGoogleGemini');
+
     // Resetar todas as conexões de modelos de IA
     if (this.workflow.connections['OpenAI Chat Model']) {
       delete this.workflow.connections['OpenAI Chat Model'];
     }
-    if (this.workflow.connections['Groq Chat Model']) {
-      delete this.workflow.connections['Groq Chat Model'];
+    if (this.workflow.connections['Google Chat Model']) {
+      delete this.workflow.connections['Google Chat Model'];
     }
 
-    if (!openaiNode || !groqNode) {
+    if (!openaiNode || !geminiNode) {
       throw new Error('AI model nodes not found in workflow template');
     }
 
@@ -168,17 +213,17 @@ export class WorkflowGenerator {
       this.workflow.connections['OpenAI Chat Model'] = {
         ai_languageModel: [[{ node: 'AI Agent', type: 'ai_languageModel', index: 0 }]]
       };
-      
-    } else if (provider === 'groq') {
-      // Configurar Groq
-      groqNode.credentials = {
-        groqApi: {
-          id: 'h6NAjjnyhHL7WSVc',
-          name: 'Groq WhatsappAI'
+
+    } else if (provider === 'gemini') {
+      // Configurar Google Gemini
+      geminiNode.credentials = {
+        googlePalmApi: {
+          id: 'tg1QjrnpAZvUXjeY',
+          name: 'Google Gemini(PaLM) Api account'
         }
       };
-      // Conectar Groq ao AI Agent
-      this.workflow.connections['Groq Chat Model'] = {
+      // Conectar Gemini ao AI Agent
+      this.workflow.connections['Google Chat Model'] = {
         ai_languageModel: [[{ node: 'AI Agent', type: 'ai_languageModel', index: 0 }]]
       };
     }
@@ -503,7 +548,7 @@ export class WorkflowGenerator {
   private getServiceNameFromCredType(credType: string): string {
     const mapping: Record<string, string> = {
       'openAiApi': 'openai',
-      'groqApi': 'groq',
+      'googlePalmApi': 'gemini',
       'anthropicApi': 'claude',
       'ollamaApi': 'ollama',
       'evolutionApi': 'evolution',

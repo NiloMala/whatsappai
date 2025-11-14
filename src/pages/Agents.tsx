@@ -30,7 +30,6 @@ import { Bot, Plus, Pencil, Trash2, Sparkles, RefreshCw, Info, Calendar, Setting
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AIModelProvider, AI_MODEL_OPTIONS } from "@/types/ai-models";
 import { WorkflowGenerator } from "@/services/workflowGenerator";
-import { CredentialsDialog } from "@/components/agents/CredentialsDialog";
 import { ScheduleConfigModal } from "@/components/agents/ScheduleConfigModal";
 import { ScheduleConfig, Holiday, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
 
@@ -54,14 +53,13 @@ const Agents = () => {
     api_key: "",
     ai_model: "openai" as AIModelProvider,
     instance_name: "",
+    voice_response_mode: "text_only" as "auto" | "text_only",
   });
 
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
-  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
-  const [missingCredentials, setMissingCredentials] = useState<string[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<any | null>(null);
@@ -180,33 +178,8 @@ const Agents = () => {
     setTemplates(data || []);
   };
 
-  const checkCredentials = async (aiModel: AIModelProvider): Promise<boolean> => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const requiredServices = [aiModel];
-
-      const { data: creds } = await supabase
-        .from('user_credentials')
-        .select('service_name')
-        .eq('user_id', user.id)
-        .in('service_name', requiredServices);
-
-      const existingServices = creds?.map(c => c.service_name) || [];
-      const missing = requiredServices.filter(s => !existingServices.includes(s));
-
-      if (missing.length > 0) {
-        setMissingCredentials(missing);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error checking credentials:', error);
-      return false;
-    }
-  };
+  // Credentials check removed - OpenAI and Gemini API keys are now centralized in n8n
+  // and configured once for all users via n8n credential store
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,15 +245,6 @@ const Agents = () => {
         variant: 'destructive',
       });
       return;
-    }
-
-    // Check credentials
-    if (!editingAgent) {
-      const hasCredentials = await checkCredentials(formData.ai_model);
-      if (!hasCredentials) {
-        setCredentialsDialogOpen(true);
-        return;
-      }
     }
 
     // Check plan limits when creating new agent
@@ -373,7 +337,8 @@ const Agents = () => {
         instanceApiKey, // Passar API Key da instância
         user.id, // Passar user_id para injetar no workflow
         scheduleConfig.scheduling_enabled ? scheduleConfig : undefined, // Configuração de horários
-        scheduleConfig.scheduling_enabled ? holidays : undefined // Feriados
+        scheduleConfig.scheduling_enabled ? holidays : undefined, // Feriados
+        formData.voice_response_mode // Modo de resposta (auto ou text_only)
       );
 
       console.log('🔍 Workflow gerado:', {
@@ -958,6 +923,7 @@ const Agents = () => {
       api_key: "",
       ai_model: "openai",
       instance_name: "",
+      voice_response_mode: "text_only",
     });
     setScheduleConfig(DEFAULT_SCHEDULE_CONFIG);
     setHolidays([]);
@@ -977,6 +943,7 @@ const Agents = () => {
       api_key: agent.api_key || "",
       ai_model: agent.ai_model || "openai",
       instance_name: agent.instance_name || "",
+      voice_response_mode: agent.voice_response_mode || "text_only",
     });
 
     // Carregar configuração de horários se existir
@@ -1308,6 +1275,31 @@ const Agents = () => {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="voice_response_mode">Modo de Resposta</Label>
+                  <Select
+                    value={formData.voice_response_mode}
+                    onValueChange={(value: "auto" | "text_only") =>
+                      setFormData({ ...formData, voice_response_mode: value })
+                    }
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Selecione o modo" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="text_only">
+                        📝 Apenas Texto (sempre responde com texto)
+                      </SelectItem>
+                      <SelectItem value="auto">
+                        🎯 Automático (Voz ↔ Voz, Texto ↔ Texto)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Padrão: Apenas Texto. Use Automático para responder áudios com voz.
+                  </p>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <Label htmlFor="auto_response">Respostas Automáticas</Label>
                   <Switch
@@ -1461,17 +1453,6 @@ const Agents = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-    <CredentialsDialog
-      open={credentialsDialogOpen}
-      onOpenChange={setCredentialsDialogOpen}
-      serviceNames={missingCredentials}
-      onSaved={() => {
-        setCredentialsDialogOpen(false);
-        const event = new Event('submit');
-        handleSubmit(event as any);
-      }}
-    />
 
     <ScheduleConfigModal
       open={scheduleModalOpen}

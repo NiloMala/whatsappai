@@ -31,7 +31,7 @@ export default function FAQ() {
                 <strong>Leia o QR code:</strong> na tela da instância haverá um QR code para conectar o número (web session). Abra o WhatsApp, clique nos três pontinhos &gt; Dispositivos Conectados &gt; Conectar dispositivo e escaneie o QR para autenticar.
               </li>
               <li>
-                <strong>Crie seu agente:</strong> agora vá em <Link to="/dashboard/agents" className="text-blue-600 dark:text-blue-400">Menu &gt; Agentes</Link> e clique em <em>Criar Agente</em>. No campo <em>Nome da Instância Evolution</em> cole a <em>Instance Key</em> que você acabou de criar e preencha nome do agente, tipo de linguagem e descrição. Escolha o Modelo de IA, clique em salvar; quando solicitado cole a chave (key) e confirme o salvamento.
+                <strong>Crie seu agente:</strong> agora vá em <Link to="/dashboard/agents" className="text-blue-600 dark:text-blue-400">Menu &gt; Agentes</Link> e clique em <em>Criar Agente</em>. Sua instância será selecionada automaticamente (caso não seja, cole a <em>Instance Key</em> no campo indicado). Preencha nome do agente, tipo de linguagem, descrição e prompt. Escolha o Modelo de IA (OpenAI ou Google Gemini) e o Modo de Resposta (Apenas Texto ou Automático para voz). Clique em salvar.
               </li>
               <li>
                 <strong>Teste o agente:</strong> após criado, abra a instância conectada e envie algumas mensagens de teste pelo WhatsApp para verificar respostas e ajustar o prompt.
@@ -45,31 +45,36 @@ export default function FAQ() {
           </section>
 
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 id="keys" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Gerando chaves de API (OpenAI e Groq) e modelos usados</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-3">Você precisa de chaves da OpenAI e da Groq para habilitar os modelos de chat no WhatsAgent AI. Abaixo está o passo a passo e os modelos que usamos como padrão.</p>
+            <h2 id="keys" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Modelos de IA e Credenciais</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-3">O WhatsAgent AI utiliza credenciais centralizadas para OpenAI e Google Gemini configuradas pelo administrador. Você não precisa fornecer suas próprias chaves de API.</p>
 
-            <h3 className="font-medium text-gray-800 dark:text-gray-100 mt-3">OpenAI</h3>
-            <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 ml-4 mb-3">
-              <li>Acesse https://platform.openai.com/ e faça login na sua conta.</li>
-              <li>Vá em <strong>View API keys</strong> (ou Profile → API keys) e clique em <strong>Create new secret key</strong>.</li>
-              <li>Copie a chave gerada (começa com <code>sk-</code>) e cole no campo de configuração do agente ou nas configurações do projeto (não compartilhe publicamente).</li>
-            </ol>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Modelo de chat OpenAI usado por padrão: <strong>gpt-4o-mini</strong>.</p>
+            <h3 className="font-medium text-gray-800 dark:text-gray-100 mt-3">Modelos Disponíveis</h3>
+            <div className="space-y-3 ml-4 mb-3">
+              <div>
+                <p className="text-gray-700 dark:text-gray-200"><strong>OpenAI (Padrão)</strong></p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Modelo: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">GPT-5-Nano</code></p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Rápido, eficiente e com suporte a voz (text-to-speech)</p>
+              </div>
 
-            <h3 className="font-medium text-gray-800 dark:text-gray-100 mt-3">Groq</h3>
-            <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 ml-4 mb-3">
-              <li>Acesse o painel da Groq (ou o portal de API que você usa para Groq) e faça login na sua conta Groq.</li>
-              <li>Localize a seção de credenciais/API keys e gere uma nova chave (siga as instruções do provedor).</li>
-              <li>Copie a chave e cole no campo de configuração do agente ou nas configurações do projeto.</li>
-            </ol>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Modelo de chat Groq usado por padrão: <strong>Groq (openai/gpt-oss-20b)</strong>.</p>
+              <div>
+                <p className="text-gray-700 dark:text-gray-200"><strong>Google Gemini</strong></p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Modelo: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Gemini-2.5-Flash</code></p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Modelo avançado do Google com alta performance</p>
+              </div>
+            </div>
+
+            <h3 className="font-medium text-gray-800 dark:text-gray-100 mt-4">Modo de Resposta</h3>
+            <div className="space-y-2 ml-4 mb-3 text-sm text-gray-600 dark:text-gray-300">
+              <p><strong>📝 Apenas Texto (Padrão):</strong> O agente sempre responde com mensagens de texto divididas em sentenças.</p>
+              <p><strong>🎯 Automático:</strong> O agente responde em áudio quando recebe áudio, e em texto quando recebe texto.</p>
+            </div>
 
             <div className="mt-4 text-gray-600 dark:text-gray-300">
-              <strong>Observações importantes:</strong>
-              <ul className="list-disc list-inside mt-2">
-                <li>Guarde as chaves em local seguro e não as exponha no frontend.</li>
-                <li>No painel do agente, escolha o provedor (OpenAI ou Groq) e cole a chave quando solicitado ao salvar o agente.</li>
-                <li>Observação sobre custos: o modelo Groq (<strong>openai/gpt-oss-20b</strong>) atualmente não gera cobrança pelo provedor; já o OpenAI pode ter custos conforme seu plano. Verifique sempre a política de preços do provedor.</li>
+              <strong>Observações:</strong>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>As credenciais OpenAI e Google Gemini são gerenciadas centralmente pelo sistema</li>
+                <li>Você só precisa escolher o modelo ao criar o agente</li>
+                <li>Funcionalidade de voz disponível em ambos os modelos</li>
               </ul>
             </div>
           </section>
@@ -77,11 +82,12 @@ export default function FAQ() {
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 id="trial" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Como funciona o período de teste grátis de 3 dias?</h2>
             <div className="space-y-3 text-gray-600 dark:text-gray-300">
-              <p>Ao iniciar o teste gratuito de 3 dias, você terá acesso total aos recursos do plano escolhido. Não cobramos na ativação — a cobrança só ocorrerá se você não cancelar antes do término do período.</p>
+              <p>Ao iniciar o teste gratuito de 3 dias, você terá acesso total aos recursos da plataforma sem precisar cadastrar cartão de crédito.</p>
               <ul className="list-disc list-inside">
-                <li>Teste começa imediatamente após a ativação.</li>
-                <li>Você pode cancelar a qualquer momento durante o teste sem custos.</li>
-                <li>Ao final do teste, o Stripe irá cobrar automaticamente o cartão cadastrado (se não houver cancelamento).</li>
+                <li>Teste começa imediatamente após o cadastro.</li>
+                <li>Não é necessário cadastrar cartão de crédito para testar.</li>
+                <li>Após os 3 dias, você pode escolher um plano e assinar se quiser continuar usando.</li>
+                <li>Sem compromisso, sem cobranças automáticas.</li>
               </ul>
             </div>
           </section>
@@ -113,21 +119,24 @@ export default function FAQ() {
           </section>
 
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 id="whatsapp" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Integração com WhatsApp & Webhooks</h2>
+            <h2 id="whatsapp" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Integração com WhatsApp</h2>
             <details className="mb-3">
               <summary className="cursor-pointer text-gray-800 dark:text-gray-100 font-medium">Como funciona a integração?</summary>
-              <div className="mt-2 text-gray-600 dark:text-gray-300">Oferecemos integração via infra estrutura própria. Você configura instânciase gerencia agentes que respondem automaticamente via fluxos e modelos de IA.</div>
-            </details>
-
-            <details>
-              <summary className="cursor-pointer text-gray-800 dark:text-gray-100 font-medium">Por que configurar webhooks?</summary>
-              <div className="mt-2 text-gray-600 dark:text-gray-300">Webhooks garantem que eventos externos (ex.: Stripe) atualizem automaticamente o status no nosso sistema, evitando inconsistências entre pagamentos e acessos.</div>
+              <div className="mt-2 text-gray-600 dark:text-gray-300">Oferecemos integração via infraestrutura própria. Você configura sua instância e gerencia agentes que respondem automaticamente via fluxos e modelos de IA.</div>
             </details>
           </section>
 
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 id="limits" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Limites</h2>
-            <p className="text-gray-600 dark:text-gray-300">Cada plano tem limites (instâncias e agentes, não de mensagens). Consulte a página de planos para detalhes. Se precisar de mais capacidade, entre em contato para um plano customizado.</p>
+            <h2 id="limits" className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Limites dos Planos</h2>
+            <div className="space-y-3 text-gray-600 dark:text-gray-300">
+              <p>Cada plano possui limites específicos de respostas mensais. Todos os planos incluem 1 instância e 1 agente:</p>
+              <ul className="list-disc list-inside ml-4">
+                <li><strong>Basic (R$ 69,90/mês):</strong> Até 500 respostas/mês</li>
+                <li><strong>Pro (R$ 99,90/mês):</strong> Até 1.000 respostas/mês</li>
+                <li><strong>Business (R$ 129,90/mês):</strong> Mensagens ilimitadas + suporte dedicado</li>
+              </ul>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Se precisar de mais capacidade ou recursos customizados, entre em contato para um plano personalizado.</p>
+            </div>
           </section>
 
           <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -140,8 +149,8 @@ export default function FAQ() {
             <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-2">
               <li>Pagamento recusado: Verifique dados do cartão, saldo e tente outro cartão.</li>
               <li>Não recebi e-mail: Verifique spam e confirme o e-mail cadastrado.</li>
-              <li>Webhook não funcionando: Confirme endpoint e signing secret no Stripe e nas secrets da função.</li>
-              <li>Erro ao criar sessão de pagamento: Verifique Price IDs e a chave Stripe (modo test vs live).</li>
+              <li>Agente não está respondendo: Verifique se o agente está ativo e se a instância está conectada ao WhatsApp.</li>
+              <li>Problemas com pagamento: Entre em contato com nosso suporte que resolveremos rapidamente.</li>
             </ul>
           </section>
 
