@@ -433,9 +433,9 @@ const PublicMiniSite = () => {
             {/* Grid de Produtos */}
             {/* Product cards sized like leads (w-80) with horizontal scroll for easy mobile browsing */}
             <div className="-mx-4 px-4">
-              <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto py-2">
+              <div className="flex flex-col items-center md:flex-row md:items-start gap-4 md:overflow-x-auto py-2">
                 {filteredItems.map((item) => (
-                <Card key={item.id} className="w-full md:w-80 flex-shrink-0 overflow-hidden">
+                <Card key={item.id} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
                     <div className="flex flex-col">
                         <div className="flex-1 flex flex-col justify-between p-3">
                         <div>
