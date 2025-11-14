@@ -438,76 +438,91 @@ const PublicMiniSite = () => {
             {/* Product cards sized like leads (w-80) with horizontal scroll for easy mobile browsing */}
             <div className="-mx-4 px-4">
               <div className="flex flex-col items-center md:flex-row md:items-start gap-4 md:overflow-x-auto py-2">
-                {filteredItems.map((item) => (
-                <Card key={item.id} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
-                    <div className="flex flex-col">
-                        <div className="flex-1 flex flex-col justify-between p-3">
-                        <div>
-                          <CardHeader>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-base">{item.title}</CardTitle>
-                                {item.duration && (
-                                  <Badge variant="outline" className="mt-1">
-                                    <CalendarIcon className="h-3 w-3 mr-1" />
-                                    {item.duration} min
-                                  </Badge>
-                                )}
-                              </div>
-                              <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
-                                R$ {item.price.toFixed(2)}
-                              </span>
-                            </div>
-                          </CardHeader>
-
-                          {item.description && (
-                            <CardContent>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 text-sm text-muted-foreground overflow-hidden whitespace-nowrap truncate">
-                                  {item.description}
-                                </div>
-                                {item.description && item.description.length > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openDescModal(item.description)}
-                                    className="p-1 rounded hover:bg-accent/20 flex items-center gap-1 text-sm text-primary"
-                                    aria-label="Ver descrição completa"
-                                    title="Ver descrição"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Ver</span>
-                                  </button>
-                                )}
-                              </div>
-                            </CardContent>
-                          )}
-                        </div>
-
-                        <div className="mt-2">
-                          <Button
-                            type="button"
-                            className="w-full px-3 py-2 text-sm rounded-md"
-                            style={{
-                              backgroundColor: miniSite?.button_color || miniSite?.theme_color,
-                              color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
-                            }}
-                            onClick={() => handleAddClick(item)}
-                          >
-                            {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
-                          </Button>
+                {filteredItems.length === 0 ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={`skeleton-${i}`} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
+                        <div className="flex flex-col h-40 md:h-56 p-2">
+                          <div className="flex-1">
+                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse" />
+                            <div className="h-3 bg-gray-200 rounded w-1/3 mb-3 animate-pulse" />
+                            <div className="h-10 bg-gray-200 rounded w-full mb-2 animate-pulse" />
+                          </div>
+                          <div className="mt-2">
+                            <div className="h-8 bg-gray-200 rounded w-full animate-pulse" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    ))}
+                  </>
+                ) : (
+                  filteredItems.map((item) => (
+                    <Card key={item.id} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
+                      <div className="flex flex-col">
+                        <div className="flex-1 flex flex-col justify-between p-3">
+                          <div>
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-base">{item.title}</CardTitle>
+                                  {item.duration && (
+                                    <Badge variant="outline" className="mt-1">
+                                      <CalendarIcon className="h-3 w-3 mr-1" />
+                                      {item.duration} min
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
+                                  R$ {item.price.toFixed(2)}
+                                </span>
+                              </div>
+                            </CardHeader>
+
+                            {item.description && (
+                              <CardContent>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 text-sm text-muted-foreground overflow-hidden whitespace-nowrap truncate">
+                                    {item.description}
+                                  </div>
+                                  {item.description && item.description.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => openDescModal(item.description)}
+                                      className="p-1 rounded hover:bg-accent/20 flex items-center gap-1 text-sm text-primary"
+                                      aria-label="Ver descrição completa"
+                                      title="Ver descrição"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      <span className="hidden sm:inline">Ver</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            )}
+                          </div>
+
+                          <div className="mt-2">
+                            <Button
+                              type="button"
+                              className="w-full px-3 py-2 text-sm rounded-md"
+                              style={{
+                                backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                                color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                              }}
+                              onClick={() => handleAddClick(item)}
+                            >
+                              {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
 
-            {filteredItems.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>Nenhum item disponível nesta categoria.</p>
-              </div>
-            )}
+            
           </div>
 
           {/* right column intentionally removed — cart is accessible via floating pill/modal */}
@@ -576,6 +591,18 @@ const PublicMiniSite = () => {
             </DialogContent>
           </Dialog>
         </>
+      )}
+
+      {/* Fixed mobile CTA for cart (visible only on small screens) */}
+      {selectedItems.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+          <div className="px-4 py-3" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}>
+            <button onClick={() => setCartOpen(true)} className="w-full flex items-center justify-between font-semibold">
+              <span className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Ver Carrinho</span>
+              <span>R$ {totalPrice.toFixed(2)}</span>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Options Modal (when adding product with additions) */}
