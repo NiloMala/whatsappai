@@ -380,46 +380,59 @@ const PublicMiniSite = () => {
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredItems.map((item) => (
                 <Card key={item.id} className="overflow-hidden">
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
+                  <div className="flex flex-row md:flex-col">
+                    {item.image_url && (
+                      <div className="w-1/3 md:w-full">
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-full h-32 md:h-48 object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex-1 flex flex-col justify-between p-4">
                       <div>
-                        <CardTitle>{item.title}</CardTitle>
-                        {item.duration && (
-                          <Badge variant="outline" className="mt-1">
-                            <CalendarIcon className="h-3 w-3 mr-1" />
-                            {item.duration} min
-                          </Badge>
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-lg md:text-xl">{item.title}</CardTitle>
+                              {item.duration && (
+                                <Badge variant="outline" className="mt-1">
+                                  <CalendarIcon className="h-3 w-3 mr-1" />
+                                  {item.duration} min
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-lg md:text-xl font-bold" style={{ color: miniSite?.theme_color }}>
+                              R$ {item.price.toFixed(2)}
+                            </span>
+                          </div>
+                        </CardHeader>
+
+                        {item.description && (
+                          <CardContent>
+                            <CardDescription className="text-sm md:text-base">{item.description}</CardDescription>
+                          </CardContent>
                         )}
                       </div>
-                      <span className="text-xl font-bold" style={{ color: miniSite?.theme_color }}>
-                        R$ {item.price.toFixed(2)}
-                      </span>
+
+                      <div className="flex justify-end mt-2">
+                        <Button
+                          type="button"
+                          className="px-3 py-2 text-sm rounded-md md:w-full"
+                          style={{
+                            backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                            color:
+                              miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                          }}
+                          onClick={() => handleAddClick(item)}
+                        >
+                          {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
+                        </Button>
+                      </div>
                     </div>
-                  </CardHeader>
-                  {item.description && (
-                      <CardContent>
-                      <CardDescription>{item.description}</CardDescription>
-                      <Button
-                        type="button"
-                        className="w-full mt-4"
-                        style={{
-                          backgroundColor: miniSite?.button_color || miniSite?.theme_color,
-                          color:
-                            miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
-                        }}
-                        onClick={() => handleAddClick(item)}
-                      >
-                        {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
-                      </Button>
-                    </CardContent>
-                  )}
+                  </div>
                 </Card>
               ))}
             </div>
