@@ -209,9 +209,77 @@ const PublicMiniSite = () => {
     setIsCheckoutOpen(true);
   };
 
-  const sendWhatsApp = () => {
+  const sendWhatsApp = async () => {
     if (!miniSite) return;
 
+    const total = selectedItems.reduce((sum, { item, quantity, selectedOptions }) => {
+      const opts = selectedOptions || [];
+      return sum + (item.price + opts.reduce((s, o) => s + (o.price || 0), 0)) * quantity;
+    }, 0);
+
+    // Se houver agente configurado, enviar via Edge Function
+    if (miniSite.agent_id) {
+      try {
+        const orderData = {
+          miniSiteSlug: resolvedSlug,
+          customerName: checkoutData.name,
+          customerPhone: checkoutData.phone,
+          customerAddress: checkoutData.address,
+          paymentMethod: checkoutData.paymentMethod,
+          observations: checkoutData.observations,
+          items: selectedItems.map(({ item, quantity, selectedOptions }) => ({
+            title: item.title,
+            quantity,
+            price: item.price,
+            selectedOptions: selectedOptions || []
+          })),
+          total
+        };
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-minisite-order`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify(orderData)
+          }
+        );
+
+        const result = await response.json();
+        console.log('Resposta do processamento:', result);
+
+        if (result.success && !result.directWhatsApp) {
+          // Pedido processado com sucesso pelo agente
+          toast({
+            title: "Pedido Enviado!",
+            description: `Seu pedido #${result.orderNumber} foi enviado e está sendo processado. Você receberá uma confirmação no WhatsApp em instantes.`,
+          });
+
+          // Limpar carrinho e fechar modal
+          setSelectedItems([]);
+          if (resolvedSlug) {
+            localStorage.removeItem(`cart_${resolvedSlug}`);
+          }
+          setIsCheckoutOpen(false);
+          setCheckoutData({
+            name: "",
+            phone: "",
+            address: "",
+            paymentMethod: "",
+            observations: "",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao processar pedido com agente:', error);
+        // Continua para envio direto ao WhatsApp em caso de erro
+      }
+    }
+
+    // Envio direto ao WhatsApp (sem agente ou em caso de erro)
     let message = `*Novo Pedido - ${miniSite.name}*\n\n`;
     message += `*Cliente:* ${checkoutData.name}\n`;
     message += `*Telefone:* ${checkoutData.phone}\n`;
@@ -228,11 +296,6 @@ const PublicMiniSite = () => {
       line += ` - R$ ${itemTotal.toFixed(2)}\\n`;
       message += line;
     });
-
-    const total = selectedItems.reduce((sum, { item, quantity, selectedOptions }) => {
-      const opts = selectedOptions || [];
-      return sum + (item.price + opts.reduce((s, o) => s + (o.price || 0), 0)) * quantity;
-    }, 0);
 
     message += `\n*Subtotal:* R$ ${total.toFixed(2)}`;
     message += `\n*Forma de Pagamento:* ${checkoutData.paymentMethod}`;

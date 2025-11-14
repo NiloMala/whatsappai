@@ -42,6 +42,7 @@ export interface MiniSite {
   address?: string;
   phone?: string;
   whatsapp_number: string;
+  agent_id?: string | null;
   theme_color: string;
   background_color?: string | null;
   button_color?: string | null;
@@ -68,6 +69,7 @@ export interface MiniSiteFormData {
   address?: string;
   phone?: string;
   whatsapp_number: string;
+  agent_id?: string | null;
   theme_color: string;
   description?: string;
   template: TemplateType;

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -47,6 +48,7 @@ const MiniSitePage = () => {
   const [saving, setSaving] = useState(false);
   const [miniSite, setMiniSite] = useState<MiniSite | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -60,6 +62,7 @@ const MiniSitePage = () => {
     logo: "",
     banner: "",
     whatsapp_number: "",
+    agent_id: null,
     theme_color: "#10B981",
     background_color: "#ffffff",
     button_color: "#1d4ed8",
@@ -99,6 +102,19 @@ const MiniSitePage = () => {
         return;
       }
 
+      // Buscar agentes do usuário
+      const { data: agentsData, error: agentsError } = await supabase
+        .from("agents")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (agentsError) {
+        console.error("Erro ao carregar agentes:", agentsError);
+      } else {
+        setAgents(agentsData || []);
+      }
+
       // Buscar mini site do usuário
       const { data: sites, error: siteError } = await supabase
         .from("mini_sites")
@@ -120,6 +136,7 @@ const MiniSitePage = () => {
           address: sites.address,
           phone: sites.phone,
           whatsapp_number: sites.whatsapp_number,
+          agent_id: sites.agent_id,
           theme_color: sites.theme_color,
           background_color: sites.background_color || formData.background_color,
           button_color: sites.button_color || formData.button_color,
@@ -549,6 +566,33 @@ const MiniSitePage = () => {
                 placeholder="Rua Exemplo, 123"
               />
             </div>
+
+            {formData.template === "delivery" && (
+              <div className="space-y-2">
+                <Label htmlFor="agent">Agente IA para Pedidos</Label>
+                <Select
+                  value={formData.agent_id || ""}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, agent_id: value || null })
+                  }
+                >
+                  <SelectTrigger id="agent">
+                    <SelectValue placeholder="Selecione um agente (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum (envio direto ao WhatsApp)</SelectItem>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selecione um agente IA para processar os pedidos e enviar mensagens formatadas. Se não selecionar, o pedido será enviado diretamente ao WhatsApp.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="theme">Cor do Tema</Label>
