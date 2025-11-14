@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon } from "lucide-react";
+import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye } from "lucide-react";
 import type { MiniSite, MenuItem, ProductOption } from "@/types/mini-site";
 import { readableTextColor } from "@/lib/utils";
 
@@ -39,6 +39,55 @@ const PublicMiniSite = () => {
   const [optionModalItem, setOptionModalItem] = useState<MenuItem | null>(null);
   const [optionSelections, setOptionSelections] = useState<Record<string, boolean>>({});
   const [optionQuantity, setOptionQuantity] = useState(1);
+  // description modal state (moved here to keep hooks order stable)
+  const [descModalOpen, setDescModalOpen] = useState(false);
+  const [descModalText, setDescModalText] = useState<string | null>(null);
+  const openDescModal = (text: string | undefined | null) => {
+    if (!text) return;
+    // Normalize lines: trim, remove empties
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+
+    const processed: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      let rawLine = lines[i];
+      // Remove the line that says "Detalhes do produto" (case-insensitive)
+      if (/^detalh(es)? do produto/i.test(rawLine)) continue;
+
+      // Collapse repeated phrase patterns inside the same line like
+      // "PASTEL CARNE PASTEL CARNE PASTEL CARNE" -> "PASTEL CARNE"
+      const tokens = rawLine.split(/\s+/).filter(Boolean);
+      let reduced = rawLine;
+
+      if (tokens.length > 1) {
+        for (let k = 1; k <= Math.floor(tokens.length / 2); k++) {
+          if (tokens.length % k !== 0) continue;
+          const pattern = tokens.slice(0, k).join(" ");
+          let ok = true;
+          for (let j = 0; j < tokens.length; j += k) {
+            const chunk = tokens.slice(j, j + k).join(" ");
+            if (chunk !== pattern) {
+              ok = false;
+              break;
+            }
+          }
+          if (ok) {
+            reduced = pattern;
+            break;
+          }
+        }
+      }
+
+      // Only collapse consecutive identical lines — preserve non-consecutive repeats
+      if (processed.length === 0 || processed[processed.length - 1] !== reduced) {
+        processed.push(reduced);
+      }
+    }
+
+    const finalText = processed.length ? processed.join("\n") : text.trim();
+    setDescModalText(finalText);
+    setDescModalOpen(true);
+  };
   
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -287,6 +336,8 @@ const PublicMiniSite = () => {
     return sum + (item.price + optsTotal) * quantity;
   }, 0);
 
+  
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: miniSite?.background_color || undefined }}>
       {/* Banner with overlayed company info card */}
@@ -296,6 +347,7 @@ const PublicMiniSite = () => {
             <img
               src={miniSite.banner}
               alt={`${miniSite.name} banner`}
+              loading="lazy"
               className="w-full h-44 md:h-56 lg:h-72 object-cover"
             />
           ) : (
@@ -317,7 +369,7 @@ const PublicMiniSite = () => {
               <div className="flex flex-col items-center text-center py-6 px-6" style={{ color: miniSite.text_color || '#ffffff' }}>
                 {miniSite.logo ? (
                   <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3">
-                    <img src={miniSite.logo} alt={miniSite.name} className="h-12 w-12 object-cover" />
+                    <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-12 w-12 object-cover" />
                   </div>
                 ) : null}
 
@@ -354,87 +406,97 @@ const PublicMiniSite = () => {
           <div className="space-y-6">
             {/* Filtro de Categorias */}
             {categories.length > 2 && (
-              <div className="flex flex-wrap gap-2 pb-4 border-b">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === category
-                        ? "text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    }`}
-                    style={
-                      selectedCategory === category
-                        ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }
-                        : {}
-                    }
-                  >
-                    {category}
-                  </button>
-                ))}
+              <div className="overflow-x-auto pb-4 border-b -mx-4 px-4">
+                <div className="inline-flex space-x-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                        selectedCategory === category
+                          ? "text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                      }`}
+                      style={
+                        selectedCategory === category
+                          ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }
+                          : {}
+                      }
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Grid de Produtos */}
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden">
-                  <div className="flex flex-row md:flex-col">
-                    {item.image_url && (
-                      <div className="w-1/3 md:w-full">
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="w-full h-32 md:h-48 object-cover"
-                        />
-                      </div>
-                    )}
-
-                    <div className="flex-1 flex flex-col justify-between p-4">
-                      <div>
-                        <CardHeader>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle className="text-lg md:text-xl">{item.title}</CardTitle>
-                              {item.duration && (
-                                <Badge variant="outline" className="mt-1">
-                                  <CalendarIcon className="h-3 w-3 mr-1" />
-                                  {item.duration} min
-                                </Badge>
-                              )}
+            {/* Product cards sized like leads (w-80) with horizontal scroll for easy mobile browsing */}
+            <div className="-mx-4 px-4">
+              <div className="flex gap-4 overflow-x-auto py-2">
+                {filteredItems.map((item) => (
+                  <Card key={item.id} className="w-80 flex-shrink-0 overflow-hidden">
+                    <div className="flex flex-col">
+                        <div className="flex-1 flex flex-col justify-between p-3">
+                        <div>
+                          <CardHeader>
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle className="text-base">{item.title}</CardTitle>
+                                {item.duration && (
+                                  <Badge variant="outline" className="mt-1">
+                                    <CalendarIcon className="h-3 w-3 mr-1" />
+                                    {item.duration} min
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
+                                R$ {item.price.toFixed(2)}
+                              </span>
                             </div>
-                            <span className="text-lg md:text-xl font-bold" style={{ color: miniSite?.theme_color }}>
-                              R$ {item.price.toFixed(2)}
-                            </span>
-                          </div>
-                        </CardHeader>
+                          </CardHeader>
 
-                        {item.description && (
-                          <CardContent>
-                            <CardDescription className="text-sm md:text-base">{item.description}</CardDescription>
-                          </CardContent>
-                        )}
-                      </div>
+                          {item.description && (
+                            <CardContent>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 text-sm text-muted-foreground overflow-hidden whitespace-nowrap truncate">
+                                  {item.description}
+                                </div>
+                                {item.description && item.description.length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openDescModal(item.description)}
+                                    className="p-1 rounded hover:bg-accent/20 flex items-center gap-1 text-sm text-primary"
+                                    aria-label="Ver descrição completa"
+                                    title="Ver descrição"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Ver</span>
+                                  </button>
+                                )}
+                              </div>
+                            </CardContent>
+                          )}
+                        </div>
 
-                      <div className="flex justify-end mt-2">
-                        <Button
-                          type="button"
-                          className="px-3 py-2 text-sm rounded-md md:w-full"
-                          style={{
-                            backgroundColor: miniSite?.button_color || miniSite?.theme_color,
-                            color:
-                              miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
-                          }}
-                          onClick={() => handleAddClick(item)}
-                        >
-                          {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
-                        </Button>
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            className="w-full px-3 py-2 text-sm rounded-md"
+                            style={{
+                              backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                              color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                            }}
+                            onClick={() => handleAddClick(item)}
+                          >
+                            {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
             </div>
 
             {filteredItems.length === 0 && (
@@ -454,13 +516,14 @@ const PublicMiniSite = () => {
           <div className="fixed bottom-4 right-4 md:top-6 md:right-6 md:bottom-auto z-50">
             <button
               onClick={() => setCartOpen(true)}
-              className="inline-flex items-center gap-3 px-3 py-2 rounded-full shadow-lg text-sm"
+              className="inline-flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-sm touch-manipulation"
               style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}
+              aria-label="Ver carrinho"
             >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden md:inline-block font-medium text-sm">Ver Carrinho</span>
+              <ShoppingCart className="h-5 w-5" />
+              <span className="font-medium text-sm hidden sm:inline">Ver Carrinho</span>
               <span className="ml-2 font-semibold text-sm">R$ {totalPrice.toFixed(2)}</span>
-              <span className="ml-2 inline-flex items-center justify-center bg-white text-black rounded-full h-5 w-5 text-xs">{totalItems}</span>
+              <span className="ml-2 inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
             </button>
           </div>
 
@@ -561,6 +624,23 @@ const PublicMiniSite = () => {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Description Modal (show full product description) */}
+      <Dialog open={descModalOpen} onOpenChange={setDescModalOpen} modal>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Descrição do Produto</DialogTitle>
+              </DialogHeader>
+          <div className="py-2">
+            <div className="text-sm whitespace-pre-wrap break-words text-muted-foreground">
+              {descModalText}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDescModalOpen(false)}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
