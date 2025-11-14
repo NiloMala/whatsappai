@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import type { MiniSite, MenuItem, ProductOption } from "@/types/mini-site";
 import { readableTextColor } from "@/lib/utils";
 
@@ -306,6 +307,13 @@ const PublicMiniSite = () => {
       quantity: 1,
     };
     addToCart(cartItem);
+    // show a short toast for 2 seconds (toast system uses TOAST_REMOVE_DELAY)
+    try {
+      toast({ title: "Produto Adicionado" });
+    } catch (e) {
+      // fallback: no-op if toast system unavailable
+      console.warn("Toast failed:", e);
+    }
     return;
     };
 
