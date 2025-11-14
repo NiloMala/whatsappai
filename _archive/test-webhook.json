@@ -1,0 +1,15 @@
+{
+  "body": {
+    "data": {
+      "pushName": "Teste",
+      "key": {
+        "remoteJid": "5511999999999@s.whatsapp.net",
+        "fromMe": false
+      },
+      "messageType": "conversation",
+      "message": {
+        "conversation": "Ola teste"
+      }
+    }
+  }
+}

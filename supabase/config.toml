@@ -1,0 +1,26 @@
+project_id = "ousswtdrflklodogqlcg"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions.evolution-instance]
+verify_jwt = false
+
+[functions.configure-webhook]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.get-webhook-config]
+verify_jwt = false
+
+[functions.n8n-delete-workflow]
+verify_jwt = false
+
+[functions.evolution-chat-proxy]
+verify_jwt = false
