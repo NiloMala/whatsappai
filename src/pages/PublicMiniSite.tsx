@@ -99,6 +99,7 @@ const PublicMiniSite = () => {
     paymentMethod: "",
     observations: "",
   });
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     loadMiniSite();
@@ -134,6 +135,7 @@ const PublicMiniSite = () => {
       console.log("Banner URL:", site.banner);
       console.log("Logo URL:", site.logo);
       console.log("Tem logo?", !!site.logo);
+      console.log("Agent ID:", site.agent_id);
       setMiniSite(site);
 
       // Buscar itens do menu
@@ -205,6 +207,38 @@ const PublicMiniSite = () => {
     setSelectedItems((prev) => prev.map((i) => (i.cartId === cartId ? { ...i, quantity } : i)));
   };
 
+  // Formatar telefone com máscara brasileira (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+  const formatPhoneNumber = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+
+    // Aplica a máscara conforme o usuário digita
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 6) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+    } else if (numbers.length <= 10) {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+    } else {
+      return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+    }
+  };
+
+  // Validar se o telefone tem DDD e número completo
+  const validatePhone = (phone: string) => {
+    const numbers = phone.replace(/\D/g, '');
+
+    if (numbers.length === 0) {
+      return "Telefone é obrigatório";
+    } else if (numbers.length < 10) {
+      return "Telefone incompleto. Inclua o DDD e o número completo";
+    } else if (numbers.length === 10 || numbers.length === 11) {
+      return ""; // Válido
+    } else {
+      return "Telefone inválido";
+    }
+  };
+
   const openCheckout = () => {
     setIsCheckoutOpen(true);
   };
@@ -217,8 +251,13 @@ const PublicMiniSite = () => {
       return sum + (item.price + opts.reduce((s, o) => s + (o.price || 0), 0)) * quantity;
     }, 0);
 
+    console.log("🔍 DEBUG sendWhatsApp:");
+    console.log("- miniSite.agent_id:", miniSite.agent_id);
+    console.log("- Tem agente?", !!miniSite.agent_id);
+
     // Se houver agente configurado, enviar via Edge Function
     if (miniSite.agent_id) {
+      console.log("✅ Agente configurado! Enviando via Edge Function...");
       try {
         const orderData = {
           miniSiteSlug: resolvedSlug,
@@ -249,9 +288,13 @@ const PublicMiniSite = () => {
         );
 
         const result = await response.json();
-        console.log('Resposta do processamento:', result);
+        console.log('📨 Resposta da Edge Function:', result);
+        console.log('- success:', result.success);
+        console.log('- directWhatsApp:', result.directWhatsApp);
+        console.log('- orderNumber:', result.orderNumber);
 
         if (result.success && !result.directWhatsApp) {
+          console.log("✅ Pedido processado pelo agente!");
           // Pedido processado com sucesso pelo agente
           toast({
             title: "Pedido Enviado!",
@@ -271,15 +314,20 @@ const PublicMiniSite = () => {
             paymentMethod: "",
             observations: "",
           });
+          setPhoneError("");
           return;
         }
       } catch (error) {
-        console.error('Erro ao processar pedido com agente:', error);
+        console.error('❌ Erro ao processar pedido com agente:', error);
+        console.log('⚠️ Continuando para envio direto ao WhatsApp...');
         // Continua para envio direto ao WhatsApp em caso de erro
       }
+    } else {
+      console.log("ℹ️ Nenhum agente configurado, enviando direto ao WhatsApp");
     }
 
     // Envio direto ao WhatsApp (sem agente ou em caso de erro)
+    console.log("📱 Abrindo WhatsApp para envio direto...");
     let message = `*Novo Pedido - ${miniSite.name}*\n\n`;
     message += `*Cliente:* ${checkoutData.name}\n`;
     message += `*Telefone:* ${checkoutData.phone}\n`;
@@ -333,6 +381,7 @@ const PublicMiniSite = () => {
       paymentMethod: "",
       observations: "",
     });
+    setPhoneError("");
   };
 
   // Agrupar itens por categoria
@@ -739,7 +788,10 @@ const PublicMiniSite = () => {
       </Dialog>
 
       {/* Checkout Modal */}
-      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen} modal>
+      <Dialog open={isCheckoutOpen} onOpenChange={(open) => {
+        setIsCheckoutOpen(open);
+        if (!open) setPhoneError("");
+      }} modal>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Finalizar Pedido</DialogTitle>
@@ -764,11 +816,18 @@ const PublicMiniSite = () => {
               <Input
                 id="phone"
                 value={checkoutData.phone}
-                onChange={(e) =>
-                  setCheckoutData({ ...checkoutData, phone: e.target.value })
-                }
+                onChange={(e) => {
+                  const formatted = formatPhoneNumber(e.target.value);
+                  setCheckoutData({ ...checkoutData, phone: formatted });
+                  const error = validatePhone(formatted);
+                  setPhoneError(error);
+                }}
                 placeholder="(00) 00000-0000"
+                className={phoneError ? "border-red-500" : ""}
               />
+              {phoneError && (
+                <p className="text-sm text-red-500">{phoneError}</p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="address">Endereço de Entrega *</Label>
@@ -827,7 +886,8 @@ const PublicMiniSite = () => {
                 !checkoutData.name ||
                 !checkoutData.phone ||
                 !checkoutData.address ||
-                !checkoutData.paymentMethod
+                !checkoutData.paymentMethod ||
+                !!phoneError
               }
             >
               <Phone className="h-4 w-4 mr-2" />

@@ -76,6 +76,7 @@ serve(async (req) => {
 
     if (agentError || !agent || !agent.workflow_id) {
       console.error('❌ Agente ou workflow não encontrado:', agentError);
+      console.error('📊 Debug agent data:', { agent, agentError });
       return new Response(
         JSON.stringify({
           success: true,
@@ -86,6 +87,12 @@ serve(async (req) => {
       );
     }
 
+    console.log('✅ Agente encontrado:', {
+      id: agent.id,
+      name: agent.name,
+      workflow_id: agent.workflow_id
+    });
+
     // Gerar número de pedido único
     const orderNumber = Math.floor(Math.random() * 90000000) + 10000000;
 
@@ -95,13 +102,20 @@ serve(async (req) => {
     console.log('📨 Enviando pedido para agente:', agent.name);
     console.log('📝 Mensagem:', orderMessage);
 
+    // Formatar número do WhatsApp (adicionar código do país se não tiver)
+    let formattedPhone = orderData.customerPhone.replace(/\D/g, ''); // Remove caracteres não numéricos
+    if (!formattedPhone.startsWith('55')) {
+      formattedPhone = '55' + formattedPhone; // Adiciona código do país Brasil
+    }
+    console.log('📞 Telefone formatado:', formattedPhone);
+
     // Construir payload simulando mensagem do WhatsApp
     const webhookPayload = {
       event: 'messages.upsert',
       instance: miniSite.whatsapp_number,
       data: {
         key: {
-          remoteJid: `${orderData.customerPhone}@s.whatsapp.net`,
+          remoteJid: `${formattedPhone}@s.whatsapp.net`,
           fromMe: false,
           id: `ORDER_${orderNumber}_${Date.now()}`
         },
@@ -117,20 +131,37 @@ serve(async (req) => {
     const webhookUrl = `https://webhook.auroratech.tech/webhook/${agent.workflow_id}`;
 
     console.log('🔗 Enviando para webhook:', webhookUrl);
+    console.log('📦 Payload:', JSON.stringify(webhookPayload, null, 2));
 
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookPayload),
-    });
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+      });
 
-    const webhookResponseText = await webhookResponse.text();
-    console.log('📨 Resposta do webhook:', webhookResponse.status, webhookResponseText);
+      const webhookResponseText = await webhookResponse.text();
+      console.log('📨 Resposta do webhook - Status:', webhookResponse.status);
+      console.log('📨 Resposta do webhook - Headers:', JSON.stringify(Object.fromEntries(webhookResponse.headers.entries())));
+      console.log('📨 Resposta do webhook - Body:', webhookResponseText);
 
-    if (!webhookResponse.ok) {
-      console.error('❌ Erro ao enviar para webhook');
+      if (!webhookResponse.ok) {
+        console.error('❌ Erro ao enviar para webhook - Status não OK:', webhookResponse.status);
+        console.error('❌ Response body:', webhookResponseText);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            directWhatsApp: true,
+            message: 'Erro ao processar com agente'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+        );
+      }
+    } catch (fetchError) {
+      console.error('❌ Erro na requisição ao webhook:', fetchError);
+      console.error('❌ Erro detalhado:', fetchError.message, fetchError.stack);
       return new Response(
         JSON.stringify({
           success: true,
