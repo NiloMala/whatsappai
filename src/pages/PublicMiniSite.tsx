@@ -555,7 +555,7 @@ const PublicMiniSite = () => {
                   {/* Scroll horizontal */}
                   <div className="flex flex-1 overflow-x-auto">
                     <div className="inline-flex space-x-2">
-                      {categories.map((category) => (
+                      {categories.filter(cat => cat !== "Todos").map((category) => (
                         <button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
