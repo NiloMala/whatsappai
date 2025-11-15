@@ -47,6 +47,7 @@ export interface MiniSite {
   background_color?: string | null;
   button_color?: string | null;
   text_color?: string | null;
+  card_color?: string | null;
   description?: string;
   template: TemplateType;
   // Booking template fields
@@ -71,6 +72,7 @@ export interface MiniSiteFormData {
   whatsapp_number: string;
   agent_id?: string | null;
   theme_color: string;
+  card_color?: string | null;
   description?: string;
   template: TemplateType;
   operating_hours?: OperatingHours;

@@ -141,6 +141,7 @@ const MiniSitePage = () => {
           background_color: sites.background_color || formData.background_color,
           button_color: sites.button_color || formData.button_color,
           text_color: sites.text_color || formData.text_color,
+          card_color: sites.card_color || formData.card_color,
           description: sites.description,
           template: sites.template,
           operating_hours: sites.operating_hours,
@@ -617,7 +618,7 @@ const MiniSitePage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="background_color">Cor de Fundo</Label>
                 <div className="flex gap-2">
@@ -670,6 +671,25 @@ const MiniSitePage = () => {
                     value={formData.text_color}
                     onChange={(e) => setFormData({ ...formData, text_color: e.target.value })}
                     placeholder="#000000"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="card_color">Cor dos Cards</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="card_color"
+                    type="color"
+                    value={formData.card_color || "#ffffff"}
+                    onChange={(e) => setFormData({ ...formData, card_color: e.target.value })}
+                    className="w-16 h-10"
+                  />
+                  <Input
+                    value={formData.card_color || "#ffffff"}
+                    onChange={(e) => setFormData({ ...formData, card_color: e.target.value })}
+                    placeholder="#ffffff"
                     className="flex-1"
                   />
                 </div>

@@ -531,12 +531,12 @@ const PublicMiniSite = () => {
                       className={`px-3 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                         selectedCategory === category
                           ? "text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                          : "hover:opacity-80"
                       }`}
                       style={
                         selectedCategory === category
-                          ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }
-                          : {}
+                          ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }
+                          : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" }
                       }
                     >
                       {category}
@@ -547,13 +547,13 @@ const PublicMiniSite = () => {
             )}
 
             {/* Grid de Produtos */}
-            {/* Product cards sized like leads (w-80) with horizontal scroll for easy mobile browsing */}
+            {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
             <div className="-mx-4 px-4">
-              <div className="flex flex-col items-center md:flex-row md:items-start gap-4 md:overflow-x-auto py-2">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-2">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={`skeleton-${i}`} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
+                      <div key={`skeleton-${i}`} className="w-full overflow-hidden">
                         <div className="flex flex-col h-40 md:h-56 p-2">
                           <div className="flex-1">
                             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse" />
@@ -569,14 +569,14 @@ const PublicMiniSite = () => {
                   </>
                 ) : (
                   filteredItems.map((item) => (
-                    <Card key={item.id} className="w-full max-w-xs mx-auto md:w-80 flex-shrink-0 overflow-hidden">
+                    <Card key={item.id} className="w-full overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
                       <div className="flex flex-col">
                         <div className="flex-1 flex flex-col justify-between p-3">
                           <div>
                             <CardHeader>
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <CardTitle className="text-base">{item.title}</CardTitle>
+                                  <CardTitle className="text-base" style={{ color: miniSite?.theme_color }}>{item.title}</CardTitle>
                                   {item.duration && (
                                     <Badge variant="outline" className="mt-1">
                                       <CalendarIcon className="h-3 w-3 mr-1" />
@@ -593,7 +593,7 @@ const PublicMiniSite = () => {
                             {item.description && (
                               <CardContent>
                                 <div className="flex items-center gap-2">
-                                  <div className="flex-1 text-sm text-muted-foreground overflow-hidden whitespace-nowrap truncate">
+                                  <div className="flex-1 text-sm overflow-hidden whitespace-nowrap truncate" style={{ color: miniSite?.theme_color }}>
                                     {item.description}
                                   </div>
                                   {item.description && item.description.length > 0 && (
@@ -620,6 +620,8 @@ const PublicMiniSite = () => {
                               style={{
                                 backgroundColor: miniSite?.button_color || miniSite?.theme_color,
                                 color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                                border: '1px solid',
+                                borderColor: miniSite?.theme_color,
                               }}
                               onClick={() => handleAddClick(item)}
                             >
@@ -659,28 +661,28 @@ const PublicMiniSite = () => {
           </div>
 
           <Dialog open={cartOpen} onOpenChange={setCartOpen} modal>
-            <DialogContent className="sm:max-w-[700px]">
+            <DialogContent className="sm:max-w-[700px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
               <DialogHeader>
-                <DialogTitle>Carrinho</DialogTitle>
-                <DialogDescription>Revise seus itens e ajuste quantidades</DialogDescription>
+                <DialogTitle style={{ color: miniSite?.theme_color }}>Carrinho</DialogTitle>
+                <DialogDescription style={{ color: miniSite?.theme_color }}>Revise seus itens e ajuste quantidades</DialogDescription>
               </DialogHeader>
               <div className="py-4">
                 <div className="space-y-3 mb-4">
                   {selectedItems.map(({ cartId, item, quantity, selectedOptions }) => (
                     <div key={cartId} className="flex justify-between items-center border-b pb-2">
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{item.title}</p>
+                        <p className="font-medium text-sm" style={{ color: miniSite?.theme_color }}>{item.title}</p>
                         {selectedOptions && selectedOptions.length > 0 && (
                           <div className="text-xs text-muted-foreground">Opções: {selectedOptions.map(o => o.name).join(', ')}</div>
                         )}
                         <div className="flex items-center gap-2 mt-1">
                           <Button variant="outline" size="sm" className="h-6 w-6 p-0" onClick={() => updateQuantity(cartId, quantity - 1)}>-</Button>
-                          <span className="text-sm">{quantity}</span>
+                          <span className="text-sm" style={{ color: miniSite?.theme_color }}>{quantity}</span>
                           <Button variant="outline" size="sm" className="h-6 w-6 p-0" onClick={() => updateQuantity(cartId, quantity + 1)}>+</Button>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">R${" "}{((item.price + ((selectedOptions || []).reduce((s,o) => s + (o.price||0),0))) * quantity).toFixed(2)}</p>
+                        <p className="font-bold" style={{ color: miniSite?.theme_color }}>R${" "}{((item.price + ((selectedOptions || []).reduce((s,o) => s + (o.price||0),0))) * quantity).toFixed(2)}</p>
                         <Button variant="ghost" size="sm" className="text-destructive h-6 text-xs" onClick={() => removeFromCart(cartId)}>Remover</Button>
                       </div>
                     </div>
@@ -688,7 +690,7 @@ const PublicMiniSite = () => {
                 </div>
 
                 <div className="border-t pt-3 mb-4">
-                  <div className="flex justify-between font-bold text-lg">
+                  <div className="flex justify-between font-bold text-lg" style={{ color: miniSite?.theme_color }}>
                     <span>Total</span>
                     <span>R$ {totalPrice.toFixed(2)}</span>
                   </div>
@@ -696,7 +698,7 @@ const PublicMiniSite = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }} onClick={() => { setCartOpen(false); setIsCheckoutOpen(true); }}>
+                <Button className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }} onClick={() => { setCartOpen(false); setIsCheckoutOpen(true); }}>
                   Finalizar Pedido
                 </Button>
               </DialogFooter>
@@ -719,10 +721,10 @@ const PublicMiniSite = () => {
 
       {/* Options Modal (when adding product with additions) */}
       <Dialog open={optionModalOpen} onOpenChange={setOptionModalOpen} modal>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
-            <DialogTitle>{optionModalItem?.title}</DialogTitle>
-            <DialogDescription>Selecione as opções adicionais</DialogDescription>
+            <DialogTitle style={{ color: miniSite?.theme_color }}>{optionModalItem?.title}</DialogTitle>
+            <DialogDescription style={{ color: miniSite?.theme_color }}>Selecione as opções adicionais</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             {optionModalItem?.options && optionModalItem.options.length > 0 ? (
@@ -736,9 +738,9 @@ const PublicMiniSite = () => {
                         onChange={(e) => setOptionSelections((s) => ({ ...s, [opt.id]: e.target.checked }))}
                         className="h-4 w-4"
                       />
-                      <span className="capitalize">{opt.name}</span>
+                      <span className="capitalize" style={{ color: miniSite?.theme_color }}>{opt.name}</span>
                     </label>
-                    <span className="text-sm">+ R$ {opt.price.toFixed(2)}</span>
+                    <span className="text-sm" style={{ color: miniSite?.theme_color }}>+ R$ {opt.price.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
@@ -748,20 +750,20 @@ const PublicMiniSite = () => {
 
             <div className="mt-4 border-t pt-4">
               <div className="flex items-center justify-between mb-2">
-                <span>Total:</span>
-                <span className="text-lg font-bold text-green-600">
+                <span style={{ color: miniSite?.theme_color }}>Total:</span>
+                <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
                   R$ {((optionModalItem?.price || 0) + (optionModalItem?.options?.filter(o => optionSelections[o.id]).reduce((s,o) => s + o.price, 0) || 0)) * optionQuantity}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 mb-3">
                 <Button type="button" variant="outline" size="sm" onClick={() => setOptionQuantity(q => Math.max(1, q-1))}>-</Button>
-                <span>{optionQuantity}</span>
+                <span style={{ color: miniSite?.theme_color }}>{optionQuantity}</span>
                 <Button type="button" variant="outline" size="sm" onClick={() => setOptionQuantity(q => q+1)}>+</Button>
               </div>
 
               <div className="text-right">
-                <Button type="button" className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }} onClick={confirmAddWithOptions}>
+                <Button type="button" className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }} onClick={confirmAddWithOptions}>
                   <span className="mr-2">+</span> Adicionar ao Carrinho
                 </Button>
               </div>
@@ -772,17 +774,17 @@ const PublicMiniSite = () => {
 
       {/* Description Modal (show full product description) */}
       <Dialog open={descModalOpen} onOpenChange={setDescModalOpen} modal>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
-            <DialogTitle>Descrição do Produto</DialogTitle>
+            <DialogTitle style={{ color: miniSite?.theme_color }}>Descrição do Produto</DialogTitle>
               </DialogHeader>
           <div className="py-2">
-            <div className="text-sm whitespace-pre-wrap break-words text-muted-foreground">
+            <div className="text-sm whitespace-pre-wrap break-words" style={{ color: miniSite?.theme_color }}>
               {descModalText}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDescModalOpen(false)}>Fechar</Button>
+            <Button variant="ghost" onClick={() => setDescModalOpen(false)} style={{ color: miniSite?.theme_color }}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -792,16 +794,16 @@ const PublicMiniSite = () => {
         setIsCheckoutOpen(open);
         if (!open) setPhoneError("");
       }} modal>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
-            <DialogTitle>Finalizar Pedido</DialogTitle>
-            <DialogDescription>
+            <DialogTitle style={{ color: miniSite?.theme_color }}>Finalizar Pedido</DialogTitle>
+            <DialogDescription style={{ color: miniSite?.theme_color }}>
               Preencha seus dados para enviar o pedido via WhatsApp
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nome Completo *</Label>
+              <Label htmlFor="name" style={{ color: miniSite?.theme_color }}>Nome Completo *</Label>
               <Input
                 id="name"
                 value={checkoutData.name}
@@ -812,7 +814,7 @@ const PublicMiniSite = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="phone">Telefone/WhatsApp *</Label>
+              <Label htmlFor="phone" style={{ color: miniSite?.theme_color }}>Telefone/WhatsApp *</Label>
               <Input
                 id="phone"
                 value={checkoutData.phone}
@@ -830,7 +832,7 @@ const PublicMiniSite = () => {
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="address">Endereço de Entrega *</Label>
+              <Label htmlFor="address" style={{ color: miniSite?.theme_color }}>Endereço de Entrega *</Label>
               <Input
                 id="address"
                 value={checkoutData.address}
@@ -841,7 +843,7 @@ const PublicMiniSite = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="payment">Forma de Pagamento *</Label>
+              <Label htmlFor="payment" style={{ color: miniSite?.theme_color }}>Forma de Pagamento *</Label>
               <Select
                 value={checkoutData.paymentMethod}
                 onValueChange={(value) =>
@@ -861,7 +863,7 @@ const PublicMiniSite = () => {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="observations">Observações (opcional)</Label>
+              <Label htmlFor="observations" style={{ color: miniSite?.theme_color }}>Observações (opcional)</Label>
               <Textarea
                 id="observations"
                 value={checkoutData.observations}
@@ -880,7 +882,7 @@ const PublicMiniSite = () => {
             <Button
               type="submit"
               className="w-full"
-              style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}
+              style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }}
               onClick={sendWhatsApp}
               disabled={
                 !checkoutData.name ||
