@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye } from "lucide-react";
+import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye, Menu } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { MiniSite, MenuItem, ProductOption } from "@/types/mini-site";
 import { readableTextColor } from "@/lib/utils";
@@ -522,26 +522,59 @@ const PublicMiniSite = () => {
           <div className="space-y-6">
             {/* Filtro de Categorias */}
             {categories.length > 2 && (
-              <div className="overflow-x-auto pb-4 border-b -mx-4 px-4">
-                <div className="inline-flex space-x-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-3 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                        selectedCategory === category
-                          ? "text-white"
-                          : "hover:opacity-80"
-                      }`}
-                      style={
-                        selectedCategory === category
-                          ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }
-                          : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" }
-                      }
-                    >
-                      {category}
-                    </button>
-                  ))}
+              <div className="border-b pb-4 -mx-4 px-4">
+                <div className="flex items-center gap-3">
+                  {/* Dropdown para mobile e muitas categorias */}
+                  <div className="w-auto">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger
+                        className="w-[60px] sm:w-[100px] px-2"
+                        style={{
+                          backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                          color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                          border: '1px solid',
+                          borderColor: miniSite?.theme_color
+                        }}
+                      >
+                        <Menu className="h-5 w-5" />
+                      </SelectTrigger>
+                      <SelectContent style={{ backgroundColor: miniSite?.card_color || undefined }}>
+                        {categories.map((category) => (
+                          <SelectItem
+                            key={category}
+                            value={category}
+                            style={{ color: miniSite?.theme_color }}
+                          >
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Scroll horizontal para desktop */}
+                  <div className="hidden sm:flex flex-1 overflow-x-auto">
+                    <div className="inline-flex space-x-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`px-3 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                            selectedCategory === category
+                              ? "text-white"
+                              : "hover:opacity-80"
+                          }`}
+                          style={
+                            selectedCategory === category
+                              ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }
+                              : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" }
+                          }
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
