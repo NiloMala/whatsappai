@@ -552,8 +552,8 @@ const PublicMiniSite = () => {
                     </Select>
                   </div>
 
-                  {/* Scroll horizontal para desktop */}
-                  <div className="hidden sm:flex flex-1 overflow-x-auto">
+                  {/* Scroll horizontal */}
+                  <div className="flex flex-1 overflow-x-auto">
                     <div className="inline-flex space-x-2">
                       {categories.map((category) => (
                         <button
