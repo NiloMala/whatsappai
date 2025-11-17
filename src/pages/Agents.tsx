@@ -271,6 +271,19 @@ const Agents = () => {
     }
 
     try {
+      // Mostrar toast imediato informando que o processo começou
+      if (!editingAgent) {
+        toast({
+          title: "Criando agente...",
+          description: "Seu agente está sendo criado. Aguarde até receber a confirmação.",
+        });
+      } else {
+        toast({
+          title: "Atualizando agente...",
+          description: "Seu agente está sendo atualizado. Aguarde até receber a confirmação.",
+        });
+      }
+
       // Buscar instância Evolution do usuário
       const { data: instances } = await supabase
         .from('whatsapp_connections')
