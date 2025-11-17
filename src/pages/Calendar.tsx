@@ -4,6 +4,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import '@/styles/calendar-custom.css';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { eventService } from "@/services/eventService";
@@ -448,6 +449,25 @@ const CalendarPage = () => {
     return () => { document.head.removeChild(style); };
   }, []);
 
+  // Custom header component for week/day views to ensure proper capitalization
+  const WeekHeader = ({ date, localizer }: any) => {
+    const dayNumber = format(date, "dd");
+    const dayName = format(date, "EEE", { locale: ptBR });
+    // Force proper capitalization: first letter uppercase, rest lowercase
+    const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
+    return (
+      <span style={{
+        whiteSpace: 'nowrap',
+        fontSize: '10px',
+        display: 'inline-block',
+        overflow: 'hidden',
+        textOverflow: 'clip'
+      }}>
+        {dayNumber} {capitalized}
+      </span>
+    );
+  };
+
   // Custom renderer for events in week/day views to keep time and title
   // on a single line. react-big-calendar allows passing a component via
   // the `components` prop named `event`.
@@ -654,7 +674,11 @@ const CalendarPage = () => {
               slotPropGetter={slotPropGetter}
               // Hide individual event tiles only in month view, show in week/day views
               eventPropGetter={() => currentView === 'month' ? { style: { display: 'none' } } : {}}
-              components={currentView === 'month' ? { dateCellWrapper: DateCellWrapper } : { event: EventComponent }}
+              components={
+                currentView === 'month'
+                  ? { dateCellWrapper: DateCellWrapper }
+                  : { event: EventComponent, week: { header: WeekHeader }, day: { header: WeekHeader } }
+              }
             />
           </div>
         </div>
