@@ -567,6 +567,8 @@ const PublicMiniSite = () => {
                       .overflow-x-auto::-webkit-scrollbar {
                         display: none;
                       }
+                      /* ensure overflow is hidden until user scrolls */
+                      .overflow-x-auto { -webkit-overflow-scrolling: touch; }
                     `}</style>
                     <div className="inline-flex gap-2 px-2 py-1">
                       {categories.filter(cat => cat !== "Todos").map((category) => (
@@ -597,11 +599,11 @@ const PublicMiniSite = () => {
             {/* Grid de Produtos */}
             {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
             <div className="-mx-4 px-4">
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-2">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-2 justify-items-center">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={`skeleton-${i}`} className="w-full overflow-hidden">
+                      <div key={`skeleton-${i}`} className="w-full max-w-xs mx-auto overflow-hidden">
                         <div className="flex flex-col h-40 md:h-56 p-2">
                           <div className="flex-1">
                             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse" />
@@ -617,7 +619,7 @@ const PublicMiniSite = () => {
                   </>
                 ) : (
                   filteredItems.map((item) => (
-                    <Card key={item.id} className="w-full overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
+                    <Card key={item.id} className="w-full max-w-xs mx-auto overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
                       <div className="flex flex-col">
                         <div className="flex-1 flex flex-col justify-between p-3">
                           <div>
