@@ -22,6 +22,7 @@ const PublicMiniSite = () => {
   const [miniSite, setMiniSite] = useState<MiniSite | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
+  const [categoryOpen, setCategoryOpen] = useState(false);
   
   // Carregar carrinho do localStorage na inicialização
   type CartItem = { cartId: string; item: MenuItem; quantity: number; selectedOptions?: ProductOption[] };
@@ -526,12 +527,12 @@ const PublicMiniSite = () => {
                 <div className="flex items-center gap-3 overflow-hidden">
                   {/* Dropdown para mobile e muitas categorias */}
                   <div className="w-auto flex-shrink-0">
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory} onOpenChange={(open) => setCategoryOpen(open)}>
                       <SelectTrigger
-                        className="w-[80px] sm:w-[100px] px-2 text-sm"
+                        className="w-[80px] sm:w-[100px] px-2 text-sm h-8 flex items-center justify-center text-center focus:outline-none focus:ring-0"
                         style={{
-                          backgroundColor: miniSite?.button_color || miniSite?.theme_color,
-                          color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                          backgroundColor: categoryOpen ? (miniSite?.button_color || miniSite?.theme_color) : (miniSite?.card_color || "#f3f4f6"),
+                          color: categoryOpen ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color)) : (miniSite?.theme_color || "#374151"),
                           border: '1px solid',
                           borderColor: miniSite?.theme_color
                         }}
