@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye, Menu } from "lucide-react";
+import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye, Menu, Home as HomeIcon, List as ListIcon, User as UserIcon, X as XIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { MiniSite, MenuItem, ProductOption } from "@/types/mini-site";
 import { readableTextColor } from "@/lib/utils";
@@ -23,6 +23,7 @@ const PublicMiniSite = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [mobileCartVisible, setMobileCartVisible] = useState(false);
   
   // Carregar carrinho do localStorage na inicialização
   type CartItem = { cartId: string; item: MenuItem; quantity: number; selectedOptions?: ProductOption[] };
@@ -111,6 +112,9 @@ const PublicMiniSite = () => {
     if (resolvedSlug) {
       localStorage.setItem(`cart_${resolvedSlug}`, JSON.stringify(selectedItems));
     }
+    if (selectedItems.length === 0) {
+      setMobileCartVisible(false);
+    }
   }, [selectedItems, resolvedSlug]);
 
   const loadMiniSite = async () => {
@@ -194,6 +198,18 @@ const PublicMiniSite = () => {
       }
       return [...prev, cartItem];
     });
+  };
+
+  // Show mobile cart bar when adding items on small screens
+  const showMobileCartIfNeeded = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 768; // tailwind md breakpoint
+        if (isMobile) setMobileCartVisible(true);
+      }
+    } catch (e) {
+      // ignore
+    }
   };
 
   const removeFromCart = (cartId: string) => {
@@ -420,6 +436,7 @@ const PublicMiniSite = () => {
       quantity: 1,
     };
     addToCart(cartItem);
+    showMobileCartIfNeeded();
     // show a short toast for 2 seconds (toast system uses TOAST_REMOVE_DELAY)
     try {
       toast({ title: "Produto Adicionado" });
@@ -443,6 +460,7 @@ const PublicMiniSite = () => {
         selectedOptions,
       };
       addToCart(cartItem);
+      showMobileCartIfNeeded();
       setOptionModalOpen(false);
       setOptionModalItem(null);
       setOptionSelections({});
@@ -670,19 +688,19 @@ const PublicMiniSite = () => {
       {/* Floating cart pill + cart modal */}
       {selectedItems.length > 0 && (
         <>
-          <div className="fixed bottom-4 right-4 md:top-6 md:right-6 md:bottom-auto z-50">
-            <button
-              onClick={() => setCartOpen(true)}
-              className="inline-flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-sm touch-manipulation"
-              style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}
-              aria-label="Ver carrinho"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              <span className="font-medium text-sm hidden sm:inline">Ver Carrinho</span>
-              <span className="ml-2 font-semibold text-sm">R$ {totalPrice.toFixed(2)}</span>
-              <span className="ml-2 inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
-            </button>
-          </div>
+              <div className="hidden md:block fixed bottom-4 right-4 md:top-6 md:right-6 md:bottom-auto z-50">
+                <button
+                  onClick={() => setCartOpen(true)}
+                  className="inline-flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-sm touch-manipulation"
+                  style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}
+                  aria-label="Ver carrinho"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="font-medium text-sm hidden sm:inline">Ver Carrinho</span>
+                  <span className="ml-2 font-semibold text-sm">R$ {totalPrice.toFixed(2)}</span>
+                  <span className="ml-2 inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
+                </button>
+              </div>
 
           <Dialog open={cartOpen} onOpenChange={setCartOpen} modal>
             <DialogContent className="sm:max-w-[700px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
@@ -731,17 +749,42 @@ const PublicMiniSite = () => {
         </>
       )}
 
-      {/* Fixed mobile CTA for cart (visible only on small screens) */}
-      {selectedItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-          <div className="px-4 py-3" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}>
-            <button onClick={() => setCartOpen(true)} className="w-full flex items-center justify-between font-semibold">
-              <span className="flex items-center gap-2"><ShoppingCart className="h-5 w-5" /> Ver Carrinho</span>
-              <span>R$ {totalPrice.toFixed(2)}</span>
+      {/* Mobile cart bar (appears above footer) */}
+      {selectedItems.length > 0 && mobileCartVisible && (
+        <div className="fixed bottom-16 left-4 right-4 z-50 md:hidden">
+          <div className="px-3 py-2 rounded-lg shadow-lg flex items-center justify-between" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}>
+            <button onClick={() => setIsCheckoutOpen(true)} className="flex items-center gap-3 font-semibold">
+              <ShoppingCart className="h-5 w-5" />
+              <span>Ver Carrinho</span>
             </button>
+            <div className="flex items-center gap-3">
+              <span className="font-semibold">R$ {totalPrice.toFixed(2)}</span>
+              <span className="inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
+              <button onClick={() => setMobileCartVisible(false)} className="ml-2 p-1 rounded-full" aria-label="Fechar">
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Mobile fixed footer with Home / Pedidos / Perfil */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+        <div className="flex items-center justify-between px-4 py-2 bg-white border-t">
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Home">
+            <HomeIcon className="h-5 w-5" />
+            <span>Home</span>
+          </button>
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => { /* open orders flow - placeholder */ alert('Pedidos'); }} aria-label="Pedidos">
+            <ListIcon className="h-5 w-5" />
+            <span>Pedidos</span>
+          </button>
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => { /* open profile - placeholder */ alert('Perfil'); }} aria-label="Perfil">
+            <UserIcon className="h-5 w-5" />
+            <span>Perfil</span>
+          </button>
+        </div>
+      </div>
 
       {/* Options Modal (when adding product with additions) */}
       <Dialog open={optionModalOpen} onOpenChange={setOptionModalOpen} modal>
