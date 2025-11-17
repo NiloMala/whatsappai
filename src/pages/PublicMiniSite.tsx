@@ -527,7 +527,19 @@ const PublicMiniSite = () => {
                 <div className="flex items-center gap-3 overflow-hidden">
                   {/* Dropdown para mobile e muitas categorias */}
                   <div className="w-auto flex-shrink-0">
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory} onOpenChange={(open) => setCategoryOpen(open)}>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory} onOpenChange={(open) => {
+                      setCategoryOpen(open);
+                      // when the select closes, remove focus from the trigger so it doesn't keep the focus outline
+                      if (!open) {
+                        setTimeout(() => {
+                          try {
+                            (document.activeElement as HTMLElement | null)?.blur();
+                          } catch (e) {
+                            // ignore
+                          }
+                        }, 0);
+                      }
+                    }}>
                       <SelectTrigger
                         className="w-[80px] sm:w-[100px] px-2 text-sm h-8 flex items-center justify-center text-center focus:outline-none focus:ring-0"
                         style={{
