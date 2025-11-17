@@ -523,9 +523,9 @@ const PublicMiniSite = () => {
             {/* Filtro de Categorias */}
             {categories.length > 2 && (
               <div className="border-b pb-4 -mx-4 px-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 overflow-hidden">
                   {/* Dropdown para mobile e muitas categorias */}
-                  <div className="w-auto">
+                  <div className="w-auto flex-shrink-0">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger
                         className="w-[60px] sm:w-[100px] px-2"
@@ -554,7 +554,7 @@ const PublicMiniSite = () => {
 
                   {/* Scroll horizontal - Carousel */}
                   <div
-                    className="flex flex-1 overflow-x-auto scroll-smooth"
+                    className="flex-1 overflow-x-auto scroll-smooth min-w-0"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
@@ -564,11 +564,11 @@ const PublicMiniSite = () => {
                     }}
                   >
                     <style>{`
-                      .flex.flex-1.overflow-x-auto::-webkit-scrollbar {
+                      .overflow-x-auto::-webkit-scrollbar {
                         display: none;
                       }
                     `}</style>
-                    <div className="inline-flex gap-2 px-4 py-1">
+                    <div className="inline-flex gap-2 px-2 py-1">
                       {categories.filter(cat => cat !== "Todos").map((category) => (
                         <button
                           key={category}
