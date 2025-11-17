@@ -30,7 +30,7 @@
             {
               "id": "da577156-0336-4cb8-98cf-acb620856825",
               "name": "Telefone",
-              "value": "={{ $json.body.data.key.remoteJid.split('@')[0] }}",
+              "value": "={{ $json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $json.body.data.key.remoteJid.split('@')[0] : $json.body.data.key.remoteJidAlt.split('@')[0] }}",
               "type": "string"
             },
             {
@@ -48,7 +48,7 @@
             {
               "id": "0fd39744-4570-425b-9898-424733135a4e",
               "name": "bloquearAgente",
-              "value": "={{ $json.user_id + ':BloquearAgente:' + String($json.body.data.key.remoteJid).replace('@s.whatsapp.net','') }}",
+              "value": "={{ $json.user_id + ':BloquearAgente:' + ($json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $json.body.data.key.remoteJid : $json.body.data.key.remoteJidAlt).replace('@s.whatsapp.net','') }}",
               "type": "string"
             },
             {
@@ -60,7 +60,7 @@
             {
               "id": "7a421dfe-7db5-4ad6-be47-f3e6d7b01bc9",
               "name": "msgPicotada",
-              "value": "={{ $json.user_id + ':MensagemPicotada:' + $json.body.data.key.remoteJid }}",
+              "value": "={{ $json.user_id + ':MensagemPicotada:' + ($json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $json.body.data.key.remoteJid : $json.body.data.key.remoteJidAlt) }}",
               "type": "string"
             },
             {
@@ -699,7 +699,7 @@
             },
             {
               "fieldId": "telefone",
-              "fieldValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}\n"
+              "fieldValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}\n"
             }
           ]
         }
@@ -728,7 +728,7 @@
             {
               "keyName": "telefone",
               "condition": "eq",
-              "keyValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}\n"
+              "keyValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}\n"
             }
           ]
         }
@@ -849,7 +849,7 @@
           "conditions": [
             {
               "keyName": "remoteJid",
-              "keyValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}"
+              "keyValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}"
             }
           ]
         }
@@ -878,7 +878,7 @@
             {
               "keyName": "remoteJid",
               "condition": "eq",
-              "keyValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}"
+              "keyValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}"
             }
           ]
         },
@@ -957,7 +957,7 @@
             },
             {
               "fieldId": "remoteJid",
-              "fieldValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}"
+              "fieldValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}"
             }
           ]
         }
@@ -986,7 +986,7 @@
             {
               "keyName": "remoteJid",
               "condition": "eq",
-              "keyValue": "={{ Number( $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] ) }}"
+              "keyValue": "={{ Number( ($('Webhook').item.json.body.data.key.remoteJid.includes('@s.whatsapp.net') ? $('Webhook').item.json.body.data.key.remoteJid : $('Webhook').item.json.body.data.key.remoteJidAlt).split('@')[0] ) }}"
             }
           ]
         }
