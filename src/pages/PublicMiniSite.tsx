@@ -33,12 +33,13 @@ const PublicMiniSite = () => {
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
-    }
-  });
+                ))}
+              </div>
+            </div>
+          </div>
 
-  const [optionModalOpen, setOptionModalOpen] = useState(false);
-  const [optionModalItem, setOptionModalItem] = useState<MenuItem | null>(null);
-  const [optionSelections, setOptionSelections] = useState<Record<string, boolean>>({});
+          
+          </div>
   const [optionQuantity, setOptionQuantity] = useState(1);
   // description modal state (moved here to keep hooks order stable)
   const [descModalOpen, setDescModalOpen] = useState(false);
@@ -601,12 +602,13 @@ const PublicMiniSite = () => {
 
             {/* Grid de Produtos */}
             {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
-            <div className="-mx-4 px-4">
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 py-2 justify-items-center">
+            <div className="px-4">
+              <div className="w-full flex justify-center">
+                <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-4 py-2 justify-items-center">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={`skeleton-${i}`} className="w-full max-w-xs mx-auto overflow-hidden">
+                      <div key={`skeleton-${i}`} className="w-full max-w-xs overflow-hidden">
                         <div className="flex flex-col h-40 md:h-56 p-2">
                           <div className="flex-1">
                             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse" />
@@ -622,7 +624,7 @@ const PublicMiniSite = () => {
                   </>
                 ) : (
                   filteredItems.map((item) => (
-                    <Card key={item.id} className="w-full max-w-xs mx-auto overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
+                    <Card key={item.id} className="w-full max-w-xs overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
                       <div className="flex flex-col">
                         <div className="flex-1 flex flex-col justify-between p-3">
                           <div>
