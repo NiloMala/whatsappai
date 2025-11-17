@@ -553,8 +553,20 @@ const PublicMiniSite = () => {
                   </div>
 
                   {/* Scroll horizontal */}
-                  <div className="flex flex-1 overflow-x-auto">
-                    <div className="inline-flex space-x-2">
+                  <div
+                    className="flex flex-1 overflow-x-auto scroll-smooth"
+                    style={{
+                      scrollbarWidth: 'none', /* Firefox */
+                      msOverflowStyle: 'none', /* IE and Edge */
+                      WebkitOverflowScrolling: 'touch', /* iOS smooth scrolling */
+                    }}
+                  >
+                    <style>{`
+                      .flex.flex-1.overflow-x-auto::-webkit-scrollbar {
+                        display: none; /* Chrome, Safari, Opera */
+                      }
+                    `}</style>
+                    <div className="inline-flex space-x-2 px-1">
                       {categories.filter(cat => cat !== "Todos").map((category) => (
                         <button
                           key={category}
