@@ -47,7 +47,8 @@ const formats = {
   weekHeaderFormat: (date: Date, culture: string, localizer: any) => {
     const dayNumber = localizer.format(date, "dd", culture);
     const dayName = localizer.format(date, "EEE", culture); // Use short format (Dom, Seg, Ter)
-    const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    // Force uppercase for first letter, ensuring proper capitalization
+    const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
     return `${dayNumber} ${capitalized}`;
   },
   // Day header format: "Domingo 02/11/25" (formato completo com data)
@@ -73,21 +74,23 @@ const CalendarPage = () => {
     const style = document.createElement('style');
     style.id = 'calendar-custom-styles-v2';
     style.textContent = `
-      /* WEEK VIEW HEADER FIX - HIGHEST PRIORITY */
+      /* WEEK VIEW HEADER FIX - HIGHEST PRIORITY - PREVENT LINE BREAKS */
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header,
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header *,
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header a,
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header span,
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header div {
-        font-size: 11px !important;
+        font-size: 10px !important;
         white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
         overflow: hidden !important;
         text-overflow: clip !important;
-        text-transform: capitalize !important;
         line-height: 40px !important;
         height: 40px !important;
-        padding: 0 2px !important;
-        display: inline !important;
+        max-height: 40px !important;
+        padding: 0 1px !important;
+        display: inline-block !important;
         text-align: center !important;
         vertical-align: middle !important;
       }
@@ -376,18 +379,28 @@ const CalendarPage = () => {
         text-align: center !important;
       }
 
-      /* Force week view headers to single line with smaller font */
+      /* Force week view headers to single line with smaller font - ADDITIONAL LAYER */
       .rbc-week-view .rbc-time-header table thead tr th.rbc-header,
       .rbc-week-view .rbc-time-header table thead tr th.rbc-header *,
       .rbc-week-view .rbc-time-header table thead tr th.rbc-header a,
       .rbc-week-view .rbc-time-header table thead tr th.rbc-header span,
       .rbc-week-view .rbc-time-header table thead tr th.rbc-header div {
         white-space: nowrap !important;
+        word-wrap: normal !important;
+        word-break: keep-all !important;
         overflow: hidden !important;
         text-overflow: clip !important;
-        display: inline !important;
+        display: inline-block !important;
         line-height: 40px !important;
-        font-size: 11px !important;
+        max-height: 40px !important;
+        font-size: 10px !important;
+        padding: 0 1px !important;
+      }
+
+      /* Extra specific rule to prevent any flex behavior that might cause wrapping */
+      .rbc-week-view .rbc-time-header table thead tr th.rbc-header {
+        min-width: 60px !important;
+        max-width: 100px !important;
       }
 
       /* Agenda view: simple table layout without extra formatting */
