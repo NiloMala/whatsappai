@@ -504,7 +504,7 @@ const PublicMiniSite = () => {
   // Profile modal inner content component (has access to closure variables)
   const ProfileModalContent = () => {
     const [mode, setMode] = useState<'login' | 'create'>('login');
-    const [form, setForm] = useState({ name: '', email: '', phone: '' });
+    const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', password: '' });
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [profileError, setProfileError] = useState<string | null>(null);
 
@@ -512,14 +512,29 @@ const PublicMiniSite = () => {
 
     const handleCreateProfile = async () => {
       if (!miniSite) return setProfileError('Mini site não carregado');
+      if (!form.email || !form.password) return setProfileError('Email e senha são obrigatórios');
       setProfileError(null);
       setLoadingProfile(true);
       try {
+        // Create auth user with email/password
+        const { data: signData, error: signError } = await supabase.auth.signUp({ email: form.email, password: form.password });
+        if (signError) {
+          console.error('Erro ao criar auth user:', signError);
+          setProfileError(signError.message || 'Erro ao criar usuário');
+          return;
+        }
+
+        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id;
+
+        // If signUp returns no user id (edge cases), try to proceed safely
         const payload: any = {
           mini_site_id: miniSite.id,
+          parent_profile_id: null,
+          user_id: userId || null,
           name: form.name || null,
           email: form.email || null,
           phone: form.phone || null,
+          address: form.address || null,
           is_active: true,
         };
 
@@ -535,9 +550,9 @@ const PublicMiniSite = () => {
           return;
         }
 
-        // mark as authenticated locally and persist minimal profile info
+        // Persist minimal profile info locally
         try {
-          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id }));
+          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id, user_id: userId }));
         } catch (e) {}
         setIsAuthenticated(true);
         setProfileModalOpen(false);
@@ -549,33 +564,49 @@ const PublicMiniSite = () => {
 
     const handleLoginProfile = async () => {
       if (!miniSite) return setProfileError('Mini site não carregado');
+      if (!form.email || !form.password) return setProfileError('Email e senha são obrigatórios para entrar');
       setProfileError(null);
       setLoadingProfile(true);
       try {
-        const q = supabase.from('minisite_profiles').select('*').eq('mini_site_id', miniSite.id);
-
-        if (form.email) {
-          q.eq('email', form.email);
-        } else if (form.phone) {
-          q.eq('phone', form.phone);
-        } else {
-          setProfileError('Informe email ou telefone para entrar');
+        // Sign in with email/password
+        const { data: signData, error: signError } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+        if (signError) {
+          console.error('Erro ao autenticar:', signError);
+          setProfileError(signError.message || 'Erro ao autenticar');
           return;
         }
 
-        const { data, error } = await q.maybeSingle();
-        if (error) {
-          console.error('Erro ao buscar perfil:', error);
-          setProfileError(error.message || 'Erro ao buscar perfil');
-          return;
+        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id;
+
+        // Try to find an existing minisite_profiles row linked to this user and minisite
+        const { data: profileData, error: profileError } = await supabase
+          .from('minisite_profiles')
+          .select('*')
+          .eq('mini_site_id', miniSite.id)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Erro ao buscar perfil:', profileError);
         }
-        if (!data) {
-          setProfileError('Perfil não encontrado para este mini-site');
-          return;
+
+        let profileRow = profileData;
+        if (!profileRow) {
+          // create a minimal profile row for this mini-site
+          const { data: created, error: createErr } = await supabase
+            .from('minisite_profiles')
+            .insert({ mini_site_id: miniSite.id, user_id: userId, email: form.email || null, phone: form.phone || null, name: null })
+            .select('*')
+            .maybeSingle();
+          if (createErr) {
+            console.error('Erro ao criar perfil automático:', createErr);
+          } else {
+            profileRow = created;
+          }
         }
 
         try {
-          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id }));
+          localStorage.setItem('user_profile', JSON.stringify({ id: profileRow?.id || null, mini_site_id: miniSite.id, user_id: userId }));
         } catch (e) {}
         setIsAuthenticated(true);
         setProfileModalOpen(false);
@@ -601,8 +632,8 @@ const PublicMiniSite = () => {
               <Input id="login_email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="seu@email.com" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="login_phone" style={{ color: miniSite?.theme_color }}>OU Telefone</Label>
-              <Input id="login_phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} placeholder="(00) 00000-0000" />
+              <Label htmlFor="login_password" style={{ color: miniSite?.theme_color }}>Senha</Label>
+              <Input id="login_password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Senha" />
             </div>
             <div>
               <Button className="w-full" onClick={handleLoginProfile} disabled={loadingProfile}>{loadingProfile ? 'Entrando...' : 'Entrar'}</Button>
@@ -619,8 +650,16 @@ const PublicMiniSite = () => {
               <Input id="create_email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="seu@email.com" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="create_phone" style={{ color: miniSite?.theme_color }}>Telefone</Label>
+              <Label htmlFor="create_password" style={{ color: miniSite?.theme_color }}>Senha</Label>
+              <Input id="create_password" value={form.password} type="password" onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Senha" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_phone" style={{ color: miniSite?.theme_color }}>Telefone (opcional)</Label>
               <Input id="create_phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} placeholder="(00) 00000-0000" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_address" style={{ color: miniSite?.theme_color }}>Endereço</Label>
+              <Input id="create_address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Rua, número, bairro, cidade" />
             </div>
             <div>
               <Button className="w-full" onClick={handleCreateProfile} disabled={loadingProfile}>{loadingProfile ? 'Criando...' : 'Criar Perfil'}</Button>
