@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye, Menu, Home as HomeIcon, List as ListIcon, User as UserIcon, X as XIcon } from "lucide-react";
+import { Phone, MapPin, Clock, ShoppingCart, Calendar as CalendarIcon, Eye, Menu, Home as HomeIcon, List as ListIcon, User as UserIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { MiniSite, MenuItem, ProductOption } from "@/types/mini-site";
 import { readableTextColor } from "@/lib/utils";
@@ -112,8 +112,16 @@ const PublicMiniSite = () => {
     if (resolvedSlug) {
       localStorage.setItem(`cart_${resolvedSlug}`, JSON.stringify(selectedItems));
     }
-    if (selectedItems.length === 0) {
-      setMobileCartVisible(false);
+    // Keep mobile cart visible whenever there are items (and hide when empty).
+    try {
+      if (typeof window !== 'undefined') {
+        const isMobile = window.innerWidth < 768;
+        setMobileCartVisible(selectedItems.length > 0 && isMobile);
+      } else {
+        setMobileCartVisible(selectedItems.length > 0);
+      }
+    } catch (e) {
+      setMobileCartVisible(selectedItems.length > 0);
     }
   }, [selectedItems, resolvedSlug]);
 
@@ -760,9 +768,6 @@ const PublicMiniSite = () => {
             <div className="flex items-center gap-3">
               <span className="font-semibold">R$ {totalPrice.toFixed(2)}</span>
               <span className="inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
-              <button onClick={() => setMobileCartVisible(false)} className="ml-2 p-1 rounded-full" aria-label="Fechar">
-                <XIcon className="h-4 w-4" />
-              </button>
             </div>
           </div>
         </div>
