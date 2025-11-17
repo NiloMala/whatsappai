@@ -753,7 +753,7 @@ const PublicMiniSite = () => {
       {selectedItems.length > 0 && mobileCartVisible && (
         <div className="fixed bottom-16 left-4 right-4 z-50 md:hidden">
           <div className="px-3 py-2 rounded-lg shadow-lg flex items-center justify-between" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}>
-            <button onClick={() => setIsCheckoutOpen(true)} className="flex items-center gap-3 font-semibold">
+            <button onClick={() => setCartOpen(true)} className="flex items-center gap-3 font-semibold">
               <ShoppingCart className="h-5 w-5" />
               <span>Ver Carrinho</span>
             </button>
