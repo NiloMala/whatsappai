@@ -552,35 +552,38 @@ const PublicMiniSite = () => {
                     </Select>
                   </div>
 
-                  {/* Scroll horizontal */}
+                  {/* Scroll horizontal - Carousel */}
                   <div
                     className="flex flex-1 overflow-x-auto scroll-smooth"
                     style={{
-                      scrollbarWidth: 'none', /* Firefox */
-                      msOverflowStyle: 'none', /* IE and Edge */
-                      WebkitOverflowScrolling: 'touch', /* iOS smooth scrolling */
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'touch',
+                      scrollSnapType: 'x mandatory',
+                      scrollPadding: '0 20px',
                     }}
                   >
                     <style>{`
                       .flex.flex-1.overflow-x-auto::-webkit-scrollbar {
-                        display: none; /* Chrome, Safari, Opera */
+                        display: none;
                       }
                     `}</style>
-                    <div className="inline-flex space-x-2 px-1">
+                    <div className="inline-flex gap-2 px-4 py-1">
                       {categories.filter(cat => cat !== "Todos").map((category) => (
                         <button
                           key={category}
                           onClick={() => setSelectedCategory(category)}
-                          className={`px-3 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
                             selectedCategory === category
-                              ? "text-white"
+                              ? "text-white scale-105"
                               : "hover:opacity-80"
                           }`}
-                          style={
-                            selectedCategory === category
+                          style={{
+                            scrollSnapAlign: 'center',
+                            ...(selectedCategory === category
                               ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }
-                              : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" }
-                          }
+                              : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" })
+                          }}
                         >
                           {category}
                         </button>
