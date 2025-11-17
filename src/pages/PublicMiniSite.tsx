@@ -501,6 +501,136 @@ const PublicMiniSite = () => {
   }, 0);
 
   
+  // Profile modal inner content component (has access to closure variables)
+  const ProfileModalContent = () => {
+    const [mode, setMode] = useState<'login' | 'create'>('login');
+    const [form, setForm] = useState({ name: '', email: '', phone: '' });
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
+
+    const sanitizePhone = (p: string) => p.replace(/\D/g, '');
+
+    const handleCreateProfile = async () => {
+      if (!miniSite) return setProfileError('Mini site não carregado');
+      setProfileError(null);
+      setLoadingProfile(true);
+      try {
+        const payload: any = {
+          mini_site_id: miniSite.id,
+          name: form.name || null,
+          email: form.email || null,
+          phone: form.phone || null,
+          is_active: true,
+        };
+
+        const { data, error } = await supabase
+          .from('minisite_profiles')
+          .insert(payload)
+          .select('*')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao criar perfil:', error);
+          setProfileError(error.message || 'Erro ao criar perfil');
+          return;
+        }
+
+        // mark as authenticated locally and persist minimal profile info
+        try {
+          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id }));
+        } catch (e) {}
+        setIsAuthenticated(true);
+        setProfileModalOpen(false);
+        toast({ title: 'Perfil criado', description: 'Seu perfil foi criado com sucesso.' });
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    const handleLoginProfile = async () => {
+      if (!miniSite) return setProfileError('Mini site não carregado');
+      setProfileError(null);
+      setLoadingProfile(true);
+      try {
+        const q = supabase.from('minisite_profiles').select('*').eq('mini_site_id', miniSite.id);
+
+        if (form.email) {
+          q.eq('email', form.email);
+        } else if (form.phone) {
+          q.eq('phone', form.phone);
+        } else {
+          setProfileError('Informe email ou telefone para entrar');
+          return;
+        }
+
+        const { data, error } = await q.maybeSingle();
+        if (error) {
+          console.error('Erro ao buscar perfil:', error);
+          setProfileError(error.message || 'Erro ao buscar perfil');
+          return;
+        }
+        if (!data) {
+          setProfileError('Perfil não encontrado para este mini-site');
+          return;
+        }
+
+        try {
+          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id }));
+        } catch (e) {}
+        setIsAuthenticated(true);
+        setProfileModalOpen(false);
+        toast({ title: 'Bem vindo', description: 'Você entrou com sucesso.' });
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    return (
+      <div className="py-2">
+        <div className="flex gap-2 mb-4">
+          <button className={`flex-1 py-2 rounded ${mode === 'login' ? 'bg-primary text-white' : 'bg-transparent border'} `} onClick={() => setMode('login')}>Entrar</button>
+          <button className={`flex-1 py-2 rounded ${mode === 'create' ? 'bg-primary text-white' : 'bg-transparent border'} `} onClick={() => setMode('create')}>Criar Perfil</button>
+        </div>
+
+        {profileError && <p className="text-sm text-red-500 mb-2">{profileError}</p>}
+
+        {mode === 'login' ? (
+          <div className="grid gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="login_email" style={{ color: miniSite?.theme_color }}>Email</Label>
+              <Input id="login_email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="seu@email.com" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="login_phone" style={{ color: miniSite?.theme_color }}>OU Telefone</Label>
+              <Input id="login_phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} placeholder="(00) 00000-0000" />
+            </div>
+            <div>
+              <Button className="w-full" onClick={handleLoginProfile} disabled={loadingProfile}>{loadingProfile ? 'Entrando...' : 'Entrar'}</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="create_name" style={{ color: miniSite?.theme_color }}>Nome</Label>
+              <Input id="create_name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_email" style={{ color: miniSite?.theme_color }}>Email</Label>
+              <Input id="create_email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="seu@email.com" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="create_phone" style={{ color: miniSite?.theme_color }}>Telefone</Label>
+              <Input id="create_phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} placeholder="(00) 00000-0000" />
+            </div>
+            <div>
+              <Button className="w-full" onClick={handleCreateProfile} disabled={loadingProfile}>{loadingProfile ? 'Criando...' : 'Criar Perfil'}</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: miniSite?.background_color || undefined }}>
@@ -993,34 +1123,16 @@ const PublicMiniSite = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Profile modal (mobile) */}
+      {/* Profile modal (mobile) with login/create flows using minisite_profiles */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen} modal>
-        <DialogContent className="sm:max-w-[400px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>Perfil</DialogTitle>
-            <DialogDescription style={{ color: miniSite?.theme_color }}>Acesse sua conta ou crie um perfil para acompanhar pedidos.</DialogDescription>
+            <DialogDescription style={{ color: miniSite?.theme_color }}>Entre ou crie um perfil para salvar e acompanhar pedidos neste mini-site.</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {isAuthenticated ? (
-              <div className="space-y-3">
-                <p style={{ color: miniSite?.theme_color }}>Você está logado.</p>
-                <div className="flex gap-2">
-                  <Button className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/profile'); }}>
-                    Ver Perfil
-                  </Button>
-                  <Button variant="ghost" className="flex-1 text-destructive" onClick={handleLogout}>Sair</Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p style={{ color: miniSite?.theme_color }}>Entre para salvar seus pedidos e dados.</p>
-                <div className="flex gap-2">
-                  <Button className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/auth'); }}>Entrar</Button>
-                  <Button variant="outline" className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/profile'); }}>Criar Perfil</Button>
-                </div>
-              </div>
-            )}
-          </div>
+
+          <ProfileModalContent />
+
         </DialogContent>
       </Dialog>
 
