@@ -47,7 +47,8 @@ const formats = {
   weekHeaderFormat: (date: Date, culture: string, localizer: any) => {
     const dayNumber = localizer.format(date, "dd", culture);
     const dayName = localizer.format(date, "EEE", culture); // Use short format (Dom, Seg, Ter)
-    const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    // Force capitalize first letter, keep rest lowercase
+    const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1).toLowerCase();
     return `${dayNumber} ${capitalized}`;
   },
   // Day header format: "Domingo 02/11/25" (formato completo com data)
@@ -68,10 +69,14 @@ const CalendarPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Injecting calendar styles v2');
+    console.log('Injecting calendar styles v3 - Fixed capitalization');
     // Improve calendar visibility and button styling
+    // Remove old versions first
+    const oldStyles = document.querySelectorAll('#calendar-custom-styles-v2, #calendar-custom-styles');
+    oldStyles.forEach(el => el.remove());
+
     const style = document.createElement('style');
-    style.id = 'calendar-custom-styles-v2';
+    style.id = 'calendar-custom-styles-v3';
     style.textContent = `
       /* WEEK VIEW HEADER FIX - HIGHEST PRIORITY */
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header,
@@ -83,7 +88,7 @@ const CalendarPage = () => {
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: clip !important;
-        text-transform: capitalize !important;
+        text-transform: none !important;
         line-height: 40px !important;
         height: 40px !important;
         padding: 0 2px !important;
