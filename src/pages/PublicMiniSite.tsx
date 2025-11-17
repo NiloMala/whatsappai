@@ -459,7 +459,7 @@ const PublicMiniSite = () => {
   
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: miniSite?.background_color || undefined }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: miniSite?.background_color || undefined }}>
       {/* Banner with overlayed company info card */}
       {miniSite ? (
         <div className="w-full relative">
@@ -554,23 +554,26 @@ const PublicMiniSite = () => {
 
                   {/* Scroll horizontal - Carousel */}
                   <div
-                    className="flex-1 overflow-x-auto scroll-smooth min-w-0"
+                    className="flex-1 overflow-x-auto scroll-smooth min-w-0 max-w-full"
                     style={{
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       WebkitOverflowScrolling: 'touch',
                       scrollSnapType: 'x mandatory',
                       scrollPadding: '0 20px',
+                      overscrollBehavior: 'contain', // prevent scroll chaining to body
+                      touchAction: 'pan-x', // favor horizontal panning inside this element
                     }}
                   >
                     <style>{`
                       .overflow-x-auto::-webkit-scrollbar {
                         display: none;
                       }
-                      /* ensure overflow is hidden until user scrolls */
+                      /* ensure overflow is handled smoothly on touch */
                       .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+                      .categories-inline { min-width: max-content; }
                     `}</style>
-                    <div className="inline-flex gap-2 px-2 py-1">
+                    <div className="inline-flex categories-inline gap-2 px-2 py-1">
                       {categories.filter(cat => cat !== "Todos").map((category) => (
                         <button
                           key={category}
