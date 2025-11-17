@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getSlugFromHostname, isPublicMiniSite } from "@/config/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,14 @@ const PublicMiniSite = () => {
   
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return Boolean(localStorage.getItem('user_profile'));
+    } catch (e) {
+      return false;
+    }
+  });
   const [checkoutData, setCheckoutData] = useState({
     name: "",
     phone: "",
@@ -102,6 +110,15 @@ const PublicMiniSite = () => {
     observations: "",
   });
   const [phoneError, setPhoneError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('user_profile');
+    } catch (e) {}
+    setIsAuthenticated(false);
+    setProfileModalOpen(false);
+  };
 
   useEffect(() => {
     loadMiniSite();
@@ -789,7 +806,7 @@ const PublicMiniSite = () => {
             <ListIcon className="h-5 w-5" />
             <span>Pedidos</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => { /* open profile - placeholder */ alert('Perfil'); }} aria-label="Perfil">
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
             <UserIcon className="h-5 w-5" />
             <span>Perfil</span>
           </button>
@@ -973,6 +990,37 @@ const PublicMiniSite = () => {
               Enviar Pedido via WhatsApp
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile modal (mobile) */}
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen} modal>
+        <DialogContent className="sm:max-w-[400px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+          <DialogHeader>
+            <DialogTitle style={{ color: miniSite?.theme_color }}>Perfil</DialogTitle>
+            <DialogDescription style={{ color: miniSite?.theme_color }}>Acesse sua conta ou crie um perfil para acompanhar pedidos.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {isAuthenticated ? (
+              <div className="space-y-3">
+                <p style={{ color: miniSite?.theme_color }}>Você está logado.</p>
+                <div className="flex gap-2">
+                  <Button className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/profile'); }}>
+                    Ver Perfil
+                  </Button>
+                  <Button variant="ghost" className="flex-1 text-destructive" onClick={handleLogout}>Sair</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p style={{ color: miniSite?.theme_color }}>Entre para salvar seus pedidos e dados.</p>
+                <div className="flex gap-2">
+                  <Button className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/auth'); }}>Entrar</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => { setProfileModalOpen(false); navigate('/profile'); }}>Criar Perfil</Button>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
