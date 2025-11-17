@@ -35,6 +35,10 @@ const PublicMiniSite = () => {
       return [];
     }
   });
+
+  const [optionModalOpen, setOptionModalOpen] = useState(false);
+  const [optionModalItem, setOptionModalItem] = useState<MenuItem | null>(null);
+  const [optionSelections, setOptionSelections] = useState<Record<string, boolean>>({});
   const [optionQuantity, setOptionQuantity] = useState(1);
   // description modal state (moved here to keep hooks order stable)
   const [descModalOpen, setDescModalOpen] = useState(false);
