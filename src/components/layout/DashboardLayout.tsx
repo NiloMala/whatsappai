@@ -85,16 +85,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: MessageCircle, label: "WhatsApp", path: "/dashboard/whatsapp" },
     { icon: FileText, label: "Templates", path: "/dashboard/templates" },
     { icon: Bot, label: "Agentes IA", path: "/dashboard/agents" },
+    { icon: Store, label: "Mini Site", path: "/dashboard/minisite" },
     { icon: MessageSquare, label: "Mensagens", path: "/dashboard/messages" },
     { icon: FileText, label: "Leads", path: "/dashboard/leads" },
     { icon: BarChart3, label: "Estatísticas", path: "/dashboard/statistics" },
-    { icon: Store, label: "Mini Site", path: "/dashboard/minisite" },
     { icon: Calendar, label: "Calendário", path: "/dashboard/calendar" },
     { icon: Users, label: "Perfil", path: "/dashboard/profile" },
     { icon: CreditCard, label: "Planos", path: "/dashboard/plans" },
-  { icon: HelpCircle, label: "FAQ", path: "/faq" },
-  { icon: FileText, label: "Termos", path: "/terms" },
-  
+    { icon: HelpCircle, label: "FAQ", path: "/faq" },
+    { icon: FileText, label: "Termos", path: "/terms" },
   ];
 
   return (

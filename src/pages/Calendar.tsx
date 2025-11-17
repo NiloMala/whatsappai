@@ -69,14 +69,14 @@ const CalendarPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Injecting calendar styles v3 - Fixed capitalization');
+    console.log('Injecting calendar styles v5 - Perfect column alignment with Grid');
     // Improve calendar visibility and button styling
     // Remove old versions first
-    const oldStyles = document.querySelectorAll('#calendar-custom-styles-v2, #calendar-custom-styles');
+    const oldStyles = document.querySelectorAll('#calendar-custom-styles-v4, #calendar-custom-styles-v3, #calendar-custom-styles-v2, #calendar-custom-styles');
     oldStyles.forEach(el => el.remove());
 
     const style = document.createElement('style');
-    style.id = 'calendar-custom-styles-v3';
+    style.id = 'calendar-custom-styles-v5';
     style.textContent = `
       /* WEEK VIEW HEADER FIX - HIGHEST PRIORITY */
       .rbc-time-view.rbc-week-view .rbc-time-header table thead tr th.rbc-header,
@@ -360,8 +360,52 @@ const CalendarPage = () => {
       }
 
       .rbc-time-header table thead tr th.rbc-header {
-        width: auto !important;
+        width: 14.285714% !important; /* Force equal width: 100% / 7 days */
         box-sizing: border-box !important;
+      }
+
+      /* WEEK VIEW: Hide all-day events row completely */
+      .rbc-week-view .rbc-time-header-content {
+        height: 40px !important;
+        overflow: hidden !important;
+      }
+
+      .rbc-week-view .rbc-allday-cell,
+      .rbc-week-view .rbc-row.rbc-time-header-cell {
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: none !important;
+      }
+
+      /* PERFECT ALIGNMENT: Force both header table and time grid to use identical widths */
+      .rbc-week-view .rbc-time-content {
+        display: table !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+      }
+
+      .rbc-week-view .rbc-time-column {
+        display: table-cell !important;
+        width: 14.285714% !important;
+        box-sizing: border-box !important;
+      }
+
+      .rbc-week-view .rbc-day-bg {
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      /* Ensure the row containing day backgrounds matches header width */
+      .rbc-week-view .rbc-row-bg {
+        display: table !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+      }
+
+      .rbc-week-view .rbc-row-bg .rbc-day-bg {
+        display: table-cell !important;
+        width: 14.285714% !important;
       }
 
       /* Ensure time gutter and content align perfectly */
@@ -460,6 +504,48 @@ const CalendarPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
+
+  // Capitalize and abbreviate day names in headers (fallback for react-big-calendar formatting)
+  useEffect(() => {
+    const capitalizeDayNames = () => {
+      // Week view: abbreviate and capitalize day names in "18 terça" -> "18 Ter"
+      const weekHeaders = document.querySelectorAll('.rbc-time-header .rbc-header span[role="columnheader"]');
+      weekHeaders.forEach((header) => {
+        const text = header.textContent;
+        if (text && /\d+\s+[a-záàâãéêíóôõúç]+/.test(text)) {
+          // Match "number day" pattern, abbreviate to 3 letters and capitalize
+          const abbreviated = text.replace(/(\d+\s+)([a-záàâãéêíóôõúç]+)/g,
+            (_match, number, dayName) => {
+              const abbr = dayName.charAt(0).toUpperCase() + dayName.slice(1, 3).toLowerCase();
+              return number + abbr;
+            });
+          if (header.textContent !== abbreviated) {
+            header.textContent = abbreviated;
+          }
+        }
+      });
+
+      // Month view: capitalize day names in "domingo" -> "Dom"
+      const monthHeaders = document.querySelectorAll('.rbc-month-view .rbc-header');
+      monthHeaders.forEach((header) => {
+        const text = header.textContent;
+        if (text && /^[a-záàâãéêíóôõúç]+$/.test(text.trim())) {
+          const fullName = text.trim().toLowerCase();
+          // Abbreviate and capitalize
+          let abbreviated = fullName.charAt(0).toUpperCase() + fullName.slice(1, 3);
+          if (header.textContent?.trim() !== abbreviated) {
+            header.textContent = abbreviated;
+          }
+        }
+      });
+    };
+
+    // Run immediately and after a short delay to catch async renders
+    capitalizeDayNames();
+    const timer = setTimeout(capitalizeDayNames, 100);
+
+    return () => clearTimeout(timer);
+  }, [currentView, events, loading]); // Re-run when view, events, or loading changes
 
   const fetchEvents = async (start: Date, end: Date) => {
     try {
