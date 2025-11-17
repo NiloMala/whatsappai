@@ -528,7 +528,7 @@ const PublicMiniSite = () => {
                   <div className="w-auto flex-shrink-0">
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger
-                        className="w-[60px] sm:w-[100px] px-2"
+                        className="w-[80px] sm:w-[100px] px-2 text-sm"
                         style={{
                           backgroundColor: miniSite?.button_color || miniSite?.theme_color,
                           color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
@@ -536,7 +536,7 @@ const PublicMiniSite = () => {
                           borderColor: miniSite?.theme_color
                         }}
                       >
-                        <Menu className="h-5 w-5" />
+                        Menu
                       </SelectTrigger>
                       <SelectContent style={{ backgroundColor: miniSite?.card_color || undefined }}>
                         {categories.map((category) => (
@@ -550,50 +550,6 @@ const PublicMiniSite = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-
-                  {/* Scroll horizontal - Carousel */}
-                  <div
-                    className="flex-1 overflow-x-auto scroll-smooth min-w-0 max-w-full"
-                    style={{
-                      scrollbarWidth: 'none',
-                      msOverflowStyle: 'none',
-                      WebkitOverflowScrolling: 'touch',
-                      scrollSnapType: 'x mandatory',
-                      scrollPadding: '0 20px',
-                      overscrollBehavior: 'contain', // prevent scroll chaining to body
-                      touchAction: 'pan-x', // favor horizontal panning inside this element
-                    }}
-                  >
-                    <style>{`
-                      .overflow-x-auto::-webkit-scrollbar {
-                        display: none;
-                      }
-                      /* ensure overflow is handled smoothly on touch */
-                      .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-                      .categories-inline { min-width: max-content; }
-                    `}</style>
-                    <div className="inline-flex categories-inline gap-2 px-2 py-1">
-                      {categories.filter(cat => cat !== "Todos").map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => setSelectedCategory(category)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
-                            selectedCategory === category
-                              ? "text-white scale-105"
-                              : "hover:opacity-80"
-                          }`}
-                          style={{
-                            scrollSnapAlign: 'center',
-                            ...(selectedCategory === category
-                              ? { backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }
-                              : { backgroundColor: miniSite?.card_color || "#f3f4f6", color: miniSite?.theme_color || "#374151", border: '1px solid', borderColor: miniSite?.theme_color || "#374151" })
-                          }}
-                        >
-                          {category}
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </div>
