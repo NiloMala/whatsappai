@@ -33,13 +33,8 @@ const PublicMiniSite = () => {
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
-                ))}
-              </div>
-            </div>
-          </div>
-
-          
-          </div>
+    }
+  });
   const [optionQuantity, setOptionQuantity] = useState(1);
   // description modal state (moved here to keep hooks order stable)
   const [descModalOpen, setDescModalOpen] = useState(false);
@@ -688,10 +683,11 @@ const PublicMiniSite = () => {
                     </Card>
                   ))
                 )}
+                </div>
               </div>
             </div>
 
-            
+
           </div>
 
           {/* right column intentionally removed — cart is accessible via floating pill/modal */}
