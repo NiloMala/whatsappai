@@ -374,10 +374,10 @@ const MiniSitePage = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-6">
         <div>
-          <h1 className="text-3xl font-bold">Mini Site</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Mini Site</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Crie um site personalizado para agendamentos ou catálogo de produtos
           </p>
         </div>
@@ -391,22 +391,24 @@ const MiniSitePage = () => {
             <CardDescription>Escolha entre serviço (agendamentos) ou delivery (produtos)</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <Button
-                size="sm"
+                size="lg"
+                className="w-full sm:w-auto min-h-[48px]"
                 variant={formData.template === "booking" ? "default" : "outline"}
                 onClick={() => setFormData({ ...formData, template: "booking" })}
               >
-                <Calendar className="h-4 w-4 mr-2" />
+                <Calendar className="h-5 w-5 mr-2" />
                 Serviço (agendamentos)
               </Button>
 
               <Button
-                size="sm"
+                size="lg"
+                className="w-full sm:w-auto min-h-[48px]"
                 variant={formData.template === "delivery" ? "default" : "outline"}
                 onClick={() => setFormData({ ...formData, template: "delivery" })}
               >
-                <Store className="h-4 w-4 mr-2" />
+                <Store className="h-5 w-5 mr-2" />
                 Delivery / Produtos
               </Button>
             </div>
@@ -415,13 +417,14 @@ const MiniSitePage = () => {
 
         {/* Now place the page-level tabs below Tipo de Negócio */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 mt-6">
-            <TabsTrigger value="config" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Configurações
+          <TabsList className="grid w-full grid-cols-2 mt-6 h-auto">
+            <TabsTrigger value="config" className="gap-2 py-3 text-sm sm:text-base">
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Configurações</span>
+              <span className="sm:hidden">Config</span>
             </TabsTrigger>
-            <TabsTrigger value="items" className="gap-2" disabled={!miniSite}>
-              <Package className="h-4 w-4" />
+            <TabsTrigger value="items" className="gap-2 py-3 text-sm sm:text-base" disabled={!miniSite}>
+              <Package className="h-4 w-4 sm:h-5 sm:w-5" />
               {formData.template === "delivery" ? "Produtos" : "Serviços"}
             </TabsTrigger>
           </TabsList>
@@ -432,7 +435,7 @@ const MiniSitePage = () => {
             <CardTitle>Informações Básicas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do Negócio *</Label>
                 <Input
@@ -473,7 +476,7 @@ const MiniSitePage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="logo">URL da Logo</Label>
                 <Input
@@ -531,7 +534,7 @@ const MiniSitePage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="whatsapp">WhatsApp *</Label>
                 <Input
@@ -618,7 +621,7 @@ const MiniSitePage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="background_color">Cor de Fundo</Label>
                 <div className="flex gap-2">
@@ -707,7 +710,7 @@ const MiniSitePage = () => {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Formas de Pagamento Aceitas</Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {["Dinheiro", "PIX", "Cartão de Crédito", "Cartão de Débito", "Vale Refeição"].map((method) => (
                         <div key={method} className="flex items-center space-x-2">
                           <input
@@ -728,9 +731,9 @@ const MiniSitePage = () => {
                                 });
                               }
                             }}
-                            className="h-4 w-4"
+                            className="h-5 w-5"
                           />
-                          <Label htmlFor={`payment-${method}`} className="font-normal cursor-pointer">
+                          <Label htmlFor={`payment-${method}`} className="font-normal cursor-pointer text-sm">
                             {method}
                           </Label>
                         </div>
@@ -758,8 +761,8 @@ const MiniSitePage = () => {
             )}
 
             <div className="flex justify-end">
-              <Button onClick={handleSaveMiniSite} disabled={saving} size="lg">
-                <Save className="h-4 w-4 mr-2" />
+              <Button onClick={handleSaveMiniSite} disabled={saving} size="lg" className="w-full sm:w-auto min-h-[48px]">
+                <Save className="h-5 w-5 mr-2" />
                 {saving ? "Salvando..." : miniSite ? "Atualizar Mini Site" : "Criar Mini Site"}
               </Button>
             </div>
@@ -783,8 +786,9 @@ const MiniSitePage = () => {
                       setEditingItem(null);
                       setIsItemModalOpen(true);
                     }}
+                    className="w-full sm:w-auto min-h-[48px]"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-5 w-5 mr-2" />
                     Adicionar {itemType}
                   </Button>
                 </div>
@@ -797,29 +801,18 @@ const MiniSitePage = () => {
                     <p className="text-sm">Clique em "Adicionar {itemType}" para começar.</p>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead>Preço</TableHead>
-                        {formData.template === "booking" && <TableHead>Duração</TableHead>}
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <>
+                    {/* Mobile view: Cards */}
+                    <div className="md:hidden space-y-3">
                       {menuItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.title}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>R$ {item.price.toFixed(2)}</TableCell>
-                          {formData.template === "booking" && (
-                            <TableCell>{item.duration ? `${item.duration}min` : "-"}</TableCell>
-                          )}
-                          <TableCell>
+                        <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-base">{item.title}</h3>
+                              <p className="text-sm text-muted-foreground">{item.category}</p>
+                            </div>
                             <span
-                              className={`px-2 py-1 rounded-full text-xs ${
+                              className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ml-2 ${
                                 item.available
                                   ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
                                   : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
@@ -827,29 +820,94 @@ const MiniSitePage = () => {
                             >
                               {item.available ? "Disponível" : "Indisponível"}
                             </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="space-y-1">
+                              <p className="font-medium text-lg">R$ {item.price.toFixed(2)}</p>
+                              {formData.template === "booking" && item.duration && (
+                                <p className="text-muted-foreground">{item.duration}min</p>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
                               <Button
-                                variant="ghost"
-                                size="icon"
+                                variant="outline"
+                                size="sm"
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={() => openEditItemModal(item)}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
+                                variant="outline"
+                                size="sm"
+                                className="min-h-[44px] min-w-[44px]"
                                 onClick={() => handleDeleteItem(item.id)}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </div>
+
+                    {/* Desktop view: Table */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Categoria</TableHead>
+                            <TableHead>Preço</TableHead>
+                            {formData.template === "booking" && <TableHead>Duração</TableHead>}
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {menuItems.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.title}</TableCell>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell>R$ {item.price.toFixed(2)}</TableCell>
+                              {formData.template === "booking" && (
+                                <TableCell>{item.duration ? `${item.duration}min` : "-"}</TableCell>
+                              )}
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs ${
+                                    item.available
+                                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                      : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                                  }`}
+                                >
+                                  {item.available ? "Disponível" : "Indisponível"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditItemModal(item)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteItem(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -862,29 +920,33 @@ const MiniSitePage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ExternalLink className="h-5 w-5" />
-                Link Público do seu Mini Site
+                Link Público do seu Site
               </CardTitle>
               <CardDescription>
                 Compartilhe este link com seus clientes
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   value={publicUrl}
                   readOnly
-                  className="font-mono text-sm"
+                  className="font-mono text-sm flex-1"
                 />
-                <Button onClick={copyToClipboard} variant="outline">
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={() => window.open(publicUrl, "_blank")}
-                  variant="default"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Visualizar
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={copyToClipboard} variant="outline" className="flex-1 sm:flex-none min-h-[44px]">
+                    <Copy className="h-4 w-4 sm:mr-0" />
+                    <span className="ml-2 sm:hidden">Copiar</span>
+                  </Button>
+                  <Button
+                    onClick={() => window.open(publicUrl, "_blank")}
+                    variant="default"
+                    className="flex-1 sm:flex-none min-h-[44px]"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Visualizar
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -892,21 +954,20 @@ const MiniSitePage = () => {
 
         {/* Modal para adicionar/editar item */}
         <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-          <DialogContent className="max-w-xl">
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">
                 {editingItem ? `Editar ${itemType}` : `Adicionar ${itemType}`}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm">
                 Preencha as informações do {itemType}
               </DialogDescription>
             </DialogHeader>
               {/* Scrollable area: keep the footer visible while allowing the form to scroll vertically when long (hide horizontal scroll) */}
               <div
-                className="pr-6 overflow-x-hidden"
+                className="pr-2 sm:pr-6 overflow-x-hidden overflow-y-auto flex-1"
                 style={{
-                  height: (itemFormData.options && itemFormData.options.length >= 1) ? '60vh' : 'auto',
-                  overflowY: (itemFormData.options && itemFormData.options.length >= 1) ? 'auto' : 'hidden'
+                  maxHeight: (itemFormData.options && itemFormData.options.length >= 1) ? '60vh' : '70vh'
                 }}
               >
                 <div className="space-y-3">
@@ -1030,11 +1091,12 @@ const MiniSitePage = () => {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="min-h-[40px]"
                     onClick={() => {
-                      const newOptions = [...(itemFormData.options || []), { 
-                        id: `temp-${Date.now()}`, 
-                        name: "", 
-                        price: 0 
+                      const newOptions = [...(itemFormData.options || []), {
+                        id: `temp-${Date.now()}`,
+                        name: "",
+                        price: 0
                       }];
                       setItemFormData({ ...itemFormData, options: newOptions });
                     }}
@@ -1059,7 +1121,7 @@ const MiniSitePage = () => {
                             newOptions[index] = { ...newOptions[index], name: e.target.value };
                             setItemFormData({ ...itemFormData, options: newOptions });
                           }}
-                          className="flex-1"
+                          className="flex-1 min-h-[44px]"
                         />
                         <Input
                           type="number"
@@ -1072,12 +1134,13 @@ const MiniSitePage = () => {
                             newOptions[index] = { ...newOptions[index], price: parseFloat(e.target.value) || 0 };
                             setItemFormData({ ...itemFormData, options: newOptions });
                           }}
-                          className="w-24"
+                          className="w-20 sm:w-24 min-h-[44px]"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
+                          className="min-h-[44px] min-w-[44px]"
                           onClick={() => {
                             const newOptions = (itemFormData.options || []).filter((_, i) => i !== index);
                             setItemFormData({ ...itemFormData, options: newOptions });
@@ -1106,11 +1169,18 @@ const MiniSitePage = () => {
             </div>
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsItemModalOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsItemModalOpen(false)}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleSaveItem}>
+              <Button
+                onClick={handleSaveItem}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
               </Button>
