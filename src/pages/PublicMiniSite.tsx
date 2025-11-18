@@ -401,7 +401,45 @@ const PublicMiniSite = () => {
     }
   };
 
-  const openCheckout = () => {
+  const openCheckout = async () => {
+    // Auto-preencher dados do perfil se o usuário estiver logado
+    try {
+      const localProfileRaw = typeof window !== 'undefined' ? localStorage.getItem('user_profile') : null;
+      if (localProfileRaw) {
+        const localProfile = JSON.parse(localProfileRaw);
+
+        // Buscar dados completos do perfil da tabela minisite_profiles
+        if (localProfile.id) {
+          try {
+            const { data: profileData, error } = await supabase
+              .from('minisite_profiles')
+              .select('name, email, phone, address')
+              .eq('id', localProfile.id)
+              .maybeSingle();
+
+            if (!error && profileData) {
+              // Preencher os campos do checkout com dados completos do perfil
+              setCheckoutData((prev) => ({
+                ...prev,
+                name: profileData.name || prev.name,
+                phone: profileData.phone || prev.phone,
+                address: profileData.address || prev.address,
+              }));
+            }
+          } catch (e) {
+            console.warn('Erro ao buscar perfil completo:', e);
+            // Fallback: usar dados do localStorage se a busca falhar
+            setCheckoutData((prev) => ({
+              ...prev,
+              name: localProfile.name || prev.name,
+            }));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar perfil para auto-preenchimento:', e);
+    }
+
     setIsCheckoutOpen(true);
   };
 
@@ -1272,7 +1310,7 @@ const PublicMiniSite = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }} onClick={() => { setCartOpen(false); setIsCheckoutOpen(true); }}>
+                <Button className="w-full" style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }} onClick={() => { setCartOpen(false); openCheckout(); }}>
                   Finalizar Pedido
                 </Button>
               </DialogFooter>
@@ -1309,11 +1347,11 @@ const PublicMiniSite = () => {
             <HomeIcon className="h-5 w-5" />
             <span>Home</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => { /* open orders flow - placeholder */ alert('Pedidos'); }} aria-label="Pedidos">
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => handleOpenOrders()} aria-label="Pedidos">
             <ListIcon className="h-5 w-5" />
             <span>Pedidos</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => handleOpenOrders()} aria-label="Pedidos">
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
             <UserIcon className="h-5 w-5" />
             <span>Perfil</span>
           </button>
@@ -1510,6 +1548,75 @@ const PublicMiniSite = () => {
 
           <ProfileModalContent />
 
+        </DialogContent>
+      </Dialog>
+
+      {/* Orders Modal */}
+      <Dialog open={ordersModalOpen} onOpenChange={setOrdersModalOpen} modal>
+        <DialogContent className="sm:max-w-[700px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+          <DialogHeader>
+            <DialogTitle style={{ color: miniSite?.theme_color }}>Meus Pedidos</DialogTitle>
+            <DialogDescription style={{ color: miniSite?.theme_color }}>Histórico de pedidos neste estabelecimento</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 max-h-[60vh] overflow-y-auto">
+            {ordersLoading ? (
+              <p className="text-center py-4" style={{ color: miniSite?.theme_color }}>Carregando pedidos...</p>
+            ) : orders.length === 0 ? (
+              <p className="text-center py-4" style={{ color: miniSite?.theme_color }}>Nenhum pedido encontrado</p>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order: any) => (
+                  <div key={order.id} className="border rounded-lg p-4" style={{ borderColor: miniSite?.theme_color }}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold" style={{ color: miniSite?.theme_color }}>
+                          Pedido #{order.id?.slice(0, 8)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.created_at).toLocaleDateString('pt-BR')} às{' '}
+                          {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <Badge variant={order.status === 'completed' ? 'default' : 'outline'}>
+                        {order.status === 'pending' && 'Pendente'}
+                        {order.status === 'processing' && 'Em processamento'}
+                        {order.status === 'completed' && 'Concluído'}
+                        {order.status === 'cancelled' && 'Cancelado'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1 mb-2">
+                      {order.items?.map((item: any, idx: number) => (
+                        <div key={idx} className="text-sm flex justify-between">
+                          <span style={{ color: miniSite?.theme_color }}>
+                            {item.quantity}x {item.title}
+                            {item.selectedOptions && item.selectedOptions.length > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {' '}({item.selectedOptions.map((o: any) => o.name).join(', ')})
+                              </span>
+                            )}
+                          </span>
+                          <span style={{ color: miniSite?.theme_color }}>
+                            R$ {((item.price + (item.selectedOptions?.reduce((s: number, o: any) => s + o.price, 0) || 0)) * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-t pt-2 mt-2" style={{ borderColor: miniSite?.theme_color }}>
+                      <div className="flex justify-between font-semibold">
+                        <span style={{ color: miniSite?.theme_color }}>Total:</span>
+                        <span style={{ color: miniSite?.theme_color }}>R$ {order.total?.toFixed(2)}</span>
+                      </div>
+                      {order.payment_method && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Pagamento: {order.payment_method}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
