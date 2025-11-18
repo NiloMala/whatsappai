@@ -1054,15 +1054,15 @@ const Agents = () => {
   return (
     <>
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Agentes IA</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Agentes IA</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Gerencie seus assistentes virtuais
             </p>
             {currentPlan && (
-              <div className="mt-2 flex items-center gap-4 text-sm">
+              <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
                 <span className="text-primary font-medium">
                   💼 Plano {currentPlan.name}: {agents.length}/{currentPlan.max_agents} agentes
                 </span>
@@ -1070,7 +1070,7 @@ const Agents = () => {
                   variant="link"
                   size="sm"
                   onClick={() => navigate("/dashboard/plans")}
-                  className="h-auto p-0"
+                  className="h-auto p-0 self-start sm:self-auto"
                 >
                   Gerenciar plano
                 </Button>
@@ -1083,20 +1083,21 @@ const Agents = () => {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-primary to-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button className="bg-gradient-to-r from-primary to-primary/90 w-full sm:w-auto min-h-[48px]">
+                <Plus className="mr-2 h-5 w-5" />
                 Novo Agente
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">
                   {editingAgent ? "Editar Agente" : "Criar Novo Agente"}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-sm">
                   Configure o comportamento e as credenciais do seu agente IA
                 </DialogDescription>
               </DialogHeader>
+              <div className="overflow-y-auto flex-1 pr-2 sm:pr-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome do Agente</Label>
@@ -1185,7 +1186,7 @@ const Agents = () => {
                       type="button"
                       variant="outline"
                       onClick={() => setScheduleModalOpen(true)}
-                      className="w-full"
+                      className="w-full min-h-[44px]"
                     >
                       <Settings className="mr-2 h-4 w-4" />
                       Configurar Horários e Feriados
@@ -1335,7 +1336,7 @@ const Agents = () => {
                   />
                 </div>
 
-                <div className="flex gap-3 justify-end">
+                <div className="flex flex-col sm:flex-row gap-3 sm:justify-end pt-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1343,14 +1344,16 @@ const Agents = () => {
                       setIsDialogOpen(false);
                       resetForm();
                     }}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     Cancelar
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" className="w-full sm:w-auto min-h-[44px]">
                     {editingAgent ? "Salvar Alterações" : "Criar Agente"}
                   </Button>
                 </div>
               </form>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -1366,15 +1369,15 @@ const Agents = () => {
             </Card>
           ) : (
             agents.map((agent) => (
-              <Card key={agent.id} className="p-6">
-                <div className="flex items-start justify-between">
+              <Card key={agent.id} className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex gap-4 flex-1">
-                    <Bot className="h-10 w-10 text-primary" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold">{agent.name}</h3>
+                    <Bot className="h-10 w-10 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h3 className="text-lg sm:text-xl font-bold">{agent.name}</h3>
                         <span
-                          className={`px-2 py-1 rounded text-xs ${
+                          className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
                             agent.is_active
                               ? "bg-primary/10 text-primary"
                               : "bg-gray-100 text-gray-600"
@@ -1398,7 +1401,7 @@ const Agents = () => {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <span>Tipo: {(() => {
                           const map: Record<string,string> = {
                             friendly: 'Amigável',
@@ -1415,11 +1418,12 @@ const Agents = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 self-start sm:self-auto">
                     <Button
                       variant="outline"
                       size="icon"
-                        onClick={() => handleReconfigureWebhook(agent)}
+                      className="min-h-[44px] min-w-[44px]"
+                      onClick={() => handleReconfigureWebhook(agent)}
                       title="Reconfigurar Webhook"
                     >
                       <RefreshCw className="h-4 w-4" />
@@ -1427,6 +1431,7 @@ const Agents = () => {
                     <Button
                       variant="outline"
                       size="icon"
+                      className="min-h-[44px] min-w-[44px]"
                       onClick={() => openEditDialog(agent)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -1434,7 +1439,8 @@ const Agents = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                        onClick={() => handleDelete(agent)}
+                      className="min-h-[44px] min-w-[44px]"
+                      onClick={() => handleDelete(agent)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -1448,21 +1454,31 @@ const Agents = () => {
     </DashboardLayout>
       {/* Delete confirmation modal for agents */}
       <Dialog open={deleteModalOpen} onOpenChange={(open) => { if (!open) setAgentToDelete(null); setDeleteModalOpen(open); }}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirmar exclusão do agente</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Confirmar exclusão do agente</DialogTitle>
+            <DialogDescription className="text-sm">
               Esta ação removerá o agente e possivelmente o workflow associado no n8n. Tem certeza que deseja continuar?
             </DialogDescription>
           </DialogHeader>
           <div className="mt-2">
-            <p>Agente: <strong>{agentToDelete?.name || agentToDelete?.id}</strong></p>
+            <p className="text-sm">Agente: <strong>{agentToDelete?.name || agentToDelete?.id}</strong></p>
           </div>
-          <DialogFooter>
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => { setDeleteModalOpen(false); setAgentToDelete(null); }}>Cancelar</Button>
-              <Button variant="destructive" onClick={() => void confirmDeleteAgent()}>Excluir agente</Button>
-            </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => { setDeleteModalOpen(false); setAgentToDelete(null); }}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteAgent()}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
+              Excluir agente
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
