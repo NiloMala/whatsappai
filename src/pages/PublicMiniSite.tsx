@@ -1320,12 +1320,12 @@ const PublicMiniSite = () => {
               </div>
 
           <Dialog open={cartOpen} onOpenChange={setCartOpen} modal>
-            <DialogContent className="sm:max-w-[700px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
               <DialogHeader>
                 <DialogTitle style={{ color: miniSite?.theme_color }}>Carrinho</DialogTitle>
                 <DialogDescription style={{ color: miniSite?.theme_color }}>Revise seus itens e ajuste quantidades</DialogDescription>
               </DialogHeader>
-              <div className="py-4">
+              <div className="overflow-y-auto flex-1 py-4 pr-2 sm:pr-4">
                 <div className="space-y-3 mb-4">
                   {selectedItems.map(({ cartId, item, quantity, selectedOptions }) => (
                     <div key={cartId} className="flex justify-between items-center border-b pb-2">
@@ -1479,12 +1479,12 @@ const PublicMiniSite = () => {
 
       {/* Options Modal (when adding product with additions) */}
       <Dialog open={optionModalOpen} onOpenChange={setOptionModalOpen} modal>
-        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>{optionModalItem?.title}</DialogTitle>
             <DialogDescription style={{ color: miniSite?.theme_color }}>Selecione as opções adicionais</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="overflow-y-auto flex-1 py-4 pr-2 sm:pr-4">
             {optionModalItem?.options && optionModalItem.options.length > 0 ? (
               <div className="space-y-3">
                 {optionModalItem.options.map((opt) => (
@@ -1532,11 +1532,11 @@ const PublicMiniSite = () => {
 
       {/* Description Modal (show full product description) */}
       <Dialog open={descModalOpen} onOpenChange={setDescModalOpen} modal>
-        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>Descrição do Produto</DialogTitle>
               </DialogHeader>
-          <div className="py-2">
+          <div className="overflow-y-auto flex-1 py-2 pr-2 sm:pr-4">
             <div className="text-sm whitespace-pre-wrap break-words" style={{ color: miniSite?.theme_color }}>
               {descModalText}
             </div>
@@ -1552,14 +1552,15 @@ const PublicMiniSite = () => {
         setIsCheckoutOpen(open);
         if (!open) setPhoneError("");
       }} modal>
-        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>Finalizar Pedido</DialogTitle>
             <DialogDescription style={{ color: miniSite?.theme_color }}>
               Preencha seus dados para enviar o pedido via WhatsApp
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="overflow-y-auto flex-1 pr-2 sm:pr-4">
+            <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="name" style={{ color: miniSite?.theme_color }}>Nome Completo *</Label>
               <Input
@@ -1688,6 +1689,7 @@ const PublicMiniSite = () => {
                 rows={3}
               />
             </div>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -1713,25 +1715,27 @@ const PublicMiniSite = () => {
 
       {/* Profile modal (mobile) with login/create flows using minisite_profiles */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen} modal>
-        <DialogContent className="sm:max-w-[500px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>Perfil</DialogTitle>
             <DialogDescription style={{ color: miniSite?.theme_color }}>Entre ou crie um perfil para salvar e acompanhar pedidos neste mini-site.</DialogDescription>
           </DialogHeader>
 
-          <ProfileModalContent />
+          <div className="overflow-y-auto flex-1 pr-2 sm:pr-4">
+            <ProfileModalContent />
+          </div>
 
         </DialogContent>
       </Dialog>
 
       {/* Orders Modal */}
       <Dialog open={ordersModalOpen} onOpenChange={setOrdersModalOpen} modal>
-        <DialogContent className="sm:max-w-[700px]" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden flex flex-col" style={{ backgroundColor: miniSite?.card_color || undefined }} closeButtonColor={miniSite?.theme_color}>
           <DialogHeader>
             <DialogTitle style={{ color: miniSite?.theme_color }}>Meus Pedidos</DialogTitle>
             <DialogDescription style={{ color: miniSite?.theme_color }}>Histórico de pedidos neste estabelecimento</DialogDescription>
           </DialogHeader>
-          <div className="py-4 max-h-[60vh] overflow-y-auto">
+          <div className="overflow-y-auto flex-1 py-4 pr-2 sm:pr-4">
             {ordersLoading ? (
               <p className="text-center py-4" style={{ color: miniSite?.theme_color }}>Carregando pedidos...</p>
             ) : orders.length === 0 ? (
