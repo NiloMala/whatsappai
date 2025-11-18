@@ -484,15 +484,18 @@ const PublicMiniSite = () => {
         customer_name: checkoutData.name,
         customer_phone: checkoutData.phone,
         customer_address: checkoutData.address,
+        customer_neighborhood: checkoutData.neighborhood || null,
+        delivery_fee: deliveryFee,
         items: selectedItems.map(({ item, quantity, selectedOptions }) => ({
           id: item.id,
           title: item.title,
           price: item.price,
           quantity,
-          selectedOptions: selectedOptions || []
+          options: selectedOptions || []
         })),
-        total,
+        total_amount: total,
         payment_method: checkoutData.paymentMethod,
+        notes: checkoutData.observations || null,
         status: 'pending'
       };
 
@@ -1747,7 +1750,7 @@ const PublicMiniSite = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-semibold" style={{ color: miniSite?.theme_color }}>
-                          Pedido #{order.id?.slice(0, 8)}
+                          Pedido #{order.order_number || order.id?.slice(0, 8)}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {new Date(order.created_at).toLocaleDateString('pt-BR')} às{' '}

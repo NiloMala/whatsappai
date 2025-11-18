@@ -22,6 +22,7 @@ interface OrderData {
   observations?: string;
   items: OrderItem[];
   total: number;
+  orderId?: string; // UUID do pedido salvo no frontend
 }
 
 serve(async (req) => {
@@ -110,6 +111,21 @@ serve(async (req) => {
     // Gerar número de pedido único
     const orderNumber = Math.floor(Math.random() * 90000000) + 10000000;
 
+    // Se o frontend enviou orderId, atualizar o registro com o order_number
+    if (orderData.orderId) {
+      const { error: updateError } = await supabase
+        .from('minisite_orders')
+        .update({ order_number: orderNumber })
+        .eq('id', orderData.orderId);
+
+      if (updateError) {
+        console.error('⚠️ Erro ao atualizar order_number:', updateError);
+        // Não bloquear o fluxo, apenas registrar o erro
+      } else {
+        console.log('✅ Order number salvo:', orderNumber, 'para pedido:', orderData.orderId);
+      }
+    }
+
     // Formatar mensagem do pedido para o agente processar
     const orderMessage = formatOrderMessage(orderData, orderNumber, miniSite.name);
 
@@ -191,6 +207,7 @@ serve(async (req) => {
         success: true,
         directWhatsApp: false,
         orderNumber,
+        orderId: orderData.orderId,
         message: 'Pedido processado pelo agente IA'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

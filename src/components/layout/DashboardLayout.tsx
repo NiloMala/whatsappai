@@ -23,6 +23,7 @@ import {
   MessageCircle,
   Users,
   Store,
+  ShoppingBag,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -86,6 +87,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: FileText, label: "Templates", path: "/dashboard/templates" },
     { icon: Bot, label: "Agentes IA", path: "/dashboard/agents" },
     { icon: Store, label: "Mini Site", path: "/dashboard/minisite" },
+    { icon: ShoppingBag, label: "Pedidos", path: "/dashboard/orders" },
     { icon: MessageSquare, label: "Mensagens", path: "/dashboard/messages" },
     { icon: FileText, label: "Leads", path: "/dashboard/leads" },
     { icon: BarChart3, label: "Estatísticas", path: "/dashboard/statistics" },

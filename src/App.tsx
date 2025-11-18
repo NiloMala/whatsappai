@@ -29,6 +29,7 @@ import MiniSite from "./pages/MiniSite";
 import PublicMiniSite from "./pages/PublicMiniSite";
 import { isPublicMiniSite } from "@/config/constants";
 import MessagesEvolution from "./pages/MessagesEvolution";
+import Orders from "./pages/Orders";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
             />
             <Route path="/dashboard/statistics" element={<Statistics />} />
             <Route path="/dashboard/minisite" element={<MiniSite />} />
+            <Route path="/dashboard/orders" element={<Orders />} />
             <Route path="/dashboard/messages-evolution" element={<MessagesEvolution />} />
             <Route path="/dashboard/calendar" element={<Calendar />} />
             <Route path="/dashboard/calendar/:date" element={<DailyAgenda />} />
