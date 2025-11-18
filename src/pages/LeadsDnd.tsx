@@ -79,20 +79,20 @@ function SortableCard({ id, card, onUpdateContent, onOpenEdit, onDelete, isActiv
   const highlightCls = isHighlighted ? "ring-2 ring-amber-400/80 bg-amber-50/30" : "";
 
   return (
-    <div id={`lead-${card.id}`} ref={setNodeRef} style={style} {...attributes} {...listeners} className={`p-2 rounded-lg relative border-2 border-emerald-600/30 bg-muted ${activeCls} ${highlightCls}`}>
+    <div id={`lead-${card.id}`} ref={setNodeRef} style={style} {...attributes} {...listeners} className={`p-3 sm:p-2 rounded-lg relative border-2 border-emerald-600/30 bg-muted ${activeCls} ${highlightCls}`}>
       <div className="absolute right-2 top-2 z-10 flex gap-1">
         {card.metadata?.phone && (
-          <button type="button" title="Abrir chat" className="p-1 rounded hover:bg-accent/50" onClick={(e) => { e.stopPropagation(); handleOpenChat(); }}>
+          <button type="button" title="Abrir chat" className="p-2 rounded hover:bg-accent/50 min-h-[36px] min-w-[36px] flex items-center justify-center" onClick={(e) => { e.stopPropagation(); handleOpenChat(); }}>
             <MessageCircle className="h-4 w-4 text-blue-500" />
           </button>
         )}
-        <button type="button" title="Editar" className="p-1 rounded hover:bg-accent/50" onClick={(e) => { e.stopPropagation(); onOpenEdit(card); }}>
+        <button type="button" title="Editar" className="p-2 rounded hover:bg-accent/50 min-h-[36px] min-w-[36px] flex items-center justify-center" onClick={(e) => { e.stopPropagation(); onOpenEdit(card); }}>
           <Pencil className="h-4 w-4 text-muted-foreground" />
         </button>
-        <button type="button" title="Ver descrição" className="p-1 rounded hover:bg-accent/50" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}>
+        <button type="button" title="Ver descrição" className="p-2 rounded hover:bg-accent/50 min-h-[36px] min-w-[36px] flex items-center justify-center" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}>
           <Eye className="h-4 w-4 text-muted-foreground" />
         </button>
-        <button type="button" title="Excluir" className="p-1 rounded hover:bg-accent/50" onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}>
+        <button type="button" title="Excluir" className="p-2 rounded hover:bg-accent/50 min-h-[36px] min-w-[36px] flex items-center justify-center" onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}>
           <Trash2 className="h-4 w-4 text-destructive" />
         </button>
       </div>
@@ -115,9 +115,9 @@ function SortableCard({ id, card, onUpdateContent, onOpenEdit, onDelete, isActiv
               <div className="absolute right-2 bottom-2 text-xs">
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium transition-colors duration-200 ${value.length > 190 ? 'text-red-500 bg-red-50 dark:bg-red-900/30' : value.length > 160 ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-muted-foreground/70 bg-white/0'}`}>{value.length}/200</span>
               </div>
-          <div className="mt-8 flex gap-2">
-            <Button size="sm" onClick={doSave}>Salvar</Button>
-            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(card.content || ""); }}>Cancelar</Button>
+          <div className="mt-8 flex flex-col sm:flex-row gap-2">
+            <Button size="sm" onClick={doSave} className="min-h-[40px]">Salvar</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setValue(card.content || ""); }} className="min-h-[40px]">Cancelar</Button>
           </div>
         </div>
       ) : (
@@ -128,9 +128,9 @@ function SortableCard({ id, card, onUpdateContent, onOpenEdit, onDelete, isActiv
 
       {/* Preview dialog for full description */}
       <Dialog open={isPreviewOpen} onOpenChange={(open) => setIsPreviewOpen(open)}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Descrição</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Descrição</DialogTitle>
           </DialogHeader>
           <div className="mt-2 max-h-[60vh] overflow-auto">
             <div className="text-sm whitespace-pre-wrap break-words break-all text-muted-foreground">
@@ -138,9 +138,7 @@ function SortableCard({ id, card, onUpdateContent, onOpenEdit, onDelete, isActiv
             </div>
           </div>
           <DialogFooter>
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => setIsPreviewOpen(false)}>Fechar</Button>
-            </div>
+            <Button variant="ghost" onClick={() => setIsPreviewOpen(false)} className="w-full sm:w-auto min-h-[44px]">Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -454,8 +452,8 @@ const LeadsDnd: React.FC = () => {
   function Column({ col }: { col: KanbanColumn }) {
     const { setNodeRef } = useDroppable({ id: `col-${col.id}` });
     return (
-      <div key={col.id} className="w-80 flex-shrink-0">
-        <Card className="p-3">
+      <div key={col.id} className="w-full md:w-80 md:flex-shrink-0">
+        <Card className="p-4 sm:p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold">{col.title}</h3>
             <span className="text-sm text-muted-foreground">{(itemsByColumn[col.id] || []).length}</span>
@@ -472,7 +470,12 @@ const LeadsDnd: React.FC = () => {
 
           <div className="mt-3">
             <div className="mt-2 flex gap-2">
-              <Button onClick={() => { setAddingColumnId(col.id); setIsAddOpen(true); }}>Adicionar</Button>
+              <Button
+                onClick={() => { setAddingColumnId(col.id); setIsAddOpen(true); }}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Adicionar
+              </Button>
             </div>
           </div>
         </Card>
@@ -482,14 +485,14 @@ const LeadsDnd: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4">
+      <div className="space-y-4 pb-6">
         <div>
-          <h1 className="text-2xl font-bold">Leads (CRM)</h1>
-          <p className="text-muted-foreground">Arraste leads entre colunas.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Leads (CRM)</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Arraste leads entre colunas.</p>
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-          <div className="flex gap-4 overflow-x-auto py-4">
+          <div className="flex flex-col md:flex-row gap-4 md:overflow-x-auto py-4">
             {columns.map((col) => (
               <Column key={col.id} col={col} />
             ))}
@@ -507,9 +510,9 @@ const LeadsDnd: React.FC = () => {
           </DragOverlay>
         </DndContext>
         <Dialog open={isAddOpen} onOpenChange={(open) => setIsAddOpen(open)}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Adicionar Lead</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">Adicionar Lead</DialogTitle>
             </DialogHeader>
 
               <div className="space-y-2 mt-2">
@@ -527,18 +530,28 @@ const LeadsDnd: React.FC = () => {
                 </div>
               </div>
 
-              <DialogFooter>
-                <div className="flex gap-2">
-                  <Button disabled={!addTitle.trim() || !isValidPhone(addPhone)} onClick={() => { if (addingColumnId) createCard(addingColumnId, addTitle, truncateByWord(addContent, 200), addPhone); setIsAddOpen(false); setAddingColumnId(null); setAddTitle(""); setAddContent(""); setAddPhone(""); }}>Salvar</Button>
-                  <Button variant="ghost" onClick={() => { setIsAddOpen(false); setAddingColumnId(null); }}>Cancelar</Button>
-                </div>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button
+                  disabled={!addTitle.trim() || !isValidPhone(addPhone)}
+                  onClick={() => { if (addingColumnId) createCard(addingColumnId, addTitle, truncateByWord(addContent, 200), addPhone); setIsAddOpen(false); setAddingColumnId(null); setAddTitle(""); setAddContent(""); setAddPhone(""); }}
+                  className="w-full sm:w-auto min-h-[44px]"
+                >
+                  Salvar
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => { setIsAddOpen(false); setAddingColumnId(null); }}
+                  className="w-full sm:w-auto min-h-[44px]"
+                >
+                  Cancelar
+                </Button>
               </DialogFooter>
           </DialogContent>
         </Dialog>
         <Dialog open={isEditOpen} onOpenChange={(open) => setIsEditOpen(open)}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Editar Lead</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">Editar Lead</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-2 mt-2">
@@ -555,30 +568,49 @@ const LeadsDnd: React.FC = () => {
               </div>
             </div>
 
-            <DialogFooter>
-              <div className="flex gap-2">
-                <Button onClick={() => saveEdit()}>Salvar</Button>
-                <Button variant="ghost" onClick={() => { setIsEditOpen(false); setEditingCard(null); }}>Cancelar</Button>
-              </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => saveEdit()}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Salvar
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => { setIsEditOpen(false); setEditingCard(null); }}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Cancelar
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
         {/* Delete confirmation modal */}
         <Dialog open={isDeleteOpen} onOpenChange={(open) => { if (!open) closeDeleteModal(); }}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Confirmar exclusão</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">Confirmar exclusão</DialogTitle>
             </DialogHeader>
 
             <div className="mt-2">
-              <p>Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.</p>
+              <p className="text-sm">Tem certeza que deseja excluir este lead? Esta ação não pode ser desfeita.</p>
             </div>
 
-        <DialogFooter>
-            <div className="flex gap-2">
-              <Button variant="destructive" onClick={() => { closeDeleteModal(); void deleteCard(deletingCardId); }}>Excluir</Button>
-              <Button variant="ghost" onClick={() => closeDeleteModal()}>Cancelar</Button>
-            </div>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="destructive"
+                onClick={() => { closeDeleteModal(); void deleteCard(deletingCardId); }}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Excluir
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => closeDeleteModal()}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Cancelar
+              </Button>
           </DialogFooter>
           </DialogContent>
         </Dialog>

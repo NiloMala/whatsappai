@@ -57,6 +57,9 @@ export interface MiniSite {
   delivery_fees?: DeliveryFee[];
   payment_methods?: string[];
   delivery_info?: string;
+  delivery_fee_type?: "fixed" | "by_neighborhood";
+  delivery_fee_value?: number;
+  delivery_neighborhoods?: Array<{ name: string; fee: number }>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -72,6 +75,9 @@ export interface MiniSiteFormData {
   whatsapp_number: string;
   agent_id?: string | null;
   theme_color: string;
+  background_color?: string | null;
+  button_color?: string | null;
+  text_color?: string | null;
   card_color?: string | null;
   description?: string;
   template: TemplateType;
@@ -80,6 +86,9 @@ export interface MiniSiteFormData {
   delivery_fees?: DeliveryFee[];
   payment_methods?: string[];
   delivery_info?: string;
+  delivery_fee_type?: "fixed" | "by_neighborhood";
+  delivery_fee_value?: number;
+  delivery_neighborhoods?: Array<{ name: string; fee: number }>;
 }
 
 export interface MenuItemFormData {

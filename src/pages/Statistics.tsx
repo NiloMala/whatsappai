@@ -324,28 +324,34 @@ const Statistics = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 pb-6">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Estatísticas Detalhadas</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Estatísticas Detalhadas</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Analise o desempenho do seu atendimento
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
               {(["7d", "30d", "90d"] as const).map((range) => (
                 <Button
                   key={range}
                   variant={timeRange === range ? "default" : "outline"}
                   onClick={() => setTimeRange(range)}
+                  className="flex-1 sm:flex-none min-h-[44px]"
                 >
                   {range === "7d" ? "7 dias" : range === "30d" ? "30 dias" : "90 dias"}
                 </Button>
               ))}
             </div>
-            <Button variant="outline" onClick={exportToPDF} disabled={loading || rawData.length === 0}>
+            <Button
+              variant="outline"
+              onClick={exportToPDF}
+              disabled={loading || rawData.length === 0}
+              className="w-full sm:w-auto min-h-[44px]"
+            >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -357,66 +363,66 @@ const Statistics = () => {
         </div>
 
         {/* Summary Cards */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <MessageSquare className="h-8 w-8 text-blue-500" />
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-blue-500" />
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h3 className="text-sm text-muted-foreground mb-1">
+            <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">
               Total Recebidas
             </h3>
-            <p className="text-3xl font-bold">{totals.received}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{totals.received}</p>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <MessageSquare className="h-8 w-8 text-primary" />
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <MessageSquare className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h3 className="text-sm text-muted-foreground mb-1">
+            <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">
               Total Enviadas
             </h3>
-            <p className="text-3xl font-bold">{totals.sent}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{totals.sent}</p>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Clock className="h-8 w-8 text-orange-500" />
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <Clock className="h-7 w-7 sm:h-8 sm:w-8 text-orange-500" />
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h3 className="text-sm text-muted-foreground mb-1">
+            <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">
               Tempo Médio
             </h3>
-            <p className="text-3xl font-bold">{formatResponseTime(totals.avgResponse)}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{formatResponseTime(totals.avgResponse)}</p>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <Users className="h-8 w-8 text-purple-500" />
+          <Card className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <Users className="h-7 w-7 sm:h-8 sm:w-8 text-purple-500" />
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h3 className="text-sm text-muted-foreground mb-1">
+            <h3 className="text-xs sm:text-sm text-muted-foreground mb-1">
               Contatos Respondidos
             </h3>
-            <p className="text-3xl font-bold">{totals.activeContacts}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{totals.activeContacts}</p>
           </Card>
         </div>
 
         {/* Charts */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-bold mb-6">Volume de Mensagens</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Volume de Mensagens</h2>
             {loading ? (
-              <div className="p-6 text-center text-muted-foreground">Carregando...</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>
             ) : chartData.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground">Nenhum dado para o período selecionado.</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Nenhum dado para o período selecionado.</div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
+                  <XAxis dataKey="date" style={{ fontSize: '12px' }} />
+                  <YAxis style={{ fontSize: '12px' }} />
                   <Tooltip />
                   <Bar dataKey="recebidas" fill="hsl(var(--primary))" />
                   <Bar dataKey="enviadas" fill="hsl(142, 76%, 46%)" />
@@ -425,12 +431,12 @@ const Statistics = () => {
             )}
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-bold mb-6">Distribuição de Mensagens</h2>
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Distribuição de Mensagens</h2>
             {loading ? (
-              <div className="p-6 text-center text-muted-foreground">Carregando...</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>
             ) : pieData.reduce((s, p) => s + p.value, 0) === 0 ? (
-              <div className="p-6 text-center text-muted-foreground">Sem dados para distribuição.</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">Sem dados para distribuição.</div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -455,18 +461,18 @@ const Statistics = () => {
           </Card>
         </div>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-6">Tempo de Resposta ao Longo do Tempo</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Tempo de Resposta ao Longo do Tempo</h2>
           {loading ? (
-            <div className="p-6 text-center text-muted-foreground">Carregando...</div>
+            <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>
           ) : chartData.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">Nenhum dado para o período selecionado.</div>
+            <div className="p-6 text-center text-sm text-muted-foreground">Nenhum dado para o período selecionado.</div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
+                <XAxis dataKey="date" style={{ fontSize: '12px' }} />
+                <YAxis style={{ fontSize: '12px' }} />
                 <Tooltip />
                 <Line
                   type="monotone"

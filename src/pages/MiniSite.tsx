@@ -21,6 +21,8 @@ import {
   Pencil,
   Package,
   Settings,
+  Truck,
+  X,
 } from "lucide-react";
 import type { MiniSite, MiniSiteFormData, MenuItem, MenuItemFormData } from "@/types/mini-site";
 import {
@@ -54,6 +56,10 @@ const MiniSitePage = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [activeTab, setActiveTab] = useState("config");
+  const [isDeliveryFeeModalOpen, setIsDeliveryFeeModalOpen] = useState(false);
+  const [deliveryFeeType, setDeliveryFeeType] = useState<"fixed" | "by_neighborhood">("fixed");
+  const [fixedDeliveryFee, setFixedDeliveryFee] = useState<number>(0);
+  const [neighborhoodFees, setNeighborhoodFees] = useState<Array<{ name: string; fee: number }>>([]);
 
   // Form data
   const [formData, setFormData] = useState<MiniSiteFormData>({
@@ -742,18 +748,21 @@ const MiniSitePage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="delivery-info">Informações de Entrega</Label>
-                    <Textarea
-                      id="delivery-info"
-                      value={formData.delivery_info || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, delivery_info: e.target.value })
+                    <Label>Taxa de Entrega</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDeliveryFeeModalOpen(true)}
+                      className="w-full min-h-[44px] justify-start"
+                    >
+                      <Truck className="mr-2 h-4 w-4" />
+                      {deliveryFeeType === "fixed"
+                        ? `Taxa Fixa: R$ ${fixedDeliveryFee.toFixed(2)}`
+                        : `Taxa por Bairro (${neighborhoodFees.length} bairros)`
                       }
-                      placeholder="Ex: Entrega grátis acima de R$ 30"
-                      rows={3}
-                    />
+                    </Button>
                     <p className="text-xs text-muted-foreground">
-                      Informações sobre entrega, tempo estimado, etc.
+                      Configure a taxa de entrega para seus pedidos
                     </p>
                   </div>
                 </CardContent>
@@ -1183,6 +1192,160 @@ const MiniSitePage = () => {
               >
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Configuração de Taxa de Entrega */}
+        <Dialog open={isDeliveryFeeModalOpen} onOpenChange={setIsDeliveryFeeModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">Configurar Taxa de Entrega</DialogTitle>
+              <DialogDescription className="text-sm">
+                Defina como cobrar pela entrega dos seus produtos
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="overflow-y-auto flex-1 pr-2 sm:pr-4 space-y-4">
+              {/* Tipo de Taxa */}
+              <div className="space-y-2">
+                <Label>Tipo de Taxa</Label>
+                <Select value={deliveryFeeType} onValueChange={(value: "fixed" | "by_neighborhood") => setDeliveryFeeType(value)}>
+                  <SelectTrigger className="min-h-[44px]">
+                    <SelectValue placeholder="Selecione o tipo de taxa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Taxa Fixa (mesmo valor para todos)</SelectItem>
+                    <SelectItem value="by_neighborhood">Taxa por Bairro (valores diferentes)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Taxa Fixa */}
+              {deliveryFeeType === "fixed" && (
+                <div className="space-y-2">
+                  <Label htmlFor="fixed-fee">Valor da Taxa de Entrega</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">R$</span>
+                    <Input
+                      id="fixed-fee"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={fixedDeliveryFee}
+                      onChange={(e) => setFixedDeliveryFee(parseFloat(e.target.value) || 0)}
+                      placeholder="0.00"
+                      className="min-h-[44px]"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Este valor será aplicado a todos os pedidos
+                  </p>
+                </div>
+              )}
+
+              {/* Taxa por Bairro */}
+              {deliveryFeeType === "by_neighborhood" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Bairros e Valores</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setNeighborhoodFees([...neighborhoodFees, { name: "", fee: 0 }])}
+                      className="min-h-[40px]"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Adicionar Bairro
+                    </Button>
+                  </div>
+
+                  {neighborhoodFees.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                      <Truck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhum bairro cadastrado</p>
+                      <p className="text-xs">Clique em "Adicionar Bairro" para começar</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {neighborhoodFees.map((neighborhood, index) => (
+                        <div key={index} className="flex gap-2 items-center p-3 border rounded-lg">
+                          <Input
+                            placeholder="Nome do bairro"
+                            value={neighborhood.name}
+                            onChange={(e) => {
+                              const newFees = [...neighborhoodFees];
+                              newFees[index].name = e.target.value;
+                              setNeighborhoodFees(newFees);
+                            }}
+                            className="flex-1 min-h-[44px]"
+                          />
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-muted-foreground">R$</span>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              value={neighborhood.fee}
+                              onChange={(e) => {
+                                const newFees = [...neighborhoodFees];
+                                newFees[index].fee = parseFloat(e.target.value) || 0;
+                                setNeighborhoodFees(newFees);
+                              }}
+                              className="w-24 sm:w-28 min-h-[44px]"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setNeighborhoodFees(neighborhoodFees.filter((_, i) => i !== index));
+                            }}
+                            className="min-h-[44px] min-w-[44px]"
+                          >
+                            <X className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    O cliente precisará selecionar o bairro no checkout
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeliveryFeeModalOpen(false)}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  // Salvar configurações no formData
+                  setFormData({
+                    ...formData,
+                    delivery_fee_type: deliveryFeeType,
+                    delivery_fee_value: deliveryFeeType === "fixed" ? fixedDeliveryFee : 0,
+                    delivery_neighborhoods: deliveryFeeType === "by_neighborhood" ? neighborhoodFees : [],
+                  });
+                  setIsDeliveryFeeModalOpen(false);
+                  toast({
+                    title: "Configuração salva",
+                    description: "A taxa de entrega foi configurada. Lembre-se de salvar o Mini Site.",
+                  });
+                }}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Configuração
               </Button>
             </DialogFooter>
           </DialogContent>
