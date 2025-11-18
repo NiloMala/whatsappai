@@ -892,7 +892,7 @@ const MiniSitePage = () => {
 
         {/* Modal para adicionar/editar item */}
         <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle>
                 {editingItem ? `Editar ${itemType}` : `Adicionar ${itemType}`}
@@ -901,9 +901,16 @@ const MiniSitePage = () => {
                 Preencha as informações do {itemType}
               </DialogDescription>
             </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              {/* Scrollable area: keep the footer visible while allowing the form to scroll vertically when long (hide horizontal scroll) */}
+              <div
+                className="pr-6 overflow-x-hidden"
+                style={{
+                  height: (itemFormData.options && itemFormData.options.length >= 1) ? '60vh' : 'auto',
+                  overflowY: (itemFormData.options && itemFormData.options.length >= 1) ? 'auto' : 'hidden'
+                }}
+              >
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="item-title">Nome *</Label>
                   <Input
@@ -935,6 +942,7 @@ const MiniSitePage = () => {
                                 }
                               }}
                               className="flex-1 p-2 border rounded"
+                              style={{ width: 'calc(100% - 20px)' }}
                             >
                               <option value="">Selecione</option>
                               {categories.map((c) => (
@@ -979,7 +987,7 @@ const MiniSitePage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="item-price">Preço (R$) *</Label>
                   <Input
@@ -1012,17 +1020,7 @@ const MiniSitePage = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="item-image">URL da Imagem</Label>
-                <Input
-                  id="item-image"
-                  value={itemFormData.image_url || ""}
-                  onChange={(e) =>
-                    setItemFormData({ ...itemFormData, image_url: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
+              {/* Image URL removed from modal per request */}
 
               {/* Opções Adicionais */}
               <div className="space-y-2">
@@ -1105,6 +1103,7 @@ const MiniSitePage = () => {
                 />
                 <Label htmlFor="item-available">Disponível para venda</Label>
               </div>
+            </div>
             </div>
 
             <DialogFooter>

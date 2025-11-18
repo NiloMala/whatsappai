@@ -1020,53 +1020,74 @@ const PublicMiniSite = () => {
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: miniSite?.background_color || undefined }}>
       {/* Banner with overlayed company info card */}
-      {miniSite ? (
+          {miniSite ? (
         <div className="w-full relative">
           {miniSite.banner ? (
-            <img
-              src={miniSite.banner}
-              alt={`${miniSite.name} banner`}
-              loading="lazy"
-              className="w-full h-44 md:h-56 lg:h-72 object-cover"
-            />
+            <>
+              <img
+                src={miniSite.banner}
+                alt={`${miniSite.name} banner`}
+                loading="lazy"
+                className="w-full h-28 md:h-36 lg:h-40 object-cover"
+              />
+            </>
           ) : (
             <div
-              className="w-full h-44 md:h-56 lg:h-72 flex items-center justify-center"
+              className="w-full h-28 md:h-36 lg:h-40 flex items-center justify-center"
               style={{ backgroundColor: miniSite.background_color || miniSite.theme_color }}
             >
               <div className="text-center">
-                <h2 className="text-2xl font-bold" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>{miniSite.name}</h2>
+                <h2 className="text-lg font-semibold" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>{miniSite.name}</h2>
+              </div>
+            </div>
+          )}
+
+          {/* Logo overlay centered at the base of the banner */}
+          {miniSite.logo && (
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: '86px' }} className="z-40">
+              <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-md">
+                <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-10 w-10 object-cover" />
               </div>
             </div>
           )}
 
           {/* Business info — rendered as a simple block below the banner (no card) */}
-          <div className="w-full px-4 mt-0">
-            <div className="mx-auto w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/5 text-center py-4 px-4" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>
+          <div className="w-full px-3 mt-0">
+            <div className="mx-auto w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-1/2 text-center py-1 px-2" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>
               {miniSite.logo ? (
-                <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center overflow-hidden mb-3 mx-auto">
-                  <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-12 w-12 object-cover" />
-                </div>
-              ) : null}
-
-              <h2 className="text-2xl font-bold">{miniSite.name}</h2>
-              {miniSite.description ? (
-                <p className="text-sm mt-1">{miniSite.description}</p>
+                // Centered layout: logo + text grouped and centered as a unit
+                <div className="flex items-center justify-center gap-3 mb-1 mx-auto" style={{ maxWidth: 420 }}>
+                      <div className="text-center">
+                        <h2 className="text-sm font-semibold leading-tight">{miniSite.name}</h2>
+                        {miniSite.description ? (
+                          <p className="text-xs mt-0">{miniSite.description}</p>
+                        ) : (
+                          <p className="text-xs mt-0">Bem vindo a {miniSite.name}</p>
+                        )}
+                      </div>
+                    </div>
               ) : (
-                <p className="text-sm mt-1">Bem vindo a {miniSite.name}</p>
+                <>
+                  <h2 className="text-sm font-semibold">{miniSite.name}</h2>
+                  {miniSite.description ? (
+                    <p className="text-xs mt-0">{miniSite.description}</p>
+                  ) : (
+                    <p className="text-xs mt-0">Bem vindo a {miniSite.name}</p>
+                  )}
+                </>
               )}
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-3 text-sm">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-1 text-xs">
                 {miniSite.whatsapp_number && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span>{miniSite.whatsapp_number}</span>
+                  <div className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    <span className="text-xs">{miniSite.whatsapp_number}</span>
                   </div>
                 )}
                 {miniSite.address && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{miniSite.address}</span>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    <span className="text-xs">{miniSite.address}</span>
                   </div>
                 )}
               </div>
@@ -1074,7 +1095,7 @@ const PublicMiniSite = () => {
           </div>
 
           {/* Desktop top-right menu: Home / Pedidos / Perfil (fixed while scrolling) */}
-          <div className="hidden md:flex fixed top-6 right-6 items-center gap-2 z-50">
+          <div className="hidden md:flex fixed top-1 right-6 items-center gap-2 z-50">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
@@ -1129,8 +1150,9 @@ const PublicMiniSite = () => {
                       }
                     }}>
                       <SelectTrigger
-                        className="w-[80px] sm:w-[100px] px-2 text-sm h-8 flex items-center justify-center text-center focus:outline-none focus:ring-0"
+                        className="w-[80px] sm:w-[100px] px-2 text-sm flex items-center justify-center text-center focus:outline-none focus:ring-0"
                         style={{
+                          height: 'calc(2rem * 1.2)',
                           backgroundColor: categoryOpen ? (miniSite?.button_color || miniSite?.theme_color) : (miniSite?.card_color || "#f3f4f6"),
                           color: categoryOpen ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color)) : (miniSite?.theme_color || "#374151"),
                           border: '1px solid',
@@ -1160,7 +1182,7 @@ const PublicMiniSite = () => {
             {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
             <div className="px-4">
               <div className="w-full flex justify-center">
-                <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-4 py-2 justify-items-center">
+                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 py-2 justify-items-center">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
@@ -1182,12 +1204,12 @@ const PublicMiniSite = () => {
                   filteredItems.map((item) => (
                     <Card key={item.id} className="w-full max-w-xs overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
                       <div className="flex flex-col">
-                        <div className="flex-1 flex flex-col justify-between p-3">
+                        <div className="flex-1 flex flex-col justify-between p-1">
                           <div>
                             <CardHeader>
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <CardTitle className="text-base" style={{ color: miniSite?.theme_color }}>{item.title}</CardTitle>
+                                  <CardTitle className="text-sm" style={{ color: miniSite?.theme_color }}>{item.title}</CardTitle>
                                   {item.duration && (
                                     <Badge variant="outline" className="mt-1">
                                       <CalendarIcon className="h-3 w-3 mr-1" />
@@ -1195,7 +1217,7 @@ const PublicMiniSite = () => {
                                     </Badge>
                                   )}
                                 </div>
-                                <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
+                                <span className="text-base font-semibold" style={{ color: miniSite?.theme_color }}>
                                   R$ {item.price.toFixed(2)}
                                 </span>
                               </div>
@@ -1203,31 +1225,33 @@ const PublicMiniSite = () => {
 
                             {item.description && (
                               <CardContent>
-                                <div className="flex items-center gap-2">
-                                  <div className="flex-1 text-sm overflow-hidden whitespace-nowrap truncate" style={{ color: miniSite?.theme_color }}>
-                                    {item.description}
-                                  </div>
-                                  {item.description && item.description.length > 0 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => openDescModal(item.description)}
-                                      className="p-1 rounded hover:bg-accent/20 flex items-center gap-1 text-sm text-primary"
-                                      aria-label="Ver descrição completa"
-                                      title="Ver descrição"
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                      <span className="hidden sm:inline">Ver</span>
-                                    </button>
-                                  )}
+                                <div className="w-full flex items-center justify-start gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => openDescModal(item.description)}
+                                    className="p-1 rounded hover:bg-accent/20 flex items-center text-primary"
+                                    aria-label="Abrir detalhes"
+                                    title="Detalhes"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => openDescModal(item.description)}
+                                    className="text-xs text-primary -ml-1"
+                                  >
+                                    Detalhes
+                                  </button>
                                 </div>
                               </CardContent>
                             )}
-                          </div>
+                           </div>
 
-                          <div className="mt-2">
+                           <div className="mt-1">
                             <Button
                               type="button"
-                              className="w-full px-3 py-2 text-sm rounded-md"
+                              className="w-full px-2 py-1 text-sm rounded-md"
                               style={{
                                 backgroundColor: miniSite?.button_color || miniSite?.theme_color,
                                 color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
@@ -1340,19 +1364,19 @@ const PublicMiniSite = () => {
         </div>
       )}
 
-      {/* Mobile fixed footer with Home / Pedidos / Perfil */}
+      {/* Mobile fixed footer with Home / Pedidos / Perfil (compact) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-        <div className="flex items-center justify-between px-4 py-2 bg-white border-t">
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Home">
-            <HomeIcon className="h-5 w-5" />
+        <div className="flex items-center justify-between px-6 py-1 bg-white border-t">
+          <button className="flex flex-col items-center text-xs text-muted-foreground ml-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Home">
+            <HomeIcon className="h-4 w-4" />
             <span>Home</span>
           </button>
           <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => handleOpenOrders()} aria-label="Pedidos">
-            <ListIcon className="h-5 w-5" />
+            <ListIcon className="h-4 w-4" />
             <span>Pedidos</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
-            <UserIcon className="h-5 w-5" />
+          <button className="flex flex-col items-center text-xs text-muted-foreground mr-2" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
+            <UserIcon className="h-4 w-4" />
             <span>Perfil</span>
           </button>
         </div>
@@ -1620,9 +1644,9 @@ const PublicMiniSite = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Footer */}
-      <footer className="mt-12 py-6 border-t">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+      {/* Footer (compact, padded above mobile menu) */}
+      <footer className="mt-4 py-2 border-t" style={{ paddingBottom: 48 }}>
+        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {miniSite.name}. Todos os direitos reservados.
           </p>
