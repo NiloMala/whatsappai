@@ -155,7 +155,21 @@ const MiniSitePage = () => {
           delivery_fees: sites.delivery_fees,
           payment_methods: sites.payment_methods,
           delivery_info: sites.delivery_info,
+          delivery_fee_type: sites.delivery_fee_type || "fixed",
+          delivery_fee_value: sites.delivery_fee_value || 0,
+          delivery_neighborhoods: sites.delivery_neighborhoods || [],
         });
+
+        // Preencher estados de taxa de entrega
+        if (sites.delivery_fee_type) {
+          setDeliveryFeeType(sites.delivery_fee_type);
+        }
+        if (sites.delivery_fee_value !== undefined) {
+          setFixedDeliveryFee(sites.delivery_fee_value);
+        }
+        if (sites.delivery_neighborhoods) {
+          setNeighborhoodFees(sites.delivery_neighborhoods);
+        }
 
         // Buscar itens do menu
         const { data: items, error: itemsError } = await supabase

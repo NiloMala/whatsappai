@@ -109,6 +109,7 @@ const PublicMiniSite = () => {
     name: "",
     phone: "",
     address: "",
+    neighborhood: "",
     paymentMethod: "",
     observations: "",
   });
@@ -446,10 +447,23 @@ const PublicMiniSite = () => {
   const sendWhatsApp = async () => {
     if (!miniSite) return;
 
-    const total = selectedItems.reduce((sum, { item, quantity, selectedOptions }) => {
+    const subtotal = selectedItems.reduce((sum, { item, quantity, selectedOptions }) => {
       const opts = selectedOptions || [];
       return sum + (item.price + opts.reduce((s, o) => s + (o.price || 0), 0)) * quantity;
     }, 0);
+
+    // Calcular taxa de entrega
+    let deliveryFee = 0;
+    if (miniSite.delivery_fee_type === "fixed" && miniSite.delivery_fee_value) {
+      deliveryFee = miniSite.delivery_fee_value;
+    } else if (miniSite.delivery_fee_type === "by_neighborhood" && checkoutData.neighborhood && miniSite.delivery_neighborhoods) {
+      const neighborhood = miniSite.delivery_neighborhoods.find(n => n.name === checkoutData.neighborhood);
+      if (neighborhood) {
+        deliveryFee = neighborhood.fee;
+      }
+    }
+
+    const total = subtotal + deliveryFee;
 
     console.log("🔍 DEBUG sendWhatsApp:");
     console.log("- miniSite.agent_id:", miniSite.agent_id);
@@ -560,6 +574,7 @@ const PublicMiniSite = () => {
             name: "",
             phone: "",
             address: "",
+            neighborhood: "",
             paymentMethod: "",
             observations: "",
           });
@@ -594,7 +609,14 @@ const PublicMiniSite = () => {
       message += line;
     });
 
-    message += `\n*Subtotal:* R$ ${total.toFixed(2)}`;
+    message += `\n*Subtotal:* R$ ${subtotal.toFixed(2)}`;
+    if (deliveryFee > 0) {
+      message += `\n*Taxa de Entrega:* R$ ${deliveryFee.toFixed(2)}`;
+      if (checkoutData.neighborhood) {
+        message += ` (${checkoutData.neighborhood})`;
+      }
+    }
+    message += `\n*TOTAL:* R$ ${total.toFixed(2)}`;
     message += `\n*Forma de Pagamento:* ${checkoutData.paymentMethod}`;
 
     if (checkoutData.observations) {
@@ -627,6 +649,7 @@ const PublicMiniSite = () => {
       name: "",
       phone: "",
       address: "",
+      neighborhood: "",
       paymentMethod: "",
       observations: "",
     });
@@ -1325,10 +1348,82 @@ const PublicMiniSite = () => {
                   ))}
                 </div>
 
+                {/* Delivery Fee Section */}
+                {miniSite.template === "delivery" && (miniSite.delivery_fee_type === "fixed" || miniSite.delivery_fee_type === "by_neighborhood") && (
+                  <div className="border-t pt-3 pb-3 mb-3">
+                    <h3 className="font-semibold text-sm mb-3" style={{ color: miniSite?.theme_color }}>Taxa de Entrega</h3>
+
+                    {miniSite.delivery_fee_type === "by_neighborhood" && miniSite.delivery_neighborhoods && miniSite.delivery_neighborhoods.length > 0 ? (
+                      <div className="grid gap-2">
+                        <Label htmlFor="cart-neighborhood" style={{ color: miniSite?.theme_color }}>Selecione seu bairro *</Label>
+                        <Select
+                          value={checkoutData.neighborhood}
+                          onValueChange={(value) => setCheckoutData({ ...checkoutData, neighborhood: value })}
+                        >
+                          <SelectTrigger id="cart-neighborhood">
+                            <SelectValue placeholder="Selecione o bairro" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {miniSite.delivery_neighborhoods.map((neighborhood) => (
+                              <SelectItem key={neighborhood.name} value={neighborhood.name}>
+                                {neighborhood.name} - R$ {neighborhood.fee.toFixed(2)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : miniSite.delivery_fee_type === "fixed" && miniSite.delivery_fee_value ? (
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: miniSite?.theme_color }}>Taxa fixa de entrega:</span>
+                        <span style={{ color: miniSite?.theme_color }}>R$ {miniSite.delivery_fee_value.toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
                 <div className="border-t pt-3 mb-4">
+                  <div className="flex justify-between text-sm mb-2" style={{ color: miniSite?.theme_color }}>
+                    <span>Subtotal</span>
+                    <span>R$ {totalPrice.toFixed(2)}</span>
+                  </div>
+
+                  {/* Show calculated delivery fee */}
+                  {miniSite.template === "delivery" && (() => {
+                    let deliveryFee = 0;
+                    if (miniSite.delivery_fee_type === "fixed" && miniSite.delivery_fee_value) {
+                      deliveryFee = miniSite.delivery_fee_value;
+                    } else if (miniSite.delivery_fee_type === "by_neighborhood" && checkoutData.neighborhood && miniSite.delivery_neighborhoods) {
+                      const neighborhood = miniSite.delivery_neighborhoods.find(n => n.name === checkoutData.neighborhood);
+                      if (neighborhood) {
+                        deliveryFee = neighborhood.fee;
+                      }
+                    }
+
+                    if (deliveryFee > 0 || miniSite.delivery_fee_type === "by_neighborhood") {
+                      return (
+                        <div className="flex justify-between text-sm mb-2" style={{ color: miniSite?.theme_color }}>
+                          <span>Taxa de Entrega{checkoutData.neighborhood ? ` (${checkoutData.neighborhood})` : ''}</span>
+                          <span>{deliveryFee > 0 ? `R$ ${deliveryFee.toFixed(2)}` : '-'}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   <div className="flex justify-between font-bold text-lg" style={{ color: miniSite?.theme_color }}>
                     <span>Total</span>
-                    <span>R$ {totalPrice.toFixed(2)}</span>
+                    <span>R$ {(() => {
+                      let deliveryFee = 0;
+                      if (miniSite.delivery_fee_type === "fixed" && miniSite.delivery_fee_value) {
+                        deliveryFee = miniSite.delivery_fee_value;
+                      } else if (miniSite.delivery_fee_type === "by_neighborhood" && checkoutData.neighborhood && miniSite.delivery_neighborhoods) {
+                        const neighborhood = miniSite.delivery_neighborhoods.find(n => n.name === checkoutData.neighborhood);
+                        if (neighborhood) {
+                          deliveryFee = neighborhood.fee;
+                        }
+                      }
+                      return (totalPrice + deliveryFee).toFixed(2);
+                    })()}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{totalItems} {totalItems === 1 ? "item" : "itens"}</p>
                 </div>
@@ -1502,8 +1597,61 @@ const PublicMiniSite = () => {
                 onChange={(e) =>
                   setCheckoutData({ ...checkoutData, address: e.target.value })
                 }
-                placeholder="Rua, número, bairro, cidade"
+                placeholder="Rua, número, complemento"
               />
+            </div>
+
+            {/* Campo de Bairro */}
+            <div className="grid gap-2">
+              <Label htmlFor="neighborhood" style={{ color: miniSite?.theme_color }}>
+                Bairro {miniSite.delivery_fee_type === "by_neighborhood" ? "*" : ""}
+              </Label>
+
+              {/* Se tem taxa por bairro E já selecionou no carrinho: mostrar como campo fixo (readonly) */}
+              {miniSite.delivery_fee_type === "by_neighborhood" && checkoutData.neighborhood ? (
+                <Input
+                  id="neighborhood"
+                  value={checkoutData.neighborhood}
+                  readOnly
+                  disabled
+                  className="bg-muted cursor-not-allowed"
+                />
+              ) : miniSite.delivery_fee_type === "by_neighborhood" && miniSite.delivery_neighborhoods && miniSite.delivery_neighborhoods.length > 0 ? (
+                /* Se tem taxa por bairro mas NÃO selecionou no carrinho: mostrar select */
+                <Select
+                  value={checkoutData.neighborhood}
+                  onValueChange={(value) =>
+                    setCheckoutData({ ...checkoutData, neighborhood: value })
+                  }
+                >
+                  <SelectTrigger id="neighborhood">
+                    <SelectValue placeholder="Selecione o bairro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {miniSite.delivery_neighborhoods.map((neighborhood) => (
+                      <SelectItem key={neighborhood.name} value={neighborhood.name}>
+                        {neighborhood.name} - R$ {neighborhood.fee.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                /* Se NÃO tem taxa por bairro OU é taxa fixa: campo editável */
+                <Input
+                  id="neighborhood"
+                  value={checkoutData.neighborhood}
+                  onChange={(e) =>
+                    setCheckoutData({ ...checkoutData, neighborhood: e.target.value })
+                  }
+                  placeholder="Digite seu bairro"
+                />
+              )}
+
+              {miniSite.delivery_fee_type === "by_neighborhood" && checkoutData.neighborhood && (
+                <p className="text-xs text-muted-foreground">
+                  Bairro selecionado no carrinho. Para alterar, volte ao carrinho.
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="payment" style={{ color: miniSite?.theme_color }}>Forma de Pagamento *</Label>
@@ -1552,7 +1700,8 @@ const PublicMiniSite = () => {
                 !checkoutData.phone ||
                 !checkoutData.address ||
                 !checkoutData.paymentMethod ||
-                !!phoneError
+                !!phoneError ||
+                (miniSite.delivery_fee_type === "by_neighborhood" && !checkoutData.neighborhood)
               }
             >
               <Phone className="h-4 w-4 mr-2" />
