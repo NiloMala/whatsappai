@@ -94,6 +94,9 @@ const PublicMiniSite = () => {
   
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [ordersModalOpen, setOrdersModalOpen] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     try {
@@ -212,6 +215,52 @@ const PublicMiniSite = () => {
 
     return () => subscription.unsubscribe();
   }, [miniSite]);
+
+  const handleOpenOrders = async () => {
+    if (!miniSite) {
+      toast({ title: 'Erro', description: 'Mini site não carregado.' });
+      return;
+    }
+    setOrdersLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = (user as any)?.id || null;
+      const localProfileRaw = typeof window !== 'undefined' ? localStorage.getItem('user_profile') : null;
+      const localProfile = localProfileRaw ? JSON.parse(localProfileRaw) : null;
+
+      const { data: dataOrders, error } = await supabase
+        .from('minisite_orders')
+        .select('*')
+        .eq('mini_site_id', miniSite.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('Erro ao buscar pedidos:', error);
+        toast({ title: 'Erro', description: 'Não foi possível buscar pedidos.' });
+        return;
+      }
+
+      const list = (dataOrders || []).filter((o: any) => {
+        if (uid && o.user_id === uid) return true;
+        if (localProfile && String(o.profile_id) === String(localProfile.id)) return true;
+        return false;
+      });
+
+      if (!list || list.length === 0) {
+        toast({ title: 'Nenhum pedido encontrado', description: 'Você não possui pedidos neste mini-site.' });
+        return;
+      }
+
+      setOrders(list);
+      setOrdersModalOpen(true);
+    } catch (e) {
+      console.error('handleOpenOrders erro:', e);
+      toast({ title: 'Erro', description: 'Erro ao carregar pedidos.' });
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
   const loadMiniSite = async () => {
     try {
@@ -368,6 +417,52 @@ const PublicMiniSite = () => {
     console.log("- miniSite.agent_id:", miniSite.agent_id);
     console.log("- Tem agente?", !!miniSite.agent_id);
 
+    // Before sending, persist the order in the DB so we always record it
+    let createdOrderId: string | null = null;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = (userData as any)?.user?.id || null;
+      const localProfileRaw = typeof window !== 'undefined' ? localStorage.getItem('user_profile') : null;
+      const localProfile = localProfileRaw ? JSON.parse(localProfileRaw) : null;
+
+      const orderRecord: any = {
+        mini_site_id: miniSite.id,
+        user_id: uid,
+        profile_id: localProfile?.id || null,
+        customer_name: checkoutData.name,
+        customer_phone: checkoutData.phone,
+        customer_address: checkoutData.address,
+        items: selectedItems.map(({ item, quantity, selectedOptions }) => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          quantity,
+          selectedOptions: selectedOptions || []
+        })),
+        total,
+        payment_method: checkoutData.paymentMethod,
+        status: 'pending'
+      };
+
+      try {
+        const { data: orderData, error: orderErr } = await supabase
+          .from('minisite_orders')
+          .insert(orderRecord)
+          .select('id')
+          .maybeSingle();
+        if (orderErr) {
+          console.warn('Não foi possível gravar pedido no DB:', orderErr);
+        } else if (orderData && (orderData as any).id) {
+          createdOrderId = (orderData as any).id;
+          try { localStorage.setItem(`last_order_${miniSite.id}`, String(createdOrderId)); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('Erro ao inserir pedido no DB:', e);
+      }
+    } catch (e) {
+      console.warn('Erro ao obter usuário/localProfile antes de gravar pedido:', e);
+    }
+
     // Se houver agente configurado, enviar via Edge Function
     if (miniSite.agent_id) {
       console.log("✅ Agente configurado! Enviando via Edge Function...");
@@ -387,6 +482,9 @@ const PublicMiniSite = () => {
           })),
           total
         };
+
+        // Include order id for server-side correlation if we created it above
+        if (createdOrderId) (orderData as any).orderId = createdOrderId;
 
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-minisite-order`,
@@ -792,7 +890,7 @@ const PublicMiniSite = () => {
     // If the client is already authenticated, show a simple profile view with logout
     if (isAuthenticated) {
       // Try to read stored profile for display
-      let localProfile: { id?: any; mini_site_id?: any; user_id?: any; email?: string } | null = null;
+      let localProfile: { id?: any; mini_site_id?: any; user_id?: any; email?: string; name?: string } | null = null;
       try {
         const raw = localStorage.getItem('user_profile');
         localProfile = raw ? JSON.parse(raw) : null;
@@ -949,7 +1047,7 @@ const PublicMiniSite = () => {
             </button>
 
             <button
-              onClick={() => navigate('/orders')}
+              onClick={() => handleOpenOrders()}
               className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
               style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
             >
@@ -1215,7 +1313,7 @@ const PublicMiniSite = () => {
             <ListIcon className="h-5 w-5" />
             <span>Pedidos</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
+          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => handleOpenOrders()} aria-label="Pedidos">
             <UserIcon className="h-5 w-5" />
             <span>Perfil</span>
           </button>
