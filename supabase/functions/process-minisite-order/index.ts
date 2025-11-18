@@ -67,15 +67,15 @@ serve(async (req) => {
       );
     }
 
-    // Buscar dados do agente e workflow
+    // Buscar dados do agente e webhook
     const { data: agent, error: agentError } = await supabase
       .from('agents')
-      .select('id, name, workflow_id')
+      .select('id, name, workflow_id, webhook_url')
       .eq('id', miniSite.agent_id)
       .single();
 
-    if (agentError || !agent || !agent.workflow_id) {
-      console.error('❌ Agente ou workflow não encontrado:', agentError);
+    if (agentError || !agent) {
+      console.error('❌ Agente não encontrado:', agentError);
       console.error('📊 Debug agent data:', { agent, agentError });
       return new Response(
         JSON.stringify({
@@ -87,9 +87,23 @@ serve(async (req) => {
       );
     }
 
+    // Validar se webhook_url ou workflow_id existe
+    if (!agent.webhook_url && !agent.workflow_id) {
+      console.warn('⚠️ Nenhum webhook configurado no agente');
+      return new Response(
+        JSON.stringify({
+          success: true,
+          directWhatsApp: true,
+          message: 'Webhook não configurado no agente'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
     console.log('✅ Agente encontrado:', {
       id: agent.id,
       name: agent.name,
+      webhook_url: agent.webhook_url,
       workflow_id: agent.workflow_id
     });
 
@@ -127,8 +141,8 @@ serve(async (req) => {
       }
     };
 
-    // Enviar para webhook do workflow n8n
-    const webhookUrl = `https://webhook.auroratech.tech/webhook/${agent.workflow_id}`;
+    // Construir URL do webhook: usar webhook_url se existir, senão construir a partir de workflow_id
+    const webhookUrl = agent.webhook_url || `https://webhook.auroratech.tech/webhook/${agent.workflow_id}`;
 
     console.log('🔗 Enviando para webhook:', webhookUrl);
     console.log('📦 Payload:', JSON.stringify(webhookPayload, null, 2));
