@@ -521,6 +521,7 @@ const PublicMiniSite = () => {
     // Se houver agente configurado, enviar via Edge Function
     if (miniSite.agent_id) {
       console.log("✅ Agente configurado! Enviando via Edge Function...");
+      console.log("🆔 Created Order ID:", createdOrderId);
       try {
         const orderData = {
           miniSiteSlug: resolvedSlug,
@@ -535,11 +536,11 @@ const PublicMiniSite = () => {
             price: item.price,
             selectedOptions: selectedOptions || []
           })),
-          total
+          total,
+          orderId: createdOrderId // Always include orderId
         };
 
-        // Include order id for server-side correlation if we created it above
-        if (createdOrderId) (orderData as any).orderId = createdOrderId;
+        console.log("📦 Order Data being sent:", orderData);
 
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-minisite-order`,

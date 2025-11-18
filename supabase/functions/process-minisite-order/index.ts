@@ -34,6 +34,7 @@ serve(async (req) => {
   try {
     const orderData: OrderData = await req.json();
     console.log('📦 Pedido recebido:', orderData);
+    console.log('🆔 Order ID recebido:', orderData.orderId);
 
     // Criar cliente Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -110,9 +111,14 @@ serve(async (req) => {
 
     // Gerar número de pedido único
     const orderNumber = Math.floor(Math.random() * 90000000) + 10000000;
+    console.log('🔢 Order Number gerado:', orderNumber);
 
     // Se o frontend enviou orderId, atualizar o registro com o order_number
     if (orderData.orderId) {
+      console.log('💾 Tentando atualizar order_number no banco...');
+      console.log('   - orderId:', orderData.orderId);
+      console.log('   - orderNumber:', orderNumber);
+      
       const { error: updateError } = await supabase
         .from('minisite_orders')
         .update({ order_number: orderNumber })
@@ -120,10 +126,15 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('⚠️ Erro ao atualizar order_number:', updateError);
+        console.error('   - Error code:', updateError.code);
+        console.error('   - Error message:', updateError.message);
+        console.error('   - Error details:', updateError.details);
         // Não bloquear o fluxo, apenas registrar o erro
       } else {
-        console.log('✅ Order number salvo:', orderNumber, 'para pedido:', orderData.orderId);
+        console.log('✅ Order number salvo com sucesso:', orderNumber, 'para pedido:', orderData.orderId);
       }
+    } else {
+      console.warn('⚠️ Nenhum orderId fornecido, order_number não será salvo no banco');
     }
 
     // Formatar mensagem do pedido para o agente processar
