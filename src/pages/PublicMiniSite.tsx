@@ -124,6 +124,58 @@ const PublicMiniSite = () => {
     loadMiniSite();
   }, [slug, resolvedSlug]);
 
+  // Claim a pending anonymous profile when the user authenticates.
+  const claimPendingProfile = async () => {
+    try {
+      const pending = typeof window !== 'undefined' ? localStorage.getItem('pending_profile_id') : null;
+      if (!pending) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = (user as any)?.id;
+      if (!uid) return;
+
+      // Only attempt to claim for the current mini site
+      const updateQuery = supabase
+        .from('minisite_profiles')
+        .update({ user_id: uid })
+        .eq('id', pending);
+
+      if (miniSite?.id) updateQuery.eq('mini_site_id', miniSite.id);
+
+      const { data, error } = await updateQuery.select('*').maybeSingle();
+      if (error) {
+        console.error('Erro ao linkar pending_profile:', error);
+        // If FK missing (users row not present yet), retry a few times
+        const isFK = (error as any)?.code === '23503' || (error as any)?.message?.includes('violates foreign key');
+        if (isFK) {
+          try {
+            const key = `pending_profile_attempts_${pending}`;
+            const raw = localStorage.getItem(key);
+            const attempts = raw ? parseInt(raw, 10) : 0;
+            if (attempts < 5) {
+              localStorage.setItem(key, String(attempts + 1));
+              // retry after 3 seconds
+              setTimeout(() => {
+                claimPendingProfile();
+              }, 3000);
+            }
+          } catch (e) {}
+        }
+        return;
+      }
+
+      // On success, remove pending flag and update local user_profile
+      try {
+        localStorage.removeItem('pending_profile_id');
+        localStorage.setItem('user_profile', JSON.stringify({ id: data?.id, mini_site_id: miniSite?.id || null, user_id: uid, name: data?.name || null, email: data?.email || null }));
+      } catch (e) {}
+
+      setIsAuthenticated(true);
+      toast({ title: 'Perfil vinculado', description: 'Seu perfil foi vinculado à conta.' });
+    } catch (e) {
+      console.error('claimPendingProfile erro:', e);
+    }
+  };
+
   // Salvar carrinho no localStorage sempre que mudar
   useEffect(() => {
     if (resolvedSlug) {
@@ -141,6 +193,25 @@ const PublicMiniSite = () => {
       setMobileCartVisible(selectedItems.length > 0);
     }
   }, [selectedItems, resolvedSlug]);
+
+  useEffect(() => {
+    // Try claiming pending profile on mount if session exists
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) await claimPendingProfile();
+      } catch (e) {}
+    })();
+
+    // Subscribe to auth state changes to claim when user signs in later
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        claimPendingProfile();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [miniSite]);
 
   const loadMiniSite = async () => {
     try {
@@ -524,13 +595,18 @@ const PublicMiniSite = () => {
           return;
         }
 
-        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id;
+        // Try to determine if the signUp produced an authenticated session.
+        // In Supabase, if email confirmation is required the session may be null
+        // and subsequent DB writes that rely on auth.uid() will be blocked by RLS (403).
+        const { data: sessionData } = await supabase.auth.getSession();
+        const hasSession = !!(sessionData && (sessionData as any).session);
 
-        // If signUp returns no user id (edge cases), try to proceed safely
+        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id || null;
+
+        // Build payload. Only include user_id if we have an authenticated session.
         const payload: any = {
           mini_site_id: miniSite.id,
           parent_profile_id: null,
-          user_id: userId || null,
           name: form.name || null,
           email: form.email || null,
           phone: form.phone || null,
@@ -538,6 +614,21 @@ const PublicMiniSite = () => {
           is_active: true,
         };
 
+        if (hasSession && userId) {
+          payload.user_id = userId;
+        } else {
+          // ensure we don't send an empty/falsy user_id which would fail RLS
+          try {
+            // remove property if present
+            if ((payload as any).user_id) delete (payload as any).user_id;
+          } catch (e) {}
+        }
+
+        // Attempt to insert profile. If there's a 403 it's likely due to RLS and
+        // missing authenticated session (email confirmation required) — handle gracefully.
+        try {
+          console.debug('Inserindo minisite_profiles payload (create):', payload, 'keys:', Object.keys(payload));
+        } catch (e) {}
         const { data, error } = await supabase
           .from('minisite_profiles')
           .insert(payload)
@@ -546,13 +637,54 @@ const PublicMiniSite = () => {
 
         if (error) {
           console.error('Erro ao criar perfil:', error);
+          // If this is a 403 from Supabase RLS or a FK constraint (user row not present), attempt fallback: insert without user_id
+          if (
+            (error as any)?.status === 403 ||
+            (error as any)?.code === '42501' ||
+            (error as any)?.message?.includes('row-level security') ||
+            (error as any)?.code === '23503' ||
+            (error as any)?.message?.includes('violates foreign key')
+          ) {
+            try {
+              console.debug('Tentando fallback: inserir minisite_profiles sem user_id');
+            } catch (e) {}
+              try {
+                const fallbackPayload: any = { ...payload };
+                try { delete fallbackPayload.user_id; } catch (e) {}
+                const { data: fallback, error: fbErr } = await supabase
+                  .from('minisite_profiles')
+                  .insert(fallbackPayload)
+                  .select('*')
+                  .maybeSingle();
+              if (fbErr) {
+                console.error('Erro no fallback ao criar perfil:', fbErr);
+                setProfileError(fbErr.message || 'Erro ao criar perfil');
+                return;
+              }
+              try {
+                localStorage.setItem('pending_profile_id', String(fallback?.id));
+              } catch (e) {}
+              try {
+                localStorage.setItem('user_profile', JSON.stringify({ id: fallback?.id, mini_site_id: miniSite.id, user_id: null, name: fallback?.name || form.name || null, email: fallback?.email || form.email || null }));
+              } catch (e) {}
+              setIsAuthenticated(!!hasSession);
+              setProfileModalOpen(false);
+              toast({ title: 'Perfil criado', description: 'Seu perfil foi criado (aguardando confirmação).' });
+              return;
+            } catch (e) {
+              console.error('Erro no fallback (catch):', e);
+              setProfileError('Erro ao criar perfil');
+              return;
+            }
+          }
+
           setProfileError(error.message || 'Erro ao criar perfil');
           return;
         }
 
         // Persist minimal profile info locally
         try {
-          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id, user_id: userId }));
+          localStorage.setItem('user_profile', JSON.stringify({ id: data.id, mini_site_id: miniSite.id, user_id: userId, name: data?.name || form.name || null, email: data?.email || form.email || null }));
         } catch (e) {}
         setIsAuthenticated(true);
         setProfileModalOpen(false);
@@ -576,38 +708,79 @@ const PublicMiniSite = () => {
           return;
         }
 
-        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id;
+        const userId = (signData && (signData.user as any)?.id) || (signData as any)?.user?.id || null;
+
+        // Ensure session is established before performing DB writes that rely on auth.uid()
+        const { data: sessionData } = await supabase.auth.getSession();
+        const hasSession = !!(sessionData && (sessionData as any).session);
 
         // Try to find an existing minisite_profiles row linked to this user and minisite
-        const { data: profileData, error: profileError } = await supabase
-          .from('minisite_profiles')
-          .select('*')
-          .eq('mini_site_id', miniSite.id)
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error('Erro ao buscar perfil:', profileError);
+        let profileRow: any = null;
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('minisite_profiles')
+            .select('*')
+            .eq('mini_site_id', miniSite.id)
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (profileError) {
+            console.error('Erro ao buscar perfil:', profileError);
+          } else {
+            profileRow = profileData;
+          }
+        } catch (e) {
+          console.error('Erro ao buscar perfil (catch):', e);
         }
 
-        let profileRow = profileData;
         if (!profileRow) {
-          // create a minimal profile row for this mini-site
+          // Build payload. If we don't have a session yet, omit user_id to avoid RLS failures.
+          const payload: any = { mini_site_id: miniSite.id, email: form.email || null, phone: form.phone || null, name: null };
+          if (hasSession && userId) payload.user_id = userId;
+
           const { data: created, error: createErr } = await supabase
             .from('minisite_profiles')
-            .insert({ mini_site_id: miniSite.id, user_id: userId, email: form.email || null, phone: form.phone || null, name: null })
+            .insert(payload)
             .select('*')
             .maybeSingle();
-          if (createErr) {
+
+            if (createErr) {
             console.error('Erro ao criar perfil automático:', createErr);
+            // If this is an RLS-related error or FK missing (users row not ready), attempt fallback: insert without user_id
+            if (
+              (createErr as any)?.code === '42501' ||
+              (createErr as any)?.message?.includes('row-level security') ||
+              (createErr as any)?.code === '23503' ||
+              (createErr as any)?.message?.includes('violates foreign key')
+            ) {
+              try {
+                const { data: fallback, error: fbErr } = await supabase
+                  .from('minisite_profiles')
+                  .insert({ mini_site_id: miniSite.id, email: form.email || null, phone: form.phone || null, name: null })
+                  .select('*')
+                  .maybeSingle();
+                if (fbErr) {
+                  console.error('Erro no fallback ao criar perfil:', fbErr);
+                } else {
+                  profileRow = fallback;
+                  try {
+                    localStorage.setItem('pending_profile_id', String(fallback?.id));
+                    // Save some profile info locally so we can show the name/email in the UI
+                    localStorage.setItem('user_profile', JSON.stringify({ id: fallback?.id, mini_site_id: miniSite.id, user_id: null, name: fallback?.name || form.name || null, email: fallback?.email || form.email || null }));
+                  } catch (e) {}
+                }
+              } catch (e) {
+                console.error('Erro no fallback (catch):', e);
+              }
+            }
           } else {
             profileRow = created;
           }
         }
 
         try {
-          localStorage.setItem('user_profile', JSON.stringify({ id: profileRow?.id || null, mini_site_id: miniSite.id, user_id: userId }));
+          localStorage.setItem('user_profile', JSON.stringify({ id: profileRow?.id || null, mini_site_id: miniSite.id, user_id: userId, name: profileRow?.name || form.name || null, email: profileRow?.email || form.email || null }));
         } catch (e) {}
+
         setIsAuthenticated(true);
         setProfileModalOpen(false);
         toast({ title: 'Bem vindo', description: 'Você entrou com sucesso.' });
@@ -615,6 +788,43 @@ const PublicMiniSite = () => {
         setLoadingProfile(false);
       }
     };
+
+    // If the client is already authenticated, show a simple profile view with logout
+    if (isAuthenticated) {
+      // Try to read stored profile for display
+      let localProfile: { id?: any; mini_site_id?: any; user_id?: any; email?: string } | null = null;
+      try {
+        const raw = localStorage.getItem('user_profile');
+        localProfile = raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        localProfile = null;
+      }
+
+      const handleSignOut = async () => {
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn('Erro ao deslogar do supabase', e);
+        }
+        try { localStorage.removeItem('user_profile'); } catch (e) {}
+        setIsAuthenticated(false);
+        setProfileModalOpen(false);
+        toast({ title: 'Desconectado', description: 'Você saiu da sua conta.' });
+      };
+
+      return (
+        <div className="py-4">
+          <div className="mb-3">
+            <p className="font-medium">Conectado</p>
+            {localProfile?.name && <p className="text-sm text-muted-foreground">Perfil Nome: {localProfile.name}</p>}
+            {localProfile?.email && <p className="text-sm text-muted-foreground">{localProfile.email}</p>}
+          </div>
+          <div>
+            <Button className="w-full" variant="destructive" onClick={handleSignOut}>Desconectar</Button>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="py-2">
@@ -725,6 +935,36 @@ const PublicMiniSite = () => {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Desktop top-right menu: Home / Pedidos / Perfil (fixed while scrolling) */}
+          <div className="hidden md:flex fixed top-6 right-6 items-center gap-2 z-50">
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }}
+            >
+              <HomeIcon className="h-4 w-4" />
+              <span>Home</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/orders')}
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
+            >
+              <ListIcon className="h-4 w-4" />
+              <span>Pedidos</span>
+            </button>
+
+            <button
+              onClick={() => setProfileModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
+            >
+              <UserIcon className="h-4 w-4" />
+              <span>Perfil</span>
+            </button>
           </div>
         </div>
       ) : null}
@@ -882,7 +1122,7 @@ const PublicMiniSite = () => {
       {/* Floating cart pill + cart modal */}
       {selectedItems.length > 0 && (
         <>
-              <div className="hidden md:block fixed bottom-4 right-4 md:top-6 md:right-6 md:bottom-auto z-50">
+              <div className="hidden md:block fixed bottom-4 right-4 md:top-20 md:right-6 md:bottom-auto z-50">
                 <button
                   onClick={() => setCartOpen(true)}
                   className="inline-flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-sm touch-manipulation"
