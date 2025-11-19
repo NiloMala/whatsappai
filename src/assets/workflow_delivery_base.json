@@ -1,0 +1,170 @@
+{
+  "name": "Delivery Agent - Mini Site",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delivery-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "id": "webhook-node",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "customer-name",
+              "name": "customerName",
+              "value": "={{ $json.body.data.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "customer-phone",
+              "name": "customerPhone",
+              "value": "={{ $json.body.data.key.remoteJid.split('@')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "message",
+              "name": "message",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "order-number",
+              "name": "orderNumber",
+              "value": "={{ $json.body.data.key.id.match(/ORDER_(\\d+)_/)?.[1] || '' }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 0],
+      "id": "extract-data",
+      "name": "Extract Data"
+    },
+    {
+      "parameters": {
+        "resource": "rows",
+        "operation": "get",
+        "tableId": "minisite_orders",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "order_number",
+              "condition": "eq",
+              "keyValue": "={{ $json.orderNumber }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [400, 0],
+      "id": "get-order",
+      "name": "Get Order"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "options": {
+          "temperature": 0.7,
+          "systemMessage": "=Você é um assistente virtual de delivery para {{ $('Get Order').item.json.mini_sites.name }}.\n\nHoje é {{ $now.toFormat('EEEE, dd/MM/yyyy HH:mm') }} (horário de Brasília, UTC−03:00).\n\nPEDIDO ATUAL:\n- Número: #{{ $json.orderNumber }}\n- Cliente: {{ $json.customerName }}\n- Status: {{ $('Get Order').item.json.status }}\n- Total: R$ {{ $('Get Order').item.json.total_amount }}\n- Itens: {{ $('Get Order').item.json.items }}\n\nSUA FUNÇÃO:\n1. Confirmar pedidos recebidos\n2. Informar status de preparação\n3. Avisar quando o pedido sair para entrega\n4. Confirmar entrega\n5. Responder dúvidas sobre o pedido\n\nRESPOSTAS AUTOMÁTICAS POR STATUS:\n- pending: \"Olá {{ $json.customerName }}! Recebemos seu pedido #{{ $json.orderNumber }} no valor de R$ {{ $('Get Order').item.json.total_amount }}. Estamos verificando e em breve confirmaremos. ⏳\"\n- processing: \"Seu pedido #{{ $json.orderNumber }} foi aceito e está sendo preparado com carinho! 👨‍🍳\"\n- out_for_delivery: \"Seu pedido #{{ $json.orderNumber }} saiu para entrega! O entregador está a caminho. 🛵\"\n- delivered: \"Pedido #{{ $json.orderNumber }} entregue! Bom apetite! 😋\"\n- completed: \"Obrigado por escolher {{ $('Get Order').item.json.mini_sites.name }}! Esperamos você novamente. ❤️\"\n- cancelled: \"Infelizmente seu pedido #{{ $json.orderNumber }} foi cancelado. Entre em contato conosco para mais informações. 😔\"\n\nUSE ESSAS FERRAMENTAS:\n- \"Atualizar Status do Pedido\": Para mudar o status do pedido\n- \"Buscar Informações do Pedido\": Para consultar detalhes\n\nSeja sempre cordial, objetivo e use emojis para deixar a conversa mais amigável!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [600, -100],
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-cred",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "={{ $('OpenAI Chat Model').item.json.options.systemMessage }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [600, 0],
+      "id": "ai-agent",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "resource": "rows",
+        "operation": "update",
+        "tableId": "minisite_orders",
+        "filterType": "manual",
+        "matchFields": "order_number",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.newStatus }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [800, -100],
+      "id": "update-order-status",
+      "name": "Atualizar Status do Pedido",
+      "description": "Atualiza o status do pedido no banco de dados"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendText",
+        "instanceName": "={{ $('Extract Data').item.json.instanceName }}",
+        "remoteJid": "={{ $('Extract Data').item.json.customerPhone }}@s.whatsapp.net",
+        "textMessage": "={{ $json.output }}"
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [800, 0],
+      "id": "send-response",
+      "name": "Send WhatsApp Response",
+      "credentials": {
+        "evolutionApi": {
+          "id": "evolution-cred",
+          "name": "Evolution API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Extract Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Data": {
+      "main": [[{ "node": "Get Order", "type": "main", "index": 0 }]]
+    },
+    "Get Order": {
+      "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "AI Agent": {
+      "main": [[{ "node": "Send WhatsApp Response", "type": "main", "index": 0 }]]
+    }
+  }
+}
