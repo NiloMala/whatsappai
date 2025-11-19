@@ -1,12 +1,13 @@
-import deliveryWorkflowTemplate from '@/assets/workflow_delivery_base.json';
+import workflowBaseTemplate from '@/assets/workflow_base.json';
+import { DELIVERY_SYSTEM_PROMPT_TEMPLATE } from './deliveryWorkflowInstructions';
 
 interface DeliveryWorkflowConfig {
   miniSiteId: string;
   miniSiteName: string;
   instanceName: string;
+  whatsappNumber: string;
   webhookUrl: string;
-  openaiApiKey?: string;
-  evolutionApiKey?: string;
+  userId: string;
 }
 
 interface WorkflowNode {
@@ -33,28 +34,34 @@ interface Workflow {
 
 export class DeliveryWorkflowGenerator {
   private workflow: Workflow;
+  private config: DeliveryWorkflowConfig;
 
-  constructor() {
-    this.workflow = JSON.parse(JSON.stringify(deliveryWorkflowTemplate));
+  constructor(config: DeliveryWorkflowConfig) {
+    // Usa workflow_base como template (já tem Redis, bloqueio, etc)
+    this.workflow = JSON.parse(JSON.stringify(workflowBaseTemplate));
+    this.config = config;
   }
 
   /**
-   * Gera um workflow completo para delivery
+   * Gera um workflow completo para delivery baseado no workflow_base
    */
   public static generate(config: DeliveryWorkflowConfig): { workflow: any; webhookPath: string } {
-    const generator = new DeliveryWorkflowGenerator();
+    const generator = new DeliveryWorkflowGenerator(config);
 
     // Configurar webhook
     const webhookPath = generator.updateWebhook(config.webhookUrl);
 
-    // Configurar AI Model
-    generator.updateAIModel(config.miniSiteName);
+    // Atualizar System Prompt para delivery
+    generator.updateSystemPromptForDelivery();
+
+    // Atualizar user_id
+    generator.updateUserId(config.userId);
 
     // Configurar Evolution API
     generator.updateEvolutionApi(config.instanceName);
 
-    // Configurar Supabase para buscar pedidos
-    generator.updateSupabaseQueries(config.miniSiteId);
+    // Adicionar queries de pedidos
+    generator.addOrderQueries();
 
     // Gerar IDs únicos
     generator.regenerateNodeIds();
@@ -63,6 +70,128 @@ export class DeliveryWorkflowGenerator {
       workflow: generator.getWorkflow(),
       webhookPath
     };
+  }
+
+  /**
+   * Atualiza o System Prompt do AI Agent para delivery
+   */
+  private updateSystemPromptForDelivery(): void {
+    const aiAgentNode = this.workflow.nodes.find(n => n.name === 'AI Agent');
+    
+    if (aiAgentNode && aiAgentNode.parameters?.options) {
+      // Substituir placeholders no template
+      let prompt = DELIVERY_SYSTEM_PROMPT_TEMPLATE
+        .replace(/{{MINI_SITE_NAME}}/g, this.config.miniSiteName)
+        .replace(/{{WHATSAPP_NUMBER}}/g, this.config.whatsappNumber);
+      
+      aiAgentNode.parameters.options.systemMessage = prompt;
+    }
+  }
+
+  /**
+   * Atualiza user_id no Edit Fields
+   */
+  private updateUserId(userId: string): void {
+    const editFieldsNode = this.workflow.nodes.find(n => n.name === 'Edit Fields');
+    
+    if (editFieldsNode && editFieldsNode.parameters?.assignments?.assignments) {
+      const userIdAssignment = editFieldsNode.parameters.assignments.assignments.find(
+        (a: any) => a.name === 'user_id'
+      );
+      if (userIdAssignment) {
+        userIdAssignment.value = userId;
+      }
+    }
+  }
+
+  /**
+   * Adiciona Tools de consulta de pedidos ao workflow
+   */
+  private addOrderQueries(): void {
+    // Buscar nó AI Agent para conectar as tools
+    const aiAgentNode = this.workflow.nodes.find(n => n.name === 'AI Agent');
+    if (!aiAgentNode) return;
+
+    // Adicionar Supabase Tool: Buscar Pedidos do Cliente
+    const searchOrdersTool: WorkflowNode = {
+      id: this.generateUUID(),
+      name: 'Buscar Pedidos do Cliente',
+      type: 'n8n-nodes-base.supabaseTool',
+      typeVersion: 1,
+      position: [aiAgentNode.position[0] + 200, aiAgentNode.position[1] - 200] as [number, number],
+      parameters: {
+        operation: 'getMany',
+        tableId: 'minisite_orders',
+        filters: {
+          conditions: [
+            {
+              keyName: 'customer_phone',
+              condition: 'eq',
+              keyValue: "={{ $('Edit Fields').item.json.Telefone }}"
+            },
+            {
+              keyName: 'mini_site_id',
+              condition: 'eq',
+              keyValue: this.config.miniSiteId
+            }
+          ]
+        },
+        returnAll: false,
+        limit: 10,
+        sort: {
+          fields: [{ field: 'created_at', direction: 'DESC' }]
+        }
+      },
+      credentials: {
+        supabaseApi: {
+          id: 'sQw0N1EVFGS7nGKf',
+          name: 'whatsappai'
+        }
+      }
+    };
+
+    // Adicionar Supabase Tool: Buscar Pedido por Número
+    const searchByNumberTool: WorkflowNode = {
+      id: this.generateUUID(),
+      name: 'Buscar Pedido por Número',
+      type: 'n8n-nodes-base.supabaseTool',
+      typeVersion: 1,
+      position: [aiAgentNode.position[0] + 200, aiAgentNode.position[1]] as [number, number],
+      parameters: {
+        operation: 'get',
+        tableId: 'minisite_orders',
+        filters: {
+          conditions: [
+            {
+              keyName: 'order_number',
+              condition: 'eq',
+              keyValue: '={{ $json.orderNumber }}'
+            },
+            {
+              keyName: 'mini_site_id',
+              condition: 'eq',
+              keyValue: this.config.miniSiteId
+            }
+          ]
+        }
+      },
+      credentials: {
+        supabaseApi: {
+          id: 'sQw0N1EVFGS7nGKf',
+          name: 'whatsappai'
+        }
+      }
+    };
+
+    this.workflow.nodes.push(searchOrdersTool, searchByNumberTool);
+
+    // Conectar tools ao AI Agent
+    if (!this.workflow.connections[searchOrdersTool.name]) {
+      this.workflow.connections[searchOrdersTool.name] = {};
+    }
+    if (!this.workflow.connections[searchByNumberTool.name]) {
+      this.workflow.connections[searchByNumberTool.name] = {};
+    }
   }
 
   /**
@@ -81,54 +210,16 @@ export class DeliveryWorkflowGenerator {
   }
 
   /**
-   * Atualiza o modelo de IA com o nome do mini site
-   */
-  private updateAIModel(miniSiteName: string): void {
-    const aiModelNode = this.workflow.nodes.find(n => n.name === 'OpenAI Chat Model');
-    
-    if (aiModelNode && aiModelNode.parameters?.options) {
-      // O systemMessage já tem placeholders que serão substituídos em runtime
-      // Apenas garantimos que está configurado corretamente
-      aiModelNode.parameters.options.temperature = 0.7;
-    }
-  }
-
-  /**
    * Atualiza a configuração da Evolution API
    */
   private updateEvolutionApi(instanceName: string): void {
-    const evolutionNode = this.workflow.nodes.find(n => n.type === 'n8n-nodes-evolution-api.evolutionApi');
-    
-    if (evolutionNode && evolutionNode.parameters) {
-      evolutionNode.parameters.instanceName = instanceName;
-    }
-  }
-
-  /**
-   * Atualiza queries do Supabase para filtrar por mini_site_id
-   */
-  private updateSupabaseQueries(miniSiteId: string): void {
-    const supabaseNode = this.workflow.nodes.find(n => 
-      n.name === 'Get Order' && n.type === 'n8n-nodes-base.supabase'
-    );
-    
-    if (supabaseNode && supabaseNode.parameters) {
-      // Adicionar filtro por mini_site_id
-      if (!supabaseNode.parameters.filters) {
-        supabaseNode.parameters.filters = { conditions: [] };
+    this.workflow.nodes.forEach(node => {
+      if (node.type === 'n8n-nodes-evolution-api.evolutionApi' || node.name.includes('Evolution API')) {
+        if (node.parameters) {
+          node.parameters.instanceName = instanceName;
+        }
       }
-      
-      if (!supabaseNode.parameters.filters.conditions) {
-        supabaseNode.parameters.filters.conditions = [];
-      }
-      
-      // Adicionar condição de mini_site_id
-      supabaseNode.parameters.filters.conditions.push({
-        keyName: 'mini_site_id',
-        condition: 'eq',
-        keyValue: miniSiteId
-      });
-    }
+    });
   }
 
   /**

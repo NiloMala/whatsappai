@@ -9,6 +9,7 @@ const corsHeaders = {
 interface CreateDeliveryAgentRequest {
   miniSiteId: string;
   miniSiteName: string;
+  whatsappNumber: string;
   userId: string;
   instanceName: string;
 }
@@ -19,9 +20,9 @@ serve(async (req) => {
   }
 
   try {
-    const { miniSiteId, miniSiteName, userId, instanceName }: CreateDeliveryAgentRequest = await req.json();
+    const { miniSiteId, miniSiteName, whatsappNumber, userId, instanceName }: CreateDeliveryAgentRequest = await req.json();
 
-    console.log('📦 Criando agente de delivery:', { miniSiteId, miniSiteName, userId, instanceName });
+    console.log('📦 Criando agente de delivery:', { miniSiteId, miniSiteName, whatsappNumber, userId, instanceName });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -68,6 +69,7 @@ Seja sempre cordial e use emojis para deixar a conversa amigável! 😊`,
         userId: userId,
         miniSiteId: miniSiteId,
         miniSiteName: miniSiteName,
+        whatsappNumber: whatsappNumber,
         instanceName: instanceName,
         workflowType: 'delivery' // Indica que é workflow de delivery
       }

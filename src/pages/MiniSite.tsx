@@ -48,6 +48,7 @@ const MiniSitePage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingAgent, setCreatingAgent] = useState(false);
   const [miniSite, setMiniSite] = useState<MiniSite | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
@@ -258,6 +259,86 @@ const MiniSitePage = () => {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateDeliveryAgent = async () => {
+    if (!miniSite) {
+      toast({
+        title: "Erro",
+        description: "Mini site não encontrado. Salve o mini site primeiro.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.whatsapp_number) {
+      toast({
+        title: "Erro",
+        description: "Configure o número do WhatsApp antes de criar o agente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setCreatingAgent(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Chamar Edge Function para criar agente
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-delivery-agent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            miniSiteId: miniSite.id,
+            miniSiteName: formData.name,
+            whatsappNumber: formData.whatsapp_number,
+            userId: user.id,
+            instanceName: formData.whatsapp_number.replace(/\D/g, '') // Usar número como instance name
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao criar agente');
+      }
+
+      toast({
+        title: "Agente Criado!",
+        description: "Agente de delivery criado e vinculado ao mini site com sucesso. 🤖",
+      });
+
+      // Recarregar dados
+      await loadMiniSite();
+      
+      // Recarregar lista de agentes
+      const { data: agentsList } = await supabase
+        .from("agents")
+        .select("id, name")
+        .eq("user_id", user.id);
+      
+      if (agentsList) {
+        setAgents(agentsList);
+      }
+
+    } catch (error: any) {
+      console.error("Erro ao criar agente:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível criar o agente.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingAgent(false);
     }
   };
 
@@ -594,26 +675,45 @@ const MiniSitePage = () => {
             {formData.template === "delivery" && (
               <div className="space-y-2">
                 <Label htmlFor="agent">Agente IA para Pedidos</Label>
-                <Select
-                  value={formData.agent_id || "none"}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, agent_id: value === "none" ? null : value })
-                  }
-                >
-                  <SelectTrigger id="agent">
-                    <SelectValue placeholder="Selecione um agente (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
-                    {agents.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.agent_id || "none"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, agent_id: value === "none" ? null : value })
+                    }
+                    disabled={creatingAgent}
+                  >
+                    <SelectTrigger id="agent" className="flex-1">
+                      <SelectValue placeholder="Selecione um agente (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
+                      {agents.map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button
+                    type="button"
+                    onClick={handleCreateDeliveryAgent}
+                    disabled={!miniSite || creatingAgent || !formData.whatsapp_number}
+                    variant="outline"
+                    className="whitespace-nowrap"
+                  >
+                    {creatingAgent ? (
+                      <>⏳ Criando...</>
+                    ) : (
+                      <>🤖 Criar Agente</>
+                    )}
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Selecione um agente IA para processar os pedidos e enviar mensagens formatadas. Se não selecionar, o pedido será enviado diretamente ao WhatsApp.
+                  {miniSite 
+                    ? "Cria um agente IA completo com workflow de delivery automaticamente. Inclui: confirmação de pedidos, consulta de status, intervenção humana e bloqueio temporário."
+                    : "Salve o mini site primeiro para criar um agente automático."}
                 </p>
               </div>
             )}
