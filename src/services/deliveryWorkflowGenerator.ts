@@ -1,4 +1,4 @@
-import workflowBaseTemplate from '@/assets/workflow_base.json';
+import workflowDeliveryClean from '@/assets/workflow_delivery_clean.json';
 import { DELIVERY_SYSTEM_PROMPT_TEMPLATE } from './deliveryWorkflowInstructions';
 
 interface DeliveryWorkflowConfig {
@@ -18,12 +18,15 @@ interface WorkflowNode {
   position: [number, number];
   parameters?: any;
   credentials?: any;
+  webhookId?: string;
 }
 
 interface WorkflowConnection {
   [key: string]: {
     main?: Array<Array<{ node: string; type: string; index: number }>>;
     ai_languageModel?: Array<Array<{ node: string; type: string; index: number }>>;
+    ai_tool?: Array<Array<{ node: string; type: string; index: number }>>;
+    ai_memory?: Array<Array<{ node: string; type: string; index: number }>>;
   };
 }
 
@@ -37,8 +40,8 @@ export class DeliveryWorkflowGenerator {
   private config: DeliveryWorkflowConfig;
 
   constructor(config: DeliveryWorkflowConfig) {
-    // Usa workflow_base como template (já tem Redis, bloqueio, etc)
-    this.workflow = JSON.parse(JSON.stringify(workflowBaseTemplate));
+    // Usa workflow_delivery_clean como template
+    this.workflow = JSON.parse(JSON.stringify(workflowDeliveryClean));
     this.config = config;
   }
 
@@ -60,10 +63,10 @@ export class DeliveryWorkflowGenerator {
     // Configurar Evolution API
     generator.updateEvolutionApi(config.instanceName);
 
-    // Adicionar queries de pedidos
-    generator.addOrderQueries();
+    // Adicionar queries de pedidos (mantém conexões)
+    generator.addOrderQueriesTools();
 
-    // Gerar IDs únicos
+    // Gerar IDs únicos (mantém conexões)
     generator.regenerateNodeIds();
 
     return {
@@ -105,92 +108,133 @@ export class DeliveryWorkflowGenerator {
   }
 
   /**
-   * Adiciona Tools de consulta de pedidos ao workflow
+   * Adiciona Tools de consulta de pedidos ao workflow (mantendo conexões)
    */
-  private addOrderQueries(): void {
-    // Buscar nó AI Agent para conectar as tools
+  private addOrderQueriesTools(): void {
     const aiAgentNode = this.workflow.nodes.find(n => n.name === 'AI Agent');
     if (!aiAgentNode) return;
 
-    // Adicionar Supabase Tool: Buscar Pedidos do Cliente
-    const searchOrdersTool: WorkflowNode = {
-      id: this.generateUUID(),
-      name: 'Buscar Pedidos do Cliente',
-      type: 'n8n-nodes-base.supabaseTool',
-      typeVersion: 1,
-      position: [aiAgentNode.position[0] + 200, aiAgentNode.position[1] - 200] as [number, number],
-      parameters: {
-        operation: 'getMany',
-        tableId: 'minisite_orders',
-        filters: {
-          conditions: [
-            {
-              keyName: 'customer_phone',
-              condition: 'eq',
-              keyValue: "={{ $('Edit Fields').item.json.Telefone }}"
-            },
-            {
-              keyName: 'mini_site_id',
-              condition: 'eq',
-              keyValue: this.config.miniSiteId
-            }
-          ]
+    // Verificar se já existem os nós de pedidos
+    let searchOrdersNode = this.workflow.nodes.find(n => n.name === 'Buscar Pedidos do Cliente');
+    let searchByNumberNode = this.workflow.nodes.find(n => n.name === 'Buscar Pedido por Número');
+
+    // Se não existirem, criar
+    if (!searchOrdersNode) {
+      searchOrdersNode = {
+        id: this.generateUUID(),
+        name: 'Buscar Pedidos do Cliente',
+        type: 'n8n-nodes-base.supabaseTool',
+        typeVersion: 1,
+        position: [1776, 592] as [number, number],
+        parameters: {
+          operation: 'getMany',
+          tableId: 'minisite_orders',
+          filters: {
+            conditions: [
+              {
+                keyName: 'customer_phone',
+                condition: 'eq',
+                keyValue: "={{ $('Edit Fields').item.json.Telefone }}"
+              },
+              {
+                keyName: 'mini_site_id',
+                condition: 'eq',
+                keyValue: this.config.miniSiteId
+              }
+            ]
+          },
+          returnAll: false,
+          limit: 10,
+          sort: {
+            fields: [{ field: 'created_at', direction: 'DESC' }]
+          }
         },
-        returnAll: false,
-        limit: 10,
-        sort: {
-          fields: [{ field: 'created_at', direction: 'DESC' }]
+        credentials: {
+          supabaseApi: {
+            id: 'sQw0N1EVFGS7nGKf',
+            name: 'whatsappai'
+          }
         }
-      },
-      credentials: {
-        supabaseApi: {
-          id: 'sQw0N1EVFGS7nGKf',
-          name: 'whatsappai'
-        }
-      }
-    };
-
-    // Adicionar Supabase Tool: Buscar Pedido por Número
-    const searchByNumberTool: WorkflowNode = {
-      id: this.generateUUID(),
-      name: 'Buscar Pedido por Número',
-      type: 'n8n-nodes-base.supabaseTool',
-      typeVersion: 1,
-      position: [aiAgentNode.position[0] + 200, aiAgentNode.position[1]] as [number, number],
-      parameters: {
-        operation: 'get',
-        tableId: 'minisite_orders',
-        filters: {
-          conditions: [
-            {
-              keyName: 'order_number',
-              condition: 'eq',
-              keyValue: '={{ $json.orderNumber }}'
-            },
-            {
-              keyName: 'mini_site_id',
-              condition: 'eq',
-              keyValue: this.config.miniSiteId
-            }
-          ]
-        }
-      },
-      credentials: {
-        supabaseApi: {
-          id: 'sQw0N1EVFGS7nGKf',
-          name: 'whatsappai'
+      };
+      this.workflow.nodes.push(searchOrdersNode);
+    } else {
+      // Atualizar mini_site_id
+      if (searchOrdersNode.parameters?.filters?.conditions) {
+        const miniSiteCondition = searchOrdersNode.parameters.filters.conditions.find(
+          (c: any) => c.keyName === 'mini_site_id'
+        );
+        if (miniSiteCondition) {
+          miniSiteCondition.keyValue = this.config.miniSiteId;
         }
       }
-    };
-
-    this.workflow.nodes.push(searchOrdersTool, searchByNumberTool);
-
-    // Conectar tools ao AI Agent
-    if (!this.workflow.connections[searchOrdersTool.name]) {
-      this.workflow.connections[searchOrdersTool.name] = {};
     }
-    if (!this.workflow.connections[searchByNumberTool.name]) {
-      this.workflow.connections[searchByNumberTool.name] = {};
+
+    if (!searchByNumberNode) {
+      searchByNumberNode = {
+        id: this.generateUUID(),
+        name: 'Buscar Pedido por Número',
+        type: 'n8n-nodes-base.supabaseTool',
+        typeVersion: 1,
+        position: [1600, 592] as [number, number],
+        parameters: {
+          operation: 'get',
+          tableId: 'minisite_orders',
+          filters: {
+            conditions: [
+              {
+                keyName: 'order_number',
+                condition: 'eq',
+                keyValue: '={{ $json.orderNumber }}'
+              },
+              {
+                keyName: 'mini_site_id',
+                condition: 'eq',
+                keyValue: this.config.miniSiteId
+              }
+            ]
+          }
+        },
+        credentials: {
+          supabaseApi: {
+            id: 'sQw0N1EVFGS7nGKf',
+            name: 'whatsappai'
+          }
+        }
+      };
+      this.workflow.nodes.push(searchByNumberNode);
+    } else {
+      // Atualizar mini_site_id
+      if (searchByNumberNode.parameters?.filters?.conditions) {
+        const miniSiteCondition = searchByNumberNode.parameters.filters.conditions.find(
+          (c: any) => c.keyName === 'mini_site_id'
+        );
+        if (miniSiteCondition) {
+          miniSiteCondition.keyValue = this.config.miniSiteId;
+        }
+      }
+    }
+
+    // Garantir conexões ai_tool (se não existirem)
+    if (!this.workflow.connections[searchOrdersNode.name]) {
+      this.workflow.connections[searchOrdersNode.name] = {};
+    }
+    if (!this.workflow.connections[searchOrdersNode.name].ai_tool) {
+      this.workflow.connections[searchOrdersNode.name].ai_tool = [[{
+        node: aiAgentNode.name,
+        type: 'ai_tool',
+        index: 0
+      }]];
+    }
+
+    if (!this.workflow.connections[searchByNumberNode.name]) {
+      this.workflow.connections[searchByNumberNode.name] = {};
+    }
+    if (!this.workflow.connections[searchByNumberNode.name].ai_tool) {
+      this.workflow.connections[searchByNumberNode.name].ai_tool = [[{
+        node: aiAgentNode.name,
+        type: 'ai_tool',
+        index: 0
+      }]];
     }
   }
 
@@ -210,11 +254,12 @@ export class DeliveryWorkflowGenerator {
   }
 
   /**
-   * Atualiza a configuração da Evolution API
+   * Atualiza a configuração da Evolution API com instance_key
    */
   private updateEvolutionApi(instanceName: string): void {
     this.workflow.nodes.forEach(node => {
-      if (node.type === 'n8n-nodes-evolution-api.evolutionApi' || node.name.includes('Evolution API')) {
+      // Atualizar nó Evolution API (Evia Texto)
+      if (node.type === 'n8n-nodes-evolution-api.evolutionApi' || node.name === 'Evia Texto') {
         if (node.parameters) {
           node.parameters.instanceName = instanceName;
         }
@@ -223,10 +268,16 @@ export class DeliveryWorkflowGenerator {
   }
 
   /**
-   * Regenera IDs únicos para todos os nós
+   * Regenera IDs únicos para todos os nós MANTENDO AS CONEXÕES
    */
   private regenerateNodeIds(): void {
     const oldToNewIdMap: Record<string, string> = {};
+    const oldToNewNameMap: Record<string, string> = {};
+
+    // Mapear nomes antigos para IDs antigos
+    this.workflow.nodes.forEach(node => {
+      oldToNewNameMap[node.name] = node.id;
+    });
 
     // Gerar novos IDs
     this.workflow.nodes.forEach(node => {
@@ -235,34 +286,9 @@ export class DeliveryWorkflowGenerator {
       node.id = newId;
     });
 
-    // Atualizar referências nas conexões
-    const newConnections: WorkflowConnection = {};
-    Object.entries(this.workflow.connections).forEach(([oldId, connections]) => {
-      const newId = oldToNewIdMap[oldId];
-      
-      if (connections.main) {
-        newConnections[newId] = {
-          main: connections.main.map(connectionArray =>
-            connectionArray.map(conn => ({
-              ...conn,
-              node: oldToNewIdMap[conn.node] || conn.node
-            }))
-          )
-        };
-      }
-      
-      if (connections.ai_languageModel) {
-        if (!newConnections[newId]) newConnections[newId] = {};
-        newConnections[newId].ai_languageModel = connections.ai_languageModel.map(connectionArray =>
-          connectionArray.map(conn => ({
-            ...conn,
-            node: oldToNewIdMap[conn.node] || conn.node
-          }))
-        );
-      }
-    });
-
-    this.workflow.connections = newConnections;
+    // Atualizar referências nas conexões (usando NOMES de nó, não IDs)
+    // O n8n usa nomes de nós nas conexões, então não precisa atualizar
+    // Apenas garantir que a estrutura está correta
   }
 
   /**

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { DeliveryWorkflowGenerator } from "@/services/deliveryWorkflowGenerator";
 import {
   Calendar,
   Store,
@@ -287,6 +288,34 @@ const MiniSitePage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Buscar instance_key da tabela whatsapp_connections
+      const { data: whatsappConnection, error: connectionError } = await supabase
+        .from("whatsapp_connections")
+        .select("instance_key, phone_number")
+        .eq("status", "connected")
+        .maybeSingle();
+
+      if (connectionError || !whatsappConnection) {
+        toast({
+          title: "Erro",
+          description: "Nenhuma instância do WhatsApp conectada encontrada. Conecte o WhatsApp primeiro na página /whatsapp.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const instanceKey = whatsappConnection.instance_key;
+
+      // Gerar workflow de delivery
+      const { workflow, webhookPath } = DeliveryWorkflowGenerator.generate({
+        miniSiteId: miniSite.id,
+        miniSiteName: formData.name,
+        instanceName: instanceKey, // Usar instance_key
+        whatsappNumber: formData.whatsapp_number,
+        webhookUrl: import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.tech/webhook',
+        userId: user.id
+      });
+
       // Chamar Edge Function para criar agente
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-delivery-agent`,
@@ -301,7 +330,9 @@ const MiniSitePage = () => {
             miniSiteName: formData.name,
             whatsappNumber: formData.whatsapp_number,
             userId: user.id,
-            instanceName: formData.whatsapp_number.replace(/\D/g, '') // Usar número como instance name
+            instanceName: instanceKey, // Enviar instance_key
+            workflow, // Enviar workflow gerado
+            webhookUrl: webhookPath // Enviar webhook path
           })
         }
       );
