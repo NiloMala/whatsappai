@@ -1,5 +1,7 @@
-import workflowDeliveryClean from '@/assets/workflow_delivery_clean.json';
+import workflowDeliveryBase from '@/assets/workflow_delivery_clean.json';
 import { DELIVERY_SYSTEM_PROMPT_TEMPLATE } from './deliveryWorkflowInstructions';
+import { generateDeliveryPrompt } from './deliveryPromptTemplate';
+import { ScheduleConfig, Holiday } from '@/types/schedule';
 
 interface DeliveryWorkflowConfig {
   miniSiteId: string;
@@ -8,6 +10,10 @@ interface DeliveryWorkflowConfig {
   whatsappNumber: string;
   webhookUrl: string;
   userId: string;
+  miniSiteAddress?: string;
+  scheduleConfig?: ScheduleConfig;
+  holidays?: Holiday[];
+  customInstructions?: string;
 }
 
 interface WorkflowNode {
@@ -41,7 +47,7 @@ export class DeliveryWorkflowGenerator {
 
   constructor(config: DeliveryWorkflowConfig) {
     // Usa workflow_delivery_clean como template
-    this.workflow = JSON.parse(JSON.stringify(workflowDeliveryClean));
+    this.workflow = JSON.parse(JSON.stringify(workflowDeliveryBase));
     this.config = config;
   }
 
@@ -80,13 +86,21 @@ export class DeliveryWorkflowGenerator {
    */
   private updateSystemPromptForDelivery(): void {
     const aiAgentNode = this.workflow.nodes.find(n => n.name === 'AI Agent');
-    
+
     if (aiAgentNode && aiAgentNode.parameters?.options) {
-      // Substituir placeholders no template
-      let prompt = DELIVERY_SYSTEM_PROMPT_TEMPLATE
-        .replace(/{{MINI_SITE_NAME}}/g, this.config.miniSiteName)
-        .replace(/{{WHATSAPP_NUMBER}}/g, this.config.whatsappNumber);
-      
+      // Usar o novo sistema de templates
+      const prompt = generateDeliveryPrompt({
+        miniSite: {
+          name: this.config.miniSiteName,
+          whatsapp_number: this.config.whatsappNumber,
+          address: this.config.miniSiteAddress,
+          mini_site_id: this.config.miniSiteId,
+        },
+        scheduleConfig: this.config.scheduleConfig,
+        holidays: this.config.holidays,
+        customInstructions: this.config.customInstructions,
+      });
+
       aiAgentNode.parameters.options.systemMessage = prompt;
     }
   }

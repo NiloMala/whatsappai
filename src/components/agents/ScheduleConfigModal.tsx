@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Plus, Trash2, AlertCircle } from "lucide-react";
-import { ScheduleConfig, Holiday, WEEK_DAYS, SLOT_DURATION_OPTIONS, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
+import { ScheduleConfig, Holiday, WEEK_DAYS, SLOT_DURATION_OPTIONS, DELIVERY_TIME_OPTIONS, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ScheduleConfigModalProps {
@@ -30,6 +30,7 @@ interface ScheduleConfigModalProps {
   scheduleConfig: ScheduleConfig;
   holidays: Holiday[];
   onSave: (config: ScheduleConfig, holidays: Holiday[]) => void;
+  agentType?: "general" | "delivery" | "support";
 }
 
 export function ScheduleConfigModal({
@@ -38,6 +39,7 @@ export function ScheduleConfigModal({
   scheduleConfig,
   holidays,
   onSave,
+  agentType = "general",
 }: ScheduleConfigModalProps) {
   const [localConfig, setLocalConfig] = useState<ScheduleConfig>(scheduleConfig);
   const [localHolidays, setLocalHolidays] = useState<Holiday[]>(holidays);
@@ -96,10 +98,14 @@ export function ScheduleConfigModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Configuração de Horários de Agendamento
+            {agentType === "delivery"
+              ? "Configuração de Horários de Funcionamento"
+              : "Configuração de Horários de Agendamento"}
           </DialogTitle>
           <DialogDescription>
-            Configure os dias, horários e feriados para este agente
+            {agentType === "delivery"
+              ? "Configure os dias e horários que o restaurante aceita pedidos"
+              : "Configure os dias, horários e feriados para este agente"}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,7 +117,9 @@ export function ScheduleConfigModal({
             </TabsTrigger>
             <TabsTrigger value="holidays">
               <Calendar className="h-4 w-4 mr-2" />
-              Feriados ({localHolidays.length})
+              {agentType === "delivery"
+                ? `Dias Fechados (${localHolidays.length})`
+                : `Feriados (${localHolidays.length})`}
             </TabsTrigger>
           </TabsList>
 
@@ -164,7 +172,11 @@ export function ScheduleConfigModal({
 
             {/* Slot duration */}
             <div className="space-y-2">
-              <Label htmlFor="slot_duration">Duração do Agendamento</Label>
+              <Label htmlFor="slot_duration">
+                {agentType === "delivery"
+                  ? "Tempo de Espera Estimado"
+                  : "Duração do Agendamento"}
+              </Label>
               <Select
                 value={localConfig.slot_duration.toString()}
                 onValueChange={(value) =>
@@ -175,7 +187,7 @@ export function ScheduleConfigModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SLOT_DURATION_OPTIONS.map((option) => (
+                  {(agentType === "delivery" ? DELIVERY_TIME_OPTIONS : SLOT_DURATION_OPTIONS).map((option) => (
                     <SelectItem key={option.value} value={option.value.toString()}>
                       {option.label}
                     </SelectItem>
@@ -183,28 +195,32 @@ export function ScheduleConfigModal({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Tempo padrão de cada agendamento
+                {agentType === "delivery"
+                  ? "Tempo estimado de preparo e entrega"
+                  : "Tempo padrão de cada agendamento"}
               </p>
             </div>
 
-            {/* Allow partial hours */}
-            <div className="flex items-center justify-between border rounded-lg p-4">
-              <div className="space-y-0.5">
-                <Label htmlFor="allow_partial_hours" className="text-base">
-                  Permitir horários quebrados
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Ex: 9:30, 10:15, etc. (Se desabilitado: apenas 9:00, 10:00, 11:00)
-                </p>
+            {/* Allow partial hours - Oculto para delivery */}
+            {agentType !== "delivery" && (
+              <div className="flex items-center justify-between border rounded-lg p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="allow_partial_hours" className="text-base">
+                    Permitir horários quebrados
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Ex: 9:30, 10:15, etc. (Se desabilitado: apenas 9:00, 10:00, 11:00)
+                  </p>
+                </div>
+                <Switch
+                  id="allow_partial_hours"
+                  checked={localConfig.allow_partial_hours}
+                  onCheckedChange={(checked) =>
+                    setLocalConfig({ ...localConfig, allow_partial_hours: checked })
+                  }
+                />
               </div>
-              <Switch
-                id="allow_partial_hours"
-                checked={localConfig.allow_partial_hours}
-                onCheckedChange={(checked) =>
-                  setLocalConfig({ ...localConfig, allow_partial_hours: checked })
-                }
-              />
-            </div>
+            )}
 
             {/* Preview */}
             <Alert>
@@ -218,7 +234,11 @@ export function ScheduleConfigModal({
           <TabsContent value="holidays" className="space-y-4 mt-4">
             {/* Add holiday form */}
             <div className="border rounded-lg p-4 space-y-3">
-              <Label className="text-base font-semibold">Adicionar Feriado/Bloqueio</Label>
+              <Label className="text-base font-semibold">
+                {agentType === "delivery"
+                  ? "Adicionar Dia Fechado"
+                  : "Adicionar Feriado/Bloqueio"}
+              </Label>
               <div className="grid grid-cols-[1fr_2fr_auto] gap-2">
                 <Input
                   type="date"
@@ -227,7 +247,9 @@ export function ScheduleConfigModal({
                   onChange={(e) => setNewHolidayDate(e.target.value)}
                 />
                 <Input
-                  placeholder="Descrição (ex: Natal, Férias)"
+                  placeholder={agentType === "delivery"
+                    ? "Descrição (ex: Natal, Manutenção, Férias)"
+                    : "Descrição (ex: Natal, Férias)"}
                   value={newHolidayDescription}
                   onChange={(e) => setNewHolidayDescription(e.target.value)}
                 />
@@ -244,11 +266,15 @@ export function ScheduleConfigModal({
             {/* Holidays list */}
             <div className="space-y-2">
               <Label className="text-base font-semibold">
-                Datas Bloqueadas ({localHolidays.length})
+                {agentType === "delivery"
+                  ? `Dias Fechados (${localHolidays.length})`
+                  : `Datas Bloqueadas (${localHolidays.length})`}
               </Label>
               {localHolidays.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum feriado cadastrado
+                  {agentType === "delivery"
+                    ? "Nenhum dia fechado cadastrado"
+                    : "Nenhum feriado cadastrado"}
                 </p>
               ) : (
                 <div className="space-y-2 max-h-[300px] overflow-y-auto">

@@ -61,6 +61,15 @@ export const SLOT_DURATION_OPTIONS = [
   { value: 120, label: '2 horas' },
 ];
 
+// Delivery estimated time options (ranges in minutes)
+export const DELIVERY_TIME_OPTIONS = [
+  { value: 22, label: '15 a 30 minutos' },  // média: 22.5
+  { value: 37, label: '30 a 45 minutos' },  // média: 37.5
+  { value: 52, label: '45 a 60 minutos' },  // média: 52.5
+  { value: 67, label: '60 a 75 minutos' },  // média: 67.5
+  { value: 82, label: '75 a 90 minutos' },  // média: 82.5
+];
+
 // Event type options for calendar events
 export const EVENT_TYPE_OPTIONS = [
   { value: 'Consulta', label: 'Consulta' },

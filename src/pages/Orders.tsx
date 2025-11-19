@@ -182,10 +182,10 @@ export default function Orders() {
 
   const sendStatusNotification = async (order: Order, newStatus: string) => {
     try {
-      // Get the mini site to find the agent_id
+      // Get the mini site to find the agent_id and name
       const { data: miniSite, error: miniSiteError } = await supabase
         .from("mini_sites")
-        .select("agent_id")
+        .select("agent_id, name")
         .eq("id", order.mini_site_id)
         .single();
 
@@ -196,21 +196,24 @@ export default function Orders() {
 
       // Prepare notification message based on status
       let message = "";
+      const orderNumber = order.order_number || "N/A";
+      const establishmentName = miniSite.name || "nosso estabelecimento";
+
       switch (newStatus) {
         case "processing":
-          message = `Olá ${order.customer_name}! Seu pedido foi aceito e está sendo preparado. Total: R$ ${(order.total_amount || 0).toFixed(2)}`;
+          message = `Ótima notícia! Seu pedido #${orderNumber} foi aceito e já está sendo preparado! 👨‍🍳`;
           break;
         case "out_for_delivery":
-          message = `Olá ${order.customer_name}! Seu pedido saiu para entrega. Em breve chegará no endereço informado!`;
+          message = `Seu pedido #${orderNumber} saiu para entrega! O entregador está a caminho. 🛵`;
           break;
         case "delivered":
-          message = `Olá ${order.customer_name}! Seu pedido foi entregue. Bom apetite!`;
+          message = `Pedido #${orderNumber} entregue! Bom apetite! 😋`;
           break;
         case "completed":
-          message = `Olá ${order.customer_name}! Obrigado por escolher nossos serviços. Esperamos você novamente!`;
+          message = `Obrigado por escolher ${establishmentName}! Esperamos você novamente. ❤️`;
           break;
         case "cancelled":
-          message = `Olá ${order.customer_name}, infelizmente seu pedido foi cancelado. Entre em contato para mais informações.`;
+          message = `Infelizmente seu pedido #${orderNumber} foi cancelado. Entre em contato para mais informações. 😔`;
           break;
         default:
           return;

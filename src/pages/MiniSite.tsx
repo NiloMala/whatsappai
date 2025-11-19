@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { DeliveryWorkflowGenerator } from "@/services/deliveryWorkflowGenerator";
 import {
   Calendar,
   Store,
@@ -43,16 +42,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getMiniSiteUrl } from "@/config/constants";
+import { generateDeliveryPrompt } from "@/services/deliveryPromptTemplate";
 
 const MiniSitePage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [creatingAgent, setCreatingAgent] = useState(false);
   const [miniSite, setMiniSite] = useState<MiniSite | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [agents, setAgents] = useState<Array<{ id: string; name: string }>>([]);
+  const [agents, setAgents] = useState<Array<{ id: string; name: string; agent_type?: string }>>([]);
   const [isNewCategory, setIsNewCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -113,7 +112,7 @@ const MiniSitePage = () => {
       // Buscar agentes do usuário
       const { data: agentsData, error: agentsError } = await supabase
         .from("agents")
-        .select("id, name")
+        .select("id, name, agent_type")
         .eq("user_id", user.id)
         .eq("is_active", true);
 
@@ -195,6 +194,120 @@ const MiniSitePage = () => {
     }
   };
 
+  /**
+   * Atualiza o workflow do agente com os dados do mini site
+   */
+  const updateAgentWorkflowWithMiniSiteData = async (agentId: string, miniSiteData: MiniSiteFormData) => {
+    try {
+      console.log('🔄 Atualizando workflow do agente com dados do mini site...');
+
+      // Buscar dados do agente (workflow_id, schedule_config, holidays)
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents')
+        .select('id, name, workflow_id, instance_name')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData) {
+        console.error('Erro ao buscar agente:', agentError);
+        return;
+      }
+
+      if (!agentData.workflow_id) {
+        console.log('Agente não possui workflow_id, pulando atualização');
+        return;
+      }
+
+      // Buscar schedule_config e holidays do agente
+      const { data: scheduleData } = await supabase
+        .from('agent_schedules')
+        .select('*')
+        .eq('agent_id', agentId)
+        .maybeSingle();
+
+      const { data: holidaysData } = await supabase
+        .from('agent_holidays')
+        .select('*')
+        .eq('agent_id', agentId);
+
+      // Buscar prompt customizado do agente
+      const { data: agentPromptData } = await supabase
+        .from('agents')
+        .select('prompt')
+        .eq('id', agentId)
+        .single();
+
+      // Gerar novo prompt com os dados do mini site
+      const updatedPrompt = generateDeliveryPrompt({
+        miniSite: {
+          name: miniSiteData.name,
+          whatsapp_number: miniSiteData.whatsapp_number || '',
+          address: miniSiteData.address,
+          mini_site_id: miniSite?.id || '',
+        },
+        scheduleConfig: scheduleData || undefined,
+        holidays: holidaysData || undefined,
+        customInstructions: agentPromptData?.prompt || undefined,
+      });
+
+      console.log('📝 Novo prompt gerado com dados do mini site');
+
+      // Buscar workflow do n8n
+      const n8nUrl = import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech';
+      const n8nApiKey = import.meta.env.VITE_N8N_API_KEY;
+
+      const workflowResponse = await fetch(`${n8nUrl}/api/v1/workflows/${agentData.workflow_id}`, {
+        headers: {
+          'X-N8N-API-KEY': n8nApiKey,
+        },
+      });
+
+      if (!workflowResponse.ok) {
+        console.error('Erro ao buscar workflow do n8n');
+        return;
+      }
+
+      const workflow = await workflowResponse.json();
+      console.log('✅ Workflow buscado do n8n');
+
+      // Atualizar o prompt no nó AI Agent
+      const aiAgentNode = workflow.nodes?.find((n: any) => n.name === 'AI Agent');
+      if (aiAgentNode && aiAgentNode.parameters?.options) {
+        aiAgentNode.parameters.options.systemMessage = updatedPrompt;
+        console.log('✅ Prompt atualizado no nó AI Agent');
+      }
+
+      // Salvar workflow atualizado no n8n
+      const updateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${agentData.workflow_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-N8N-API-KEY': n8nApiKey,
+        },
+        body: JSON.stringify(workflow),
+      });
+
+      if (!updateResponse.ok) {
+        console.error('Erro ao atualizar workflow no n8n');
+        return;
+      }
+
+      console.log('✅ Workflow atualizado com sucesso no n8n');
+
+      toast({
+        title: "Sucesso!",
+        description: "Dados do agente atualizados com informações do mini site.",
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar workflow do agente:', error);
+      toast({
+        title: "Aviso",
+        description: "Mini site salvo, mas houve um erro ao atualizar o agente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSaveMiniSite = async () => {
     try {
       setSaving(true);
@@ -220,6 +333,11 @@ const MiniSitePage = () => {
           .eq("id", miniSite.id);
 
         if (error) throw error;
+
+        // Se vinculou um agente, atualizar o workflow com os dados do mini site
+        if (formData.agent_id && formData.agent_id !== miniSite.agent_id) {
+          await updateAgentWorkflowWithMiniSiteData(formData.agent_id, formData);
+        }
 
         toast({
           title: "Sucesso!",
@@ -260,116 +378,6 @@ const MiniSitePage = () => {
       }
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleCreateDeliveryAgent = async () => {
-    if (!miniSite) {
-      toast({
-        title: "Erro",
-        description: "Mini site não encontrado. Salve o mini site primeiro.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.whatsapp_number) {
-      toast({
-        title: "Erro",
-        description: "Configure o número do WhatsApp antes de criar o agente.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setCreatingAgent(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // Buscar instance_key da tabela whatsapp_connections
-      const { data: whatsappConnection, error: connectionError } = await supabase
-        .from("whatsapp_connections")
-        .select("instance_key, phone_number")
-        .eq("status", "connected")
-        .maybeSingle();
-
-      if (connectionError || !whatsappConnection) {
-        toast({
-          title: "Erro",
-          description: "Nenhuma instância do WhatsApp conectada encontrada. Conecte o WhatsApp primeiro na página /whatsapp.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const instanceKey = whatsappConnection.instance_key;
-
-      // Gerar workflow de delivery
-      const { workflow, webhookPath } = DeliveryWorkflowGenerator.generate({
-        miniSiteId: miniSite.id,
-        miniSiteName: formData.name,
-        instanceName: instanceKey, // Usar instance_key
-        whatsappNumber: formData.whatsapp_number,
-        webhookUrl: import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.tech/webhook',
-        userId: user.id
-      });
-
-      // Chamar Edge Function para criar agente
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-delivery-agent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify({
-            miniSiteId: miniSite.id,
-            miniSiteName: formData.name,
-            whatsappNumber: formData.whatsapp_number,
-            userId: user.id,
-            instanceName: instanceKey, // Enviar instance_key
-            workflow, // Enviar workflow gerado
-            webhookUrl: webhookPath // Enviar webhook path
-          })
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Erro ao criar agente');
-      }
-
-      toast({
-        title: "Agente Criado!",
-        description: "Agente de delivery criado e vinculado ao mini site com sucesso. 🤖",
-      });
-
-      // Recarregar dados
-      await loadMiniSite();
-      
-      // Recarregar lista de agentes
-      const { data: agentsList } = await supabase
-        .from("agents")
-        .select("id, name")
-        .eq("user_id", user.id);
-      
-      if (agentsList) {
-        setAgents(agentsList);
-      }
-
-    } catch (error: any) {
-      console.error("Erro ao criar agente:", error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível criar o agente.",
-        variant: "destructive",
-      });
-    } finally {
-      setCreatingAgent(false);
     }
   };
 
@@ -705,46 +713,39 @@ const MiniSitePage = () => {
 
             {formData.template === "delivery" && (
               <div className="space-y-2">
-                <Label htmlFor="agent">Agente IA para Pedidos</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.agent_id || "none"}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, agent_id: value === "none" ? null : value })
-                    }
-                    disabled={creatingAgent}
-                  >
-                    <SelectTrigger id="agent" className="flex-1">
-                      <SelectValue placeholder="Selecione um agente (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
-                      {agents.map((agent) => (
-                        <SelectItem key={agent.id} value={agent.id}>
-                          {agent.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="agent">Agente IA para Pedidos</Label>
                   <Button
                     type="button"
-                    onClick={handleCreateDeliveryAgent}
-                    disabled={!miniSite || creatingAgent || !formData.whatsapp_number}
-                    variant="outline"
-                    className="whitespace-nowrap"
+                    variant="link"
+                    size="sm"
+                    onClick={() => window.open('/dashboard/agents', '_blank')}
+                    className="h-auto p-0 text-xs"
                   >
-                    {creatingAgent ? (
-                      <>⏳ Criando...</>
-                    ) : (
-                      <>🤖 Criar Agente</>
-                    )}
+                    + Criar Novo Agente
                   </Button>
                 </div>
+                <Select
+                  value={formData.agent_id || "none"}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, agent_id: value === "none" ? null : value })
+                  }
+                >
+                  <SelectTrigger id="agent">
+                    <SelectValue placeholder="Selecione um agente de delivery" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
+                    {agents.filter(a => a.agent_type === 'delivery').map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-xs text-muted-foreground">
-                  {miniSite 
-                    ? "Cria um agente IA completo com workflow de delivery automaticamente. Inclui: confirmação de pedidos, consulta de status, intervenção humana e bloqueio temporário."
-                    : "Salve o mini site primeiro para criar um agente automático."}
+                  Selecione um agente de delivery para processar pedidos automaticamente.
+                  O agente enviará notificações de status e poderá ser configurado com horários personalizados.
                 </p>
               </div>
             )}

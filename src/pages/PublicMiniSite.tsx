@@ -1783,15 +1783,50 @@ const PublicMiniSite = () => {
                       ))}
                     </div>
                     <div className="border-t pt-2 mt-2" style={{ borderColor: miniSite?.theme_color }}>
-                      <div className="flex justify-between font-semibold">
-                        <span style={{ color: miniSite?.theme_color }}>Total:</span>
-                        <span style={{ color: miniSite?.theme_color }}>R$ {order.total?.toFixed(2)}</span>
-                      </div>
-                      {order.payment_method && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Pagamento: {order.payment_method}
-                        </p>
-                      )}
+                      {(() => {
+                        // Calcular subtotal somando os itens
+                        const itemsSubtotal = order.items?.reduce((sum: number, item: any) => {
+                          const itemPrice = item.price || 0;
+                          const optionsPrice = item.selectedOptions?.reduce((s: number, o: any) => s + (o.price || 0), 0) || 0;
+                          return sum + ((itemPrice + optionsPrice) * (item.quantity || 1));
+                        }, 0) || 0;
+
+                        const deliveryFee = order.delivery_fee || 0;
+                        const total = itemsSubtotal + deliveryFee;
+
+                        return (
+                          <>
+                            {/* Subtotal (soma dos itens) */}
+                            {deliveryFee > 0 && (
+                              <div className="flex justify-between text-sm mb-1">
+                                <span style={{ color: miniSite?.theme_color }}>Subtotal:</span>
+                                <span style={{ color: miniSite?.theme_color }}>
+                                  R$ {itemsSubtotal.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {/* Delivery fee */}
+                            {deliveryFee > 0 && (
+                              <div className="flex justify-between text-sm mb-1">
+                                <span style={{ color: miniSite?.theme_color }}>Taxa de entrega:</span>
+                                <span style={{ color: miniSite?.theme_color }}>
+                                  R$ {deliveryFee.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                            {/* Total */}
+                            <div className="flex justify-between font-semibold">
+                              <span style={{ color: miniSite?.theme_color }}>Total:</span>
+                              <span style={{ color: miniSite?.theme_color }}>R$ {total.toFixed(2)}</span>
+                            </div>
+                            {order.payment_method && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Pagamento: {order.payment_method}
+                              </p>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}

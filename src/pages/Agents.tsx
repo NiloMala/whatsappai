@@ -30,6 +30,7 @@ import { Bot, Plus, Pencil, Trash2, Sparkles, RefreshCw, Info, Calendar, Setting
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { AIModelProvider, AI_MODEL_OPTIONS } from "@/types/ai-models";
 import { WorkflowGenerator } from "@/services/workflowGenerator";
+import { DeliveryWorkflowGenerator } from "@/services/deliveryWorkflowGenerator";
 import { ScheduleConfigModal } from "@/components/agents/ScheduleConfigModal";
 import { ScheduleConfig, Holiday, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
 
@@ -54,6 +55,7 @@ const Agents = () => {
     ai_model: "openai" as AIModelProvider,
     instance_name: "",
     voice_response_mode: "text_only" as "auto" | "text_only",
+    agent_type: "general" as "general" | "delivery" | "support",
   });
 
   const [scheduleConfig, setScheduleConfig] = useState<ScheduleConfig>(DEFAULT_SCHEDULE_CONFIG);
@@ -340,19 +342,46 @@ const Agents = () => {
   console.log('🔍 DEBUG: scheduleConfig at submit:', scheduleConfig);
   console.log('🔍 DEBUG: holidays at submit:', holidays);
 
-      // Gerar workflow
-      const { workflow, webhookPath } = WorkflowGenerator.generate(
-        formData.ai_model,
-        instanceName,
-        formData.prompt,
-        credentialsMap,
-        webhookUrl,
-        instanceApiKey, // Passar API Key da instância
-        user.id, // Passar user_id para injetar no workflow
-        scheduleConfig.scheduling_enabled ? scheduleConfig : undefined, // Configuração de horários
-        scheduleConfig.scheduling_enabled ? holidays : undefined, // Feriados
-        formData.voice_response_mode // Modo de resposta (auto ou text_only)
-      );
+      // Gerar workflow (diferente para delivery vs general)
+      let workflow, webhookPath;
+
+      if (formData.agent_type === 'delivery') {
+        // Para agentes de delivery, criar workflow genérico
+        // Os dados específicos do mini-site serão aplicados quando vincular
+        const deliveryWorkflow = DeliveryWorkflowGenerator.generate({
+          miniSiteId: '', // Será preenchido quando vincular ao mini-site
+          miniSiteName: formData.name, // Usar nome do agente como placeholder
+          instanceName: instanceName,
+          whatsappNumber: '', // Será preenchido quando vincular ao mini-site
+          webhookUrl: `${import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.tech/webhook'}`,
+          userId: user.id,
+          miniSiteAddress: undefined,
+          scheduleConfig: scheduleConfig.scheduling_enabled ? scheduleConfig : undefined,
+          holidays: scheduleConfig.scheduling_enabled ? holidays : undefined,
+          customInstructions: formData.prompt, // Para delivery, o prompt contém as instruções personalizadas
+        });
+
+        workflow = deliveryWorkflow.workflow;
+        webhookPath = deliveryWorkflow.webhookPath;
+
+      } else {
+        // Para agentes gerais, usar WorkflowGenerator normal
+        const generalWorkflow = WorkflowGenerator.generate(
+          formData.ai_model,
+          instanceName,
+          formData.prompt,
+          credentialsMap,
+          webhookUrl,
+          instanceApiKey,
+          user.id,
+          scheduleConfig.scheduling_enabled ? scheduleConfig : undefined,
+          scheduleConfig.scheduling_enabled ? holidays : undefined,
+          formData.voice_response_mode
+        );
+
+        workflow = generalWorkflow.workflow;
+        webhookPath = generalWorkflow.webhookPath;
+      }
 
       console.log('🔍 Workflow gerado:', {
         totalNodes: workflow?.nodes?.length,
@@ -937,6 +966,7 @@ const Agents = () => {
       ai_model: "openai",
       instance_name: "",
       voice_response_mode: "text_only",
+      agent_type: "general",
     });
     setScheduleConfig(DEFAULT_SCHEDULE_CONFIG);
     setHolidays([]);
@@ -957,6 +987,7 @@ const Agents = () => {
       ai_model: agent.ai_model || "openai",
       instance_name: agent.instance_name || "",
       voice_response_mode: agent.voice_response_mode || "text_only",
+      agent_type: agent.agent_type || "general",
     });
 
     // Carregar configuração de horários se existir
@@ -1113,6 +1144,25 @@ const Agents = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="agent_type">Tipo de Agente</Label>
+                  <Select
+                    value={formData.agent_type}
+                    onValueChange={(value: "general" | "delivery" | "support") =>
+                      setFormData({ ...formData, agent_type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">Agente Geral</SelectItem>
+                      <SelectItem value="delivery">Agente de Delivery</SelectItem>
+                      <SelectItem value="support">Agente de Suporte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="language_type">Tipo de Linguagem</Label>
                   <Select
                     value={formData.language_type}
@@ -1144,32 +1194,39 @@ const Agents = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="template">Template de Prompt</Label>
-                  <Select onValueChange={handleTemplateSelect}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Selecione um template (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Template de Prompt - Oculto para agentes de delivery */}
+                {formData.agent_type !== "delivery" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="template">Template de Prompt</Label>
+                    <Select onValueChange={handleTemplateSelect}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Selecione um template (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {templates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                {/* Seção de Agendamentos */}
+                {/* Seção de Agendamentos / Horários de Atendimento */}
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="scheduling_enabled" className="text-base flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Este agente fará agendamentos?
+                        {formData.agent_type === "delivery"
+                          ? "Configurar horários de funcionamento?"
+                          : "Este agente fará agendamentos?"}
                       </Label>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Habilite para configurar horários de atendimento personalizados
+                        {formData.agent_type === "delivery"
+                          ? "Defina os dias e horários que o restaurante aceita pedidos"
+                          : "Habilite para configurar horários de atendimento personalizados"}
                       </p>
                     </div>
                     <Switch
@@ -1189,13 +1246,20 @@ const Agents = () => {
                       className="w-full min-h-[44px]"
                     >
                       <Settings className="mr-2 h-4 w-4" />
-                      Configurar Horários e Feriados
+                      {formData.agent_type === "delivery"
+                        ? "Configurar Horários de Funcionamento"
+                        : "Configurar Horários e Feriados"}
                     </Button>
                   )}
                 </div>
 
+                {/* Campo de Prompt/Instruções - Customizado por tipo de agente */}
                 <div className="space-y-2">
-                  <Label htmlFor="prompt">Ou crie um Prompt Base manualmente</Label>
+                  <Label htmlFor="prompt">
+                    {formData.agent_type === "delivery"
+                      ? "Instruções Personalizadas (Opcional)"
+                      : "Ou crie um Prompt Base manualmente"}
+                  </Label>
                   <Textarea
                     id="prompt"
                     value={formData.prompt}
@@ -1204,8 +1268,17 @@ const Agents = () => {
                     }
                     required
                     rows={6}
-                    placeholder="Descreva o comportamento e as instruções do agente..."
+                    placeholder={
+                      formData.agent_type === "delivery"
+                        ? "Ex: Não aceitamos troco acima de R$ 50. Tempo médio de entrega: 30-45 minutos. Taxa de entrega: R$ 5,00 para distâncias até 3km."
+                        : "Descreva o comportamento e as instruções do agente..."
+                    }
                   />
+                  {formData.agent_type === "delivery" && (
+                    <p className="text-xs text-muted-foreground">
+                      Adicione regras específicas do seu negócio (horários especiais, taxas, políticas, etc.)
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-4 border-t pt-4">
@@ -1488,6 +1561,7 @@ const Agents = () => {
       onOpenChange={setScheduleModalOpen}
       scheduleConfig={scheduleConfig}
       holidays={holidays}
+      agentType={formData.agent_type}
       onSave={(config, newHolidays) => {
         setScheduleConfig(config);
         setHolidays(newHolidays);
