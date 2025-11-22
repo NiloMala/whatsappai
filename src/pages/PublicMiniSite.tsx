@@ -128,6 +128,66 @@ const PublicMiniSite = () => {
     loadMiniSite();
   }, [slug, resolvedSlug]);
 
+  // Atualizar meta tags quando miniSite carregar
+  useEffect(() => {
+    if (!miniSite) return;
+
+    // Atualizar título da página
+    document.title = `${miniSite.name} - Faça seu pedido online`;
+
+    // Atualizar ou criar meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.setAttribute('content', miniSite.description || `Faça seu pedido no ${miniSite.name}. Delivery rápido e fácil!`);
+
+    // Open Graph tags para compartilhamento
+    const ogTags = [
+      { property: 'og:title', content: `${miniSite.name} - Cardápio Online` },
+      { property: 'og:description', content: miniSite.description || `Faça seu pedido no ${miniSite.name}` },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: window.location.href },
+    ];
+
+    if (miniSite.logo) {
+      ogTags.push({ property: 'og:image', content: miniSite.logo });
+    }
+
+    ogTags.forEach(({ property, content }) => {
+      let tag = document.querySelector(`meta[property="${property}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('property', property);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    });
+
+    // Twitter Card tags
+    const twitterTags = [
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: `${miniSite.name} - Cardápio Online` },
+      { name: 'twitter:description', content: miniSite.description || `Faça seu pedido no ${miniSite.name}` },
+    ];
+
+    if (miniSite.logo) {
+      twitterTags.push({ name: 'twitter:image', content: miniSite.logo });
+    }
+
+    twitterTags.forEach(({ name, content }) => {
+      let tag = document.querySelector(`meta[name="${name}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    });
+  }, [miniSite]);
+
   // Claim a pending anonymous profile when the user authenticates.
   const claimPendingProfile = async () => {
     try {
