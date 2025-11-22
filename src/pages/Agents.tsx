@@ -33,6 +33,7 @@ import { WorkflowGenerator } from "@/services/workflowGenerator";
 import { DeliveryWorkflowGenerator } from "@/services/deliveryWorkflowGenerator";
 import { ScheduleConfigModal } from "@/components/agents/ScheduleConfigModal";
 import { ScheduleConfig, Holiday, DEFAULT_SCHEDULE_CONFIG } from "@/types/schedule";
+import { generateDeliveryPrompt } from "@/services/deliveryPromptTemplate";
 
 const Agents = () => {
   const { toast } = useToast();
@@ -178,6 +179,114 @@ const Agents = () => {
     }
 
     setTemplates(data || []);
+  };
+
+  /**
+   * Busca dados do mini site vinculado ao agente e atualiza o workflow com informações reais
+   */
+  const updateAgentWithMiniSiteData = async (agentId: string) => {
+    try {
+      console.log('🔍 Verificando se agente está vinculado a mini site...');
+
+      // Buscar mini site que usa este agente
+      const { data: miniSiteData, error: miniSiteError } = await supabase
+        .from('mini_sites')
+        .select('*')
+        .eq('agent_id', agentId)
+        .maybeSingle();
+
+      if (miniSiteError) {
+        console.error('Erro ao buscar mini site:', miniSiteError);
+        return;
+      }
+
+      if (!miniSiteData) {
+        console.log('⚠️ Agente não está vinculado a nenhum mini site');
+        return;
+      }
+
+      console.log('✅ Mini site encontrado:', miniSiteData.name);
+
+      // Buscar dados do agente
+      const { data: agentData, error: agentError } = await supabase
+        .from('agents')
+        .select('id, name, workflow_id, instance_name')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agentData || !agentData.workflow_id) {
+        console.log('⚠️ Agente sem workflow_id, pulando atualização');
+        return;
+      }
+
+      // Buscar schedule_config e holidays do agente
+      const { data: scheduleData } = await supabase
+        .from('agent_schedule_config')
+        .select('*')
+        .eq('agent_id', agentId)
+        .maybeSingle();
+
+      const { data: holidaysData } = await supabase
+        .from('agent_holidays')
+        .select('*')
+        .eq('agent_id', agentId);
+
+      // Buscar prompt customizado do agente
+      const { data: agentPromptData } = await supabase
+        .from('agents')
+        .select('prompt')
+        .eq('id', agentId)
+        .single();
+
+      // Mapear holiday_date para date
+      const mappedHolidays = holidaysData?.map(h => ({
+        id: h.id,
+        date: h.holiday_date,
+        description: h.description
+      }));
+
+      // Gerar novo prompt com os dados do mini site
+      const updatedPrompt = generateDeliveryPrompt({
+        miniSite: {
+          name: miniSiteData.name,
+          whatsapp_number: miniSiteData.whatsapp_number || '',
+          address: miniSiteData.address,
+          mini_site_id: miniSiteData.id || '',
+        },
+        scheduleConfig: scheduleData || undefined,
+        holidays: mappedHolidays || undefined,
+        customInstructions: agentPromptData?.prompt || undefined,
+      });
+
+      console.log('📝 Atualizando workflow com dados do mini site...');
+
+      // Usar Edge Function para atualizar workflow
+      const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-agent-prompt', {
+        body: {
+          workflowId: agentData.workflow_id,
+          updatedPrompt: updatedPrompt,
+          agentName: agentData.name,
+        }
+      });
+
+      if (updateError) {
+        console.error('❌ Erro ao atualizar workflow:', updateError);
+        return;
+      }
+
+      if (updateResult?.error) {
+        console.error('❌ Edge Function retornou erro:', updateResult.error);
+        return;
+      }
+
+      console.log('✅ Workflow atualizado com dados do mini site!');
+      toast({
+        title: "Workflow atualizado!",
+        description: `Prompt atualizado com dados de "${miniSiteData.name}".`,
+      });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar workflow com dados do mini site:', error);
+    }
   };
 
   // Credentials check removed - OpenAI and Gemini API keys are now centralized in n8n
@@ -664,6 +773,11 @@ const Agents = () => {
           title: "Agente atualizado!",
           description: "Workflow atualizado com sucesso.",
         });
+
+        // Se for agente de delivery, verificar se está vinculado a um mini site e atualizar com dados reais
+        if (formData.agent_type === 'delivery' && editingAgent.id) {
+          await updateAgentWithMiniSiteData(editingAgent.id);
+        }
       } else {
         // Primeiro inserir o agente
         const { data: insertedAgent, error } = await supabase
@@ -794,6 +908,11 @@ const Agents = () => {
           title: "Agente Criado!",
           description: "Workflow e Webhook configurado.",
         });
+
+        // Se for agente de delivery, verificar se está vinculado a um mini site e atualizar com dados reais
+        if (formData.agent_type === 'delivery' && insertedAgent?.id) {
+          await updateAgentWithMiniSiteData(insertedAgent.id);
+        }
       }
 
       setIsDialogOpen(false);
