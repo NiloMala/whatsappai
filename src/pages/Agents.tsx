@@ -589,15 +589,22 @@ const Agents = () => {
         }
 
         // Reimportar workflow atualizado no n8n
-        if (editingAgent.workflow_id) {
+        if (editingAgent.workflow_id && workflow) {
           try {
-            console.log('Atualizando workflow no n8n...');
+            console.log('🔄 Atualizando workflow no n8n...');
+            console.log('📦 Workflow dados:', {
+              hasWorkflow: !!workflow,
+              hasNodes: !!workflow?.nodes,
+              nodeCount: workflow?.nodes?.length,
+              workflowId: editingAgent.workflow_id,
+            });
+
             const { data: n8nResponse, error: n8nError } = await supabase.functions.invoke('n8n-import-workflow', {
               body: {
                 workflow: workflow,
                 workflowName: `Agent: ${formData.name} (${instanceName})`,
                 n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
-                n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6Oa',
+                n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'n8n_api_test_key_placeholder',
                 workflowId: editingAgent.workflow_id, // ID do workflow existente para atualizar
                 instanceApiKey: instanceApiKey,
                 instanceName: instanceName,
@@ -605,23 +612,30 @@ const Agents = () => {
             });
 
             if (n8nError) {
-              console.error('Erro ao atualizar workflow no n8n:', n8nError);
+              console.error('❌ Erro ao atualizar workflow no n8n:', n8nError);
               toast({
-                title: "Workflow não atualizado",
-                description: "Agente salvo no banco, mas workflow não foi atualizado no n8n. Reimporte manualmente.",
+                title: "Aviso",
+                description: "Agente atualizado no banco de dados, mas não foi possível atualizar o workflow no n8n. O agente continuará funcionando com a configuração anterior.",
                 variant: "destructive",
               });
             } else {
-              console.log('Workflow atualizado no n8n:', n8nResponse);
+              console.log('✅ Workflow atualizado no n8n:', n8nResponse);
             }
-          } catch (n8nError) {
-            console.error('Erro ao atualizar workflow no n8n:', n8nError);
+          } catch (n8nError: any) {
+            console.error('❌ Erro ao atualizar workflow no n8n:', n8nError);
+            console.error('Stack:', n8nError?.stack);
             toast({
-              title: "Workflow não atualizado",
-              description: "Agente salvo, mas workflow não foi atualizado no n8n.",
+              title: "Aviso",
+              description: `Agente atualizado, mas workflow não foi sincronizado: ${n8nError?.message || 'Erro desconhecido'}`,
               variant: "destructive",
             });
           }
+        } else if (editingAgent.workflow_id && !workflow) {
+          console.warn('⚠️ Workflow não gerado, pulando atualização no n8n');
+          toast({
+            title: "Aviso",
+            description: "Agente atualizado no banco, mas workflow não foi regenerado. O agente continuará com a configuração anterior.",
+          });
         }
 
         // Configurar webhook na instância Evolution
