@@ -256,6 +256,11 @@ const MiniSitePage = () => {
 
       // Usar Edge Function para atualizar workflow (evita CORS)
       console.log('💾 Atualizando workflow via Edge Function...');
+      console.log('📤 Payload:', {
+        workflowId: agentData.workflow_id,
+        promptLength: updatedPrompt?.length,
+        agentName: agentData.name,
+      });
 
       const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-agent-prompt', {
         body: {
@@ -267,7 +272,15 @@ const MiniSitePage = () => {
 
       if (updateError) {
         console.error('❌ Erro ao atualizar workflow:', updateError);
+        console.error('📊 Detalhes do erro:', JSON.stringify(updateError, null, 2));
         throw updateError;
+      }
+
+      // Verificar se o resultado contém erro (mesmo sem updateError)
+      if (updateResult?.error) {
+        console.error('❌ Edge Function retornou erro:', updateResult.error);
+        console.error('📋 Detalhes:', updateResult.details);
+        throw new Error(updateResult.error);
       }
 
       console.log('✅ Workflow atualizado com sucesso!', updateResult);

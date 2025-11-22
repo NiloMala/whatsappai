@@ -21,6 +21,8 @@ serve(async (req) => {
     console.log('🔄 Atualizando prompt do workflow:', workflowId);
     console.log('👤 Agente:', agentName);
     console.log('📝 Novo prompt length:', updatedPrompt?.length || 0);
+    console.log('🔗 N8N URL:', n8nUrl);
+    console.log('🔑 API Key presente:', !!n8nApiKey);
 
     if (!n8nApiKey) {
       throw new Error('N8N API Key não configurada. Configure a secret N8N_API_KEY no Supabase.');
