@@ -239,6 +239,13 @@ const MiniSitePage = () => {
         .eq('id', agentId)
         .single();
 
+      // Mapear holiday_date para date (compatibilidade com tipo Holiday)
+      const mappedHolidays = holidaysData?.map(h => ({
+        id: h.id,
+        date: h.holiday_date,
+        description: h.description
+      }));
+
       // Gerar novo prompt com os dados do mini site
       const updatedPrompt = generateDeliveryPrompt({
         miniSite: {
@@ -248,7 +255,7 @@ const MiniSitePage = () => {
           mini_site_id: miniSite?.id || '',
         },
         scheduleConfig: scheduleData || undefined,
-        holidays: holidaysData || undefined,
+        holidays: mappedHolidays || undefined,
         customInstructions: agentPromptData?.prompt || undefined,
       });
 
