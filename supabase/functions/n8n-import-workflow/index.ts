@@ -13,13 +13,18 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.json();
-    const { workflow, workflowName, n8nUrl, n8nApiKey, workflowId, instanceName } = requestBody;
+    const { workflow, workflowName, workflowId, instanceName } = requestBody;
+
+    // Ler credenciais das secrets do Supabase (produção) ou do request (local)
+    const n8nUrl = Deno.env.get('N8N_URL') || requestBody.n8nUrl || 'https://n8n.auroratech.tech';
+    const n8nApiKey = Deno.env.get('N8N_API_KEY') || requestBody.n8nApiKey;
 
     console.log('🔧 Importando workflow:', workflowName);
     console.log('📦 Workflow nodes:', workflow?.nodes?.length || 0);
     console.log('🔗 Workflow connections:', Object.keys(workflow?.connections || {}).length);
     console.log('🔑 N8N URL:', n8nUrl);
     console.log('🔐 N8N API Key presente:', !!n8nApiKey);
+    console.log('🔐 N8N API Key source:', Deno.env.get('N8N_API_KEY') ? 'Supabase Secret' : 'Request Body');
     console.log('🆔 Workflow ID (update):', workflowId || 'N/A (novo workflow)');
     console.log('📱 Instance Name:', instanceName || 'N/A');
 
@@ -41,7 +46,7 @@ serve(async (req) => {
 
     if (!n8nApiKey) {
       console.error('❌ N8N API Key não fornecida');
-      throw new Error('N8N API Key não fornecida');
+      throw new Error('N8N API Key não fornecida. Configure a secret N8N_API_KEY no Supabase.');
     }
 
     if (!n8nUrl) {
