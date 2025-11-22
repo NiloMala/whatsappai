@@ -183,29 +183,11 @@ const Agents = () => {
 
   /**
    * Busca dados do mini site vinculado ao agente e atualiza o workflow com informações reais
+   * Se não houver mini site vinculado, gera prompt padrão de delivery
    */
   const updateAgentWithMiniSiteData = async (agentId: string) => {
     try {
       console.log('🔍 Verificando se agente está vinculado a mini site...');
-
-      // Buscar mini site que usa este agente
-      const { data: miniSiteData, error: miniSiteError } = await supabase
-        .from('mini_sites')
-        .select('*')
-        .eq('agent_id', agentId)
-        .maybeSingle();
-
-      if (miniSiteError) {
-        console.error('Erro ao buscar mini site:', miniSiteError);
-        return;
-      }
-
-      if (!miniSiteData) {
-        console.log('⚠️ Agente não está vinculado a nenhum mini site');
-        return;
-      }
-
-      console.log('✅ Mini site encontrado:', miniSiteData.name);
 
       // Buscar dados do agente
       const { data: agentData, error: agentError } = await supabase
@@ -217,6 +199,17 @@ const Agents = () => {
       if (agentError || !agentData || !agentData.workflow_id) {
         console.log('⚠️ Agente sem workflow_id, pulando atualização');
         return;
+      }
+
+      // Buscar mini site que usa este agente
+      const { data: miniSiteData, error: miniSiteError } = await supabase
+        .from('mini_sites')
+        .select('*')
+        .eq('agent_id', agentId)
+        .maybeSingle();
+
+      if (miniSiteError) {
+        console.error('Erro ao buscar mini site:', miniSiteError);
       }
 
       // Buscar schedule_config e holidays do agente
@@ -245,21 +238,25 @@ const Agents = () => {
         description: h.description
       }));
 
-      // Gerar novo prompt com os dados do mini site
+      // Gerar prompt com dados do mini site (se existir) ou valores padrão
       const updatedPrompt = generateDeliveryPrompt({
         miniSite: {
-          name: miniSiteData.name,
-          whatsapp_number: miniSiteData.whatsapp_number || '',
-          address: miniSiteData.address,
-          mini_site_id: miniSiteData.id || '',
-          slug: miniSiteData.slug,
+          name: miniSiteData?.name || agentData.name || 'nosso estabelecimento',
+          whatsapp_number: miniSiteData?.whatsapp_number || '',
+          address: miniSiteData?.address,
+          mini_site_id: miniSiteData?.id || '',
+          slug: miniSiteData?.slug,
         },
         scheduleConfig: scheduleData || undefined,
         holidays: mappedHolidays || undefined,
         customInstructions: agentPromptData?.prompt || undefined,
       });
 
-      console.log('📝 Atualizando workflow com dados do mini site...');
+      const updateMessage = miniSiteData
+        ? `Atualizando workflow com dados de "${miniSiteData.name}"...`
+        : 'Atualizando workflow com prompt padrão de delivery...';
+
+      console.log(`📝 ${updateMessage}`);
 
       // Usar Edge Function para atualizar workflow
       const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-agent-prompt', {
@@ -280,11 +277,16 @@ const Agents = () => {
         return;
       }
 
-      console.log('✅ Workflow atualizado com dados do mini site!');
-      toast({
-        title: "Workflow atualizado!",
-        description: `Prompt atualizado com dados de "${miniSiteData.name}".`,
-      });
+      console.log('✅ Workflow atualizado com sucesso!');
+
+      if (miniSiteData) {
+        toast({
+          title: "Workflow atualizado!",
+          description: `Prompt atualizado com dados de "${miniSiteData.name}".`,
+        });
+      } else {
+        console.log('ℹ️ Prompt padrão de delivery aplicado (sem mini site vinculado)');
+      }
     } catch (error) {
       console.error('❌ Erro ao atualizar workflow com dados do mini site:', error);
     }
