@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -298,13 +299,14 @@ export default function Orders() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Gerenciar Pedidos</h1>
-        <p className="text-muted-foreground">
-          Visualize e gerencie todos os pedidos recebidos em seus mini sites
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="container mx-auto p-4 max-w-7xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Gerenciar Pedidos</h1>
+          <p className="text-muted-foreground">
+            Visualize e gerencie todos os pedidos recebidos em seus mini sites
+          </p>
+        </div>
 
       {/* Filters */}
       <div className="mb-6">
@@ -554,6 +556,7 @@ export default function Orders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
