@@ -74,12 +74,20 @@ export function formatHolidaysText(holidays?: Holiday[]): string {
     return "";
   }
 
-  const sortedHolidays = [...holidays].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  const sortedHolidays = [...holidays].sort((a, b) => {
+    const dateA = parseDate(a.date);
+    const dateB = parseDate(b.date);
+    return dateA.getTime() - dateB.getTime();
+  });
 
   const holidaysList = sortedHolidays.map(holiday => {
-    const date = new Date(holiday.date + 'T00:00:00');
+    const date = parseDate(holiday.date);
+
+    // Verificar se a data é válida
+    if (isNaN(date.getTime())) {
+      return `- ${holiday.date}: ${holiday.description}`;
+    }
+
     const formattedDate = date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -89,6 +97,31 @@ export function formatHolidaysText(holidays?: Holiday[]): string {
   }).join('\n');
 
   return `\n🚫 DIAS FECHADOS (não aceitamos pedidos):\n${holidaysList}\n`;
+}
+
+/**
+ * Parseia uma data em múltiplos formatos (YYYY-MM-DD, DD/MM/YYYY, etc)
+ */
+function parseDate(dateString: string): Date {
+  // Formato ISO: YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return new Date(dateString + 'T00:00:00');
+  }
+
+  // Formato brasileiro: DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    const [day, month, year] = dateString.split('/');
+    return new Date(`${year}-${month}-${day}T00:00:00`);
+  }
+
+  // Formato americano ou outros formatos suportados pelo Date
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  // Se nenhum formato funcionou, retorna data inválida
+  return new Date('Invalid Date');
 }
 
 /**
