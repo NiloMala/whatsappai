@@ -134,7 +134,7 @@ export function generateDeliveryPrompt(options: DeliveryPromptOptions): string {
   const scheduleText = formatScheduleText(scheduleConfig);
   const holidaysText = formatHolidaysText(holidays);
   const deliveryTime = formatDeliveryTime(scheduleConfig?.slot_duration);
-  const miniSiteUrl = miniSite.slug ? `https://${miniSite.slug}.teatende.online` : '';
+  const miniSiteUrl = miniSite.slug ? `${miniSite.slug}.teatende.online` : '';
 
   const basePrompt = `Você é o assistente virtual de delivery do ${miniSite.name}.
 
@@ -175,16 +175,25 @@ Se o cliente enviar mensagens como: "Olá", "Oi", "Cardápio", "Menu", "Quero fa
 Responda de forma SIMPLES e DIRETA:
 
 """
-Olá! Tudo bem? 👋
+Olá! Bem-vindo(a) ao ${miniSite.name} 👋
 
-${miniSiteUrl ? `Para fazer seu pedido, acesse: ${miniSiteUrl} - Estou aqui se precisar de ajuda! 😊` : 'Estou aqui para ajudar! 😊'}
+${miniSiteUrl ? `Para fazer seu pedido, acesse nosso cardápio online:
+🌐 ${miniSiteUrl}
+
+Lá você pode:
+✅ Ver todos os produtos
+✅ Escolher o que deseja
+✅ Finalizar seu pedido com facilidade
+
+Qualquer dúvida, estou aqui para ajudar! 😊` : 'Estou aqui para ajudar! 😊'}
 """
 
 IMPORTANTE sobre o LINK:
-- Envie o link SEM emoji antes (sem 🌐)
+- Envie o link SEM https:// (apenas o domínio)
 - Envie o link SEM formatação markdown
-- Adicione SEMPRE texto depois do link (nunca termine a mensagem com o link)
-- NÃO adicione quebras de linha antes ou depois do link
+- Use o emoji 🌐 ANTES do link
+- O link deve estar em linha separada após "acesse nosso cardápio online:"
+- SEMPRE adicione texto/emojis depois do link (nunca termine a mensagem com o link)
 
 QUANDO ENVIAR:
 - APENAS em primeiro contato ou quando cliente pedir cardápio/menu
