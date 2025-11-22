@@ -350,7 +350,7 @@ const Agents = () => {
         // Os dados específicos do mini-site serão aplicados quando vincular
         const deliveryWorkflow = DeliveryWorkflowGenerator.generate({
           miniSiteId: '', // Será preenchido quando vincular ao mini-site
-          miniSiteName: formData.name, // Usar nome do agente como placeholder
+          miniSiteName: 'nosso estabelecimento', // Nome genérico - será atualizado ao vincular ao mini-site
           instanceName: instanceName,
           whatsappNumber: '', // Será preenchido quando vincular ao mini-site
           webhookUrl: `${import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.tech/webhook'}`,

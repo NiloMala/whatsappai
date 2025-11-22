@@ -222,7 +222,7 @@ const MiniSitePage = () => {
 
       // Buscar schedule_config e holidays do agente
       const { data: scheduleData } = await supabase
-        .from('agent_schedules')
+        .from('agent_schedule_config')
         .select('*')
         .eq('agent_id', agentId)
         .maybeSingle();
@@ -254,51 +254,27 @@ const MiniSitePage = () => {
 
       console.log('📝 Novo prompt gerado com dados do mini site');
 
-      // Buscar workflow do n8n
-      const n8nUrl = import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech';
-      const n8nApiKey = import.meta.env.VITE_N8N_API_KEY;
+      // Usar Edge Function para atualizar workflow (evita CORS)
+      console.log('💾 Atualizando workflow via Edge Function...');
 
-      const workflowResponse = await fetch(`${n8nUrl}/api/v1/workflows/${agentData.workflow_id}`, {
-        headers: {
-          'X-N8N-API-KEY': n8nApiKey,
-        },
+      const { data: updateResult, error: updateError } = await supabase.functions.invoke('update-agent-prompt', {
+        body: {
+          workflowId: agentData.workflow_id,
+          updatedPrompt: updatedPrompt,
+          agentName: agentData.name,
+        }
       });
 
-      if (!workflowResponse.ok) {
-        console.error('Erro ao buscar workflow do n8n');
-        return;
+      if (updateError) {
+        console.error('❌ Erro ao atualizar workflow:', updateError);
+        throw updateError;
       }
 
-      const workflow = await workflowResponse.json();
-      console.log('✅ Workflow buscado do n8n');
-
-      // Atualizar o prompt no nó AI Agent
-      const aiAgentNode = workflow.nodes?.find((n: any) => n.name === 'AI Agent');
-      if (aiAgentNode && aiAgentNode.parameters?.options) {
-        aiAgentNode.parameters.options.systemMessage = updatedPrompt;
-        console.log('✅ Prompt atualizado no nó AI Agent');
-      }
-
-      // Salvar workflow atualizado no n8n
-      const updateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${agentData.workflow_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-N8N-API-KEY': n8nApiKey,
-        },
-        body: JSON.stringify(workflow),
-      });
-
-      if (!updateResponse.ok) {
-        console.error('Erro ao atualizar workflow no n8n');
-        return;
-      }
-
-      console.log('✅ Workflow atualizado com sucesso no n8n');
+      console.log('✅ Workflow atualizado com sucesso!', updateResult);
 
       toast({
         title: "Sucesso!",
-        description: "Dados do agente atualizados com informações do mini site.",
+        description: "Workflow do agente atualizado com dados do mini site.",
       });
     } catch (error) {
       console.error('❌ Erro ao atualizar workflow do agente:', error);
@@ -337,8 +313,17 @@ const MiniSitePage = () => {
         if (error) throw error;
 
         // Se vinculou um agente, atualizar o workflow com os dados do mini site
+        console.log('🔍 Verificando vínculo de agente:', {
+          agent_id_novo: formData.agent_id,
+          agent_id_antigo: miniSite.agent_id,
+          vai_atualizar: formData.agent_id && formData.agent_id !== miniSite.agent_id
+        });
+
         if (formData.agent_id && formData.agent_id !== miniSite.agent_id) {
+          console.log('✅ Atualizando workflow do agente com dados do mini site...');
           await updateAgentWorkflowWithMiniSiteData(formData.agent_id, formData);
+        } else {
+          console.log('⚠️ Não vai atualizar workflow (agente não mudou ou não foi selecionado)');
         }
 
         toast({
