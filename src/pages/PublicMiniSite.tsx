@@ -1185,7 +1185,7 @@ const PublicMiniSite = () => {
           <div className="hidden md:flex fixed top-1 right-6 items-center gap-2 z-50">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
               style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }}
             >
               <HomeIcon className="h-4 w-4" />
@@ -1194,7 +1194,7 @@ const PublicMiniSite = () => {
 
             <button
               onClick={() => handleOpenOrders()}
-              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
               style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
             >
               <ListIcon className="h-4 w-4" />
@@ -1203,7 +1203,7 @@ const PublicMiniSite = () => {
 
             <button
               onClick={() => setProfileModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm"
+              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
               style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
             >
               <UserIcon className="h-4 w-4" />
