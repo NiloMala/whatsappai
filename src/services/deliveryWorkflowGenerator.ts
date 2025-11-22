@@ -14,6 +14,7 @@ interface DeliveryWorkflowConfig {
   scheduleConfig?: ScheduleConfig;
   holidays?: Holiday[];
   customInstructions?: string;
+  aiModel?: 'openai' | 'gemini';
 }
 
 interface WorkflowNode {
@@ -69,6 +70,9 @@ export class DeliveryWorkflowGenerator {
     // Configurar Evolution API
     generator.updateEvolutionApi(config.instanceName);
 
+    // Configurar modelo de IA (OpenAI ou Gemini)
+    generator.updateAIModelConnection(config.aiModel || 'gemini');
+
     // Adicionar queries de pedidos (mantém conexões)
     generator.addOrderQueriesTools();
 
@@ -110,7 +114,7 @@ export class DeliveryWorkflowGenerator {
    */
   private updateUserId(userId: string): void {
     const editFieldsNode = this.workflow.nodes.find(n => n.name === 'Edit Fields');
-    
+
     if (editFieldsNode && editFieldsNode.parameters?.assignments?.assignments) {
       const userIdAssignment = editFieldsNode.parameters.assignments.assignments.find(
         (a: any) => a.name === 'user_id'
@@ -119,6 +123,36 @@ export class DeliveryWorkflowGenerator {
         userIdAssignment.value = userId;
       }
     }
+  }
+
+  /**
+   * Atualiza as conexões do modelo de IA baseado na escolha do usuário
+   */
+  private updateAIModelConnection(aiModel: 'openai' | 'gemini'): void {
+    const aiAgentNode = this.workflow.nodes.find(n => n.name === 'AI Agent');
+    if (!aiAgentNode) return;
+
+    // Determinar qual modelo deve ser conectado
+    const modelNodeName = aiModel === 'openai' ? 'OpenAI Chat Model' : 'Google Gemini Chat Model';
+    const otherModelName = aiModel === 'openai' ? 'Google Gemini Chat Model' : 'OpenAI Chat Model';
+
+    // Remover conexão do modelo não selecionado
+    if (this.workflow.connections[otherModelName]) {
+      delete this.workflow.connections[otherModelName].ai_languageModel;
+    }
+
+    // Adicionar/garantir conexão do modelo selecionado
+    if (!this.workflow.connections[modelNodeName]) {
+      this.workflow.connections[modelNodeName] = {};
+    }
+
+    this.workflow.connections[modelNodeName].ai_languageModel = [[{
+      node: 'AI Agent',
+      type: 'ai_languageModel',
+      index: 0
+    }]];
+
+    console.log(`✅ Modelo de IA configurado: ${modelNodeName}`);
   }
 
   /**

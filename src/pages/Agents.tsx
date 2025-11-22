@@ -471,6 +471,7 @@ const Agents = () => {
           scheduleConfig: scheduleConfig.scheduling_enabled ? scheduleConfig : undefined,
           holidays: scheduleConfig.scheduling_enabled ? holidays : undefined,
           customInstructions: formData.prompt, // Para delivery, o prompt contém as instruções personalizadas
+          aiModel: formData.ai_model === 'openai' ? 'openai' : 'gemini', // Modelo de IA selecionado
         });
 
         workflow = deliveryWorkflow.workflow;
