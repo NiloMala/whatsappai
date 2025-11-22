@@ -61,6 +61,8 @@ const MiniSitePage = () => {
   const [deliveryFeeType, setDeliveryFeeType] = useState<"fixed" | "by_neighborhood">("fixed");
   const [fixedDeliveryFee, setFixedDeliveryFee] = useState<number>(0);
   const [neighborhoodFees, setNeighborhoodFees] = useState<Array<{ name: string; fee: number }>>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
 
   // Form data
   const [formData, setFormData] = useState<MiniSiteFormData>({
@@ -427,28 +429,38 @@ const MiniSitePage = () => {
     }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este item?")) return;
+  const handleDeleteItem = (id: string) => {
+    const item = menuItems.find(item => item.id === id);
+    if (item) {
+      setItemToDelete(item);
+      setDeleteModalOpen(true);
+    }
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
 
     try {
       const { error } = await supabase
         .from("menu_items")
         .delete()
-        .eq("id", id);
+        .eq("id", itemToDelete.id);
 
       if (error) throw error;
 
       toast({
-        title: "Item excluído!",
-        description: "O item foi removido com sucesso.",
+        title: "✅ Item removido com sucesso!",
+        description: `"${itemToDelete.title}" foi excluído do seu cardápio.`,
       });
 
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
       loadMiniSite();
     } catch (error) {
       console.error("Erro ao excluir item:", error);
       toast({
-        title: "Erro",
-        description: "Não foi possível excluir o item.",
+        title: "❌ Erro ao remover item",
+        description: `Não foi possível excluir "${itemToDelete.title}". Tente novamente.`,
         variant: "destructive",
       });
     }
@@ -1492,6 +1504,51 @@ const MiniSitePage = () => {
               >
                 <Save className="h-4 w-4 mr-2" />
                 Salvar Configuração
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Item Confirmation Modal */}
+        <Dialog open={deleteModalOpen} onOpenChange={(open) => {
+          if (!open) setItemToDelete(null);
+          setDeleteModalOpen(open);
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">Confirmar exclusão do item</DialogTitle>
+              <DialogDescription className="text-sm">
+                Tem certeza que deseja remover este item do cardápio? Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 p-4 bg-muted rounded-lg">
+              <p className="text-sm font-medium">Item a ser removido:</p>
+              <p className="text-base font-semibold mt-1">{itemToDelete?.title}</p>
+              {itemToDelete?.category && (
+                <p className="text-sm text-muted-foreground mt-1">Categoria: {itemToDelete.category}</p>
+              )}
+              {itemToDelete?.price !== undefined && (
+                <p className="text-sm text-muted-foreground">Preço: R$ {itemToDelete.price.toFixed(2)}</p>
+              )}
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setItemToDelete(null);
+                }}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmDeleteItem()}
+                className="w-full sm:w-auto min-h-[44px]"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir item
               </Button>
             </DialogFooter>
           </DialogContent>

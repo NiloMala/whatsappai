@@ -1072,8 +1072,8 @@ const PublicMiniSite = () => {
           {/* Logo overlay centered at the base of the banner */}
           {miniSite.logo && (
             <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: '86px' }} className="z-40">
-              <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-md">
-                <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-10 w-10 object-cover" />
+              <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-md">
+                <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-20 w-20 object-cover" />
               </div>
             </div>
           )}
