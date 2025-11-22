@@ -252,6 +252,7 @@ const Agents = () => {
           whatsapp_number: miniSiteData.whatsapp_number || '',
           address: miniSiteData.address,
           mini_site_id: miniSiteData.id || '',
+          slug: miniSiteData.slug,
         },
         scheduleConfig: scheduleData || undefined,
         holidays: mappedHolidays || undefined,

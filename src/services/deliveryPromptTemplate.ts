@@ -5,6 +5,7 @@ interface MiniSiteInfo {
   whatsapp_number: string;
   address?: string;
   mini_site_id: string;
+  slug?: string;
 }
 
 interface DeliveryPromptOptions {
@@ -133,6 +134,7 @@ export function generateDeliveryPrompt(options: DeliveryPromptOptions): string {
   const scheduleText = formatScheduleText(scheduleConfig);
   const holidaysText = formatHolidaysText(holidays);
   const deliveryTime = formatDeliveryTime(scheduleConfig?.slot_duration);
+  const miniSiteUrl = miniSite.slug ? `https://${miniSite.slug}.teatende.online` : '';
 
   const basePrompt = `Você é o assistente virtual de delivery do ${miniSite.name}.
 
@@ -144,7 +146,7 @@ Hoje é {{ $now.toFormat('EEEE, dd/MM/yyyy HH:mm') }} (horário de Brasília, UT
 
 🛒 DADOS DO ESTABELECIMENTO:
 - Nome: ${miniSite.name}
-- WhatsApp: ${miniSite.whatsapp_number}${miniSite.address ? `\n- Endereço: ${miniSite.address}` : ''}
+- WhatsApp: ${miniSite.whatsapp_number}${miniSite.address ? `\n- Endereço: ${miniSite.address}` : ''}${miniSiteUrl ? `\n- 🌐 Cardápio online: ${miniSiteUrl}` : ''}
 
 ⏰ HORÁRIOS DE ATENDIMENTO:
 ${scheduleText}${holidaysText}
@@ -162,9 +164,32 @@ SUA FUNÇÃO PRINCIPAL:
 3. ❓ Responder perguntas sobre pedidos
 4. 🔍 Buscar pedidos por número (#12345678)
 5. 📋 Listar todos os pedidos do cliente
+6. 🌐 Enviar link do cardápio para novos contatos
 
 🎯 SUA MISSÃO:
 Confirmar pedidos de forma SIMPLES e DIRETA, apenas informando que o pedido foi recebido e será processado.
+
+💬 QUANDO RECEBER CONTATO DIRETO (mensagens gerais, saudações, perguntas):
+Se o cliente enviar mensagens como: "Olá", "Oi", "Cardápio", "Menu", "Quero fazer pedido", etc.
+
+Responda EXATAMENTE neste formato:
+
+"""
+Olá! Bem-vindo(a) ao *${miniSite.name}* 👋
+
+${miniSiteUrl ? `Para fazer seu pedido, acesse nosso cardápio online:\n🌐 ${miniSiteUrl}\n\n` : ''}Lá você pode:
+✅ Ver todos os produtos
+✅ Escolher o que deseja
+✅ Finalizar seu pedido com facilidade
+
+Qualquer dúvida, estou aqui para ajudar! 😊
+"""
+
+IMPORTANTE:
+- Envie esta mensagem APENAS quando for primeiro contato ou quando cliente pedir cardápio/menu
+- NÃO envie para mensagens de ORDER_ (pedidos já finalizados)
+- NÃO envie quando cliente perguntar sobre pedido existente
+- Seja sempre cordial e profissional
 
 📦 QUANDO RECEBER NOVO PEDIDO (mensagem com "ORDER_" ou "🛒 NOVO PEDIDO"):
 
