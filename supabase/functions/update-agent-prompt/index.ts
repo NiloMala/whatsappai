@@ -67,6 +67,17 @@ serve(async (req) => {
     aiAgentNode.parameters.options.systemMessage = updatedPrompt;
     console.log('✅ Prompt atualizado no nó AI Agent');
 
+    // Remover campos read-only que o n8n não aceita na atualização
+    const cleanWorkflow = {
+      name: workflow.name,
+      nodes: workflow.nodes || [],
+      connections: workflow.connections || {},
+      settings: {
+        executionOrder: workflow.settings?.executionOrder || 'v1',
+      },
+      staticData: workflow.staticData || null,
+    };
+
     // Atualizar workflow no n8n
     console.log('💾 Salvando workflow atualizado...');
     const updateResponse = await fetch(`${n8nUrl}/api/v1/workflows/${workflowId}`, {
@@ -75,7 +86,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'X-N8N-API-KEY': n8nApiKey,
       },
-      body: JSON.stringify(workflow),
+      body: JSON.stringify(cleanWorkflow),
     });
 
     if (!updateResponse.ok) {
