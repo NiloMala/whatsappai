@@ -91,6 +91,111 @@ export default function Orders() {
     filterOrders();
   }, [orders, statusFilter, dateFilter]);
 
+  // Realtime subscription para novos pedidos
+  useEffect(() => {
+    const setupRealtimeSubscription = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      // Buscar mini sites do usuário para filtrar apenas seus pedidos
+      const { data: userMiniSites } = await supabase
+        .from("mini_sites")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (!userMiniSites || userMiniSites.length === 0) return;
+
+      const miniSiteIds = userMiniSites.map((ms) => ms.id);
+
+      // Criar subscription para mudanças na tabela minisite_orders
+      const channel = supabase
+        .channel("orders-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "minisite_orders",
+          },
+          async (payload) => {
+            const newOrder = payload.new as Order;
+
+            // Verificar se o pedido pertence a um dos mini sites do usuário
+            if (miniSiteIds.includes(newOrder.mini_site_id)) {
+              // Buscar dados completos do pedido incluindo mini_sites
+              const { data: fullOrder } = await supabase
+                .from("minisite_orders")
+                .select(`
+                  *,
+                  mini_sites (
+                    name,
+                    slug
+                  )
+                `)
+                .eq("id", newOrder.id)
+                .single();
+
+              if (fullOrder) {
+                // Adicionar novo pedido à lista
+                setOrders((prev) => [fullOrder, ...prev]);
+
+                // Mostrar notificação
+                toast({
+                  title: "🔔 Novo Pedido Recebido!",
+                  description: `Pedido ${fullOrder.order_number ? `#${fullOrder.order_number}` : ""} de ${fullOrder.customer_name} - R$ ${(fullOrder.total_amount || 0).toFixed(2)}`,
+                  duration: 5000,
+                });
+
+                // Tocar som de notificação (opcional)
+                try {
+                  const audio = new Audio("/notification.mp3");
+                  audio.play().catch(() => {
+                    // Ignorar erro se o áudio não puder ser tocado
+                  });
+                } catch (e) {
+                  // Ignorar erro de áudio
+                }
+              }
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "minisite_orders",
+          },
+          async (payload) => {
+            const updatedOrder = payload.new as Order;
+
+            // Verificar se o pedido pertence a um dos mini sites do usuário
+            if (miniSiteIds.includes(updatedOrder.mini_site_id)) {
+              // Atualizar pedido na lista
+              setOrders((prev) =>
+                prev.map((order) =>
+                  order.id === updatedOrder.id
+                    ? { ...order, ...updatedOrder }
+                    : order
+                )
+              );
+            }
+          }
+        )
+        .subscribe();
+
+      // Cleanup: remover subscription quando componente desmontar
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    setupRealtimeSubscription();
+  }, []);
+
   const checkAuth = async () => {
     const {
       data: { session },
@@ -485,7 +590,16 @@ export default function Orders() {
     <DashboardLayout>
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Gerenciar Pedidos</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold">Gerenciar Pedidos</h1>
+            <Badge variant="outline" className="flex items-center gap-1.5 px-2 py-1">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-xs font-medium">Ao Vivo</span>
+            </Badge>
+          </div>
           <p className="text-muted-foreground">
             Visualize e gerencie todos os pedidos recebidos em seus mini sites
           </p>
