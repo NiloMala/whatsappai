@@ -230,6 +230,68 @@ export default function Orders() {
     };
   }, []);
 
+  // Polling como fallback (verifica novos pedidos a cada 10 segundos)
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+
+    const pollForNewOrders = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      // Buscar pedidos mais recentes
+      const { data: latestOrders } = await supabase
+        .from("minisite_orders")
+        .select(`
+          *,
+          mini_sites!inner(name, slug, user_id)
+        `)
+        .eq("mini_sites.user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      if (latestOrders && latestOrders.length > 0) {
+        latestOrders.forEach((newOrder) => {
+          setOrders((prev) => {
+            // Verificar se o pedido já existe
+            const exists = prev.some(o => o.id === newOrder.id);
+            if (!exists) {
+              console.log('🔄 Novo pedido encontrado via polling:', newOrder);
+
+              // Mostrar notificação
+              toast({
+                title: "🔔 Novo Pedido Recebido!",
+                description: `Pedido ${newOrder.order_number ? `#${newOrder.order_number}` : ""} de ${newOrder.customer_name} - R$ ${(newOrder.total_amount || 0).toFixed(2)}`,
+                duration: 5000,
+              });
+
+              // Tocar som de notificação (opcional)
+              try {
+                const audio = new Audio("/notification.mp3");
+                audio.play().catch(() => {});
+              } catch (e) {}
+
+              return [newOrder, ...prev];
+            }
+            return prev;
+          });
+        });
+      }
+    };
+
+    // Polling a cada 10 segundos
+    pollInterval = setInterval(pollForNewOrders, 10000);
+
+    // Cleanup
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, []);
+
   const checkAuth = async () => {
     const {
       data: { session },
