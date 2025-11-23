@@ -23,6 +23,7 @@ import {
   Settings,
   Truck,
   X,
+  Bot,
 } from "lucide-react";
 import type { MiniSite, MiniSiteFormData, MenuItem, MenuItemFormData } from "@/types/mini-site";
 import {
@@ -730,40 +731,39 @@ const MiniSitePage = () => {
             </div>
 
             {formData.template === "delivery" && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="agent">Agente IA para Pedidos</Label>
+              <div className="space-y-3">
+                <Label htmlFor="agent">Agente IA para Pedidos</Label>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.agent_id || "none"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, agent_id: value === "none" ? null : value })
+                    }
+                  >
+                    <SelectTrigger id="agent" className="w-[200px]">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {agents.filter(a => a.agent_type === 'delivery').map((agent) => (
+                        <SelectItem key={agent.id} value={agent.id}>
+                          {agent.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     type="button"
-                    variant="link"
-                    size="sm"
+                    variant="outline"
                     onClick={() => window.open('/dashboard/agents', '_blank')}
-                    className="h-auto p-0 text-xs"
+                    className="flex items-center gap-2"
                   >
-                    + Criar Novo Agente
+                    <Bot className="h-4 w-4" />
+                    <span>Criar Agente</span>
                   </Button>
                 </div>
-                <Select
-                  value={formData.agent_id || "none"}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, agent_id: value === "none" ? null : value })
-                  }
-                >
-                  <SelectTrigger id="agent">
-                    <SelectValue placeholder="Selecione um agente de delivery" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (envio direto ao WhatsApp)</SelectItem>
-                    {agents.filter(a => a.agent_type === 'delivery').map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <p className="text-xs text-muted-foreground">
-                  Selecione um agente de delivery para processar pedidos automaticamente.
-                  O agente enviará notificações de status e poderá ser configurado com horários personalizados.
+                  Agente para processar pedidos automaticamente com notificações e horários personalizados.
                 </p>
               </div>
             )}
