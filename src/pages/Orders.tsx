@@ -93,6 +93,8 @@ export default function Orders() {
 
   // Realtime subscription para novos pedidos
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     const setupRealtimeSubscription = async () => {
       const {
         data: { user },
@@ -100,19 +102,25 @@ export default function Orders() {
 
       if (!user) return;
 
+      console.log('🔄 Configurando Realtime subscription para pedidos...');
+
       // Buscar mini sites do usuário para filtrar apenas seus pedidos
       const { data: userMiniSites } = await supabase
         .from("mini_sites")
         .select("id")
         .eq("user_id", user.id);
 
-      if (!userMiniSites || userMiniSites.length === 0) return;
+      if (!userMiniSites || userMiniSites.length === 0) {
+        console.log('⚠️ Nenhum mini site encontrado para o usuário');
+        return;
+      }
 
       const miniSiteIds = userMiniSites.map((ms) => ms.id);
+      console.log('✅ Mini sites encontrados:', miniSiteIds.length);
 
       // Criar subscription para mudanças na tabela minisite_orders
-      const channel = supabase
-        .channel("orders-changes")
+      channel = supabase
+        .channel(`orders-changes-${user.id}`)
         .on(
           "postgres_changes",
           {
@@ -121,10 +129,13 @@ export default function Orders() {
             table: "minisite_orders",
           },
           async (payload) => {
+            console.log('🆕 Novo pedido detectado:', payload);
             const newOrder = payload.new as Order;
 
             // Verificar se o pedido pertence a um dos mini sites do usuário
             if (miniSiteIds.includes(newOrder.mini_site_id)) {
+              console.log('✅ Pedido pertence ao usuário, buscando dados completos...');
+
               // Buscar dados completos do pedido incluindo mini_sites
               const { data: fullOrder } = await supabase
                 .from("minisite_orders")
@@ -139,8 +150,18 @@ export default function Orders() {
                 .single();
 
               if (fullOrder) {
+                console.log('✅ Pedido completo recebido, atualizando lista...');
+
                 // Adicionar novo pedido à lista
-                setOrders((prev) => [fullOrder, ...prev]);
+                setOrders((prev) => {
+                  // Verificar se o pedido já existe para evitar duplicatas
+                  const exists = prev.some(o => o.id === fullOrder.id);
+                  if (exists) {
+                    console.log('⚠️ Pedido já existe na lista');
+                    return prev;
+                  }
+                  return [fullOrder, ...prev];
+                });
 
                 // Mostrar notificação
                 toast({
@@ -159,6 +180,8 @@ export default function Orders() {
                   // Ignorar erro de áudio
                 }
               }
+            } else {
+              console.log('⚠️ Pedido não pertence ao usuário logado');
             }
           }
         )
@@ -170,10 +193,13 @@ export default function Orders() {
             table: "minisite_orders",
           },
           async (payload) => {
+            console.log('🔄 Pedido atualizado:', payload);
             const updatedOrder = payload.new as Order;
 
             // Verificar se o pedido pertence a um dos mini sites do usuário
             if (miniSiteIds.includes(updatedOrder.mini_site_id)) {
+              console.log('✅ Atualizando pedido na lista...');
+
               // Atualizar pedido na lista
               setOrders((prev) =>
                 prev.map((order) =>
@@ -185,15 +211,23 @@ export default function Orders() {
             }
           }
         )
-        .subscribe();
-
-      // Cleanup: remover subscription quando componente desmontar
-      return () => {
-        supabase.removeChannel(channel);
-      };
+        .subscribe((status) => {
+          console.log('📡 Status da subscription:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Subscription ativa! Aguardando novos pedidos...');
+          }
+        });
     };
 
     setupRealtimeSubscription();
+
+    // Cleanup: remover subscription quando componente desmontar
+    return () => {
+      if (channel) {
+        console.log('🔌 Removendo subscription...');
+        supabase.removeChannel(channel);
+      }
+    };
   }, []);
 
   const checkAuth = async () => {
