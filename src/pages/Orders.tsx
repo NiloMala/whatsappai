@@ -36,7 +36,11 @@ import {
   Phone,
   CreditCard,
   ShoppingBag,
+  FileDown,
+  Calendar,
 } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface OrderItem {
   id: string;
@@ -74,6 +78,7 @@ export default function Orders() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
@@ -84,7 +89,7 @@ export default function Orders() {
 
   useEffect(() => {
     filterOrders();
-  }, [orders, statusFilter]);
+  }, [orders, statusFilter, dateFilter]);
 
   const checkAuth = async () => {
     const {
@@ -132,11 +137,34 @@ export default function Orders() {
   };
 
   const filterOrders = () => {
-    if (statusFilter === "all") {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter((order) => order.status === statusFilter));
+    let filtered = [...orders];
+
+    // Filtrar por status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((order) => order.status === statusFilter);
     }
+
+    // Filtrar por data
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      filtered = filtered.filter((order) => {
+        const orderDate = new Date(order.created_at);
+        const daysDiff = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (dateFilter === "today") {
+          return orderDate >= today;
+        } else if (dateFilter === "7days") {
+          return daysDiff <= 7;
+        } else if (dateFilter === "30days") {
+          return daysDiff <= 30;
+        }
+        return true;
+      });
+    }
+
+    setFilteredOrders(filtered);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -298,6 +326,161 @@ export default function Orders() {
     });
   };
 
+  const exportToPDF = () => {
+    if (!filteredOrders || filteredOrders.length === 0) {
+      toast({ title: "Sem dados", description: "Não há pedidos para exportar no período selecionado." });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+
+      // Header com logo e título
+      doc.setFillColor(79, 70, 229); // Primary color
+      doc.rect(0, 0, 220, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Relatório de Pedidos', 105, 20, { align: 'center' });
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      const periodText = dateFilter === "today" ? "Hoje" : dateFilter === "7days" ? "Últimos 7 dias" : dateFilter === "30days" ? "Últimos 30 dias" : "Todos os períodos";
+      const statusText = statusFilter === "all" ? "Todos os status" : getStatusLabel(statusFilter);
+      doc.text(`${periodText} | ${statusText}`, 105, 30, { align: 'center' });
+
+      // Data de geração
+      doc.setFontSize(9);
+      const now = new Date().toLocaleString('pt-BR');
+      doc.text(`Gerado em: ${now}`, 105, 36, { align: 'center' });
+
+      // Reset cor do texto
+      doc.setTextColor(0, 0, 0);
+
+      // Resumo executivo
+      let yPos = 50;
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resumo Executivo', 14, yPos);
+
+      yPos += 10;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+
+      // Calcular totais
+      const totalPedidos = filteredOrders.length;
+      const totalVendas = filteredOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+      const ticketMedio = totalVendas / totalPedidos;
+      const pedidosPendentes = filteredOrders.filter(o => o.status === 'pending').length;
+
+      // Cards de resumo em grid
+      const cardWidth = 45;
+      const cardHeight = 25;
+      const gap = 5;
+
+      // Card 1 - Total de Pedidos
+      doc.setFillColor(59, 130, 246); // Blue
+      doc.roundedRect(14, yPos, cardWidth, cardHeight, 3, 3, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.text('Total de Pedidos', 16, yPos + 6);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(totalPedidos), 16, yPos + 17);
+
+      // Card 2 - Total de Vendas
+      doc.setFillColor(34, 197, 94); // Green
+      doc.roundedRect(14 + cardWidth + gap, yPos, cardWidth, cardHeight, 3, 3, 'F');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Total de Vendas', 16 + cardWidth + gap, yPos + 6);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${totalVendas.toFixed(2)}`, 16 + cardWidth + gap, yPos + 17);
+
+      // Card 3 - Ticket Médio
+      doc.setFillColor(249, 115, 22); // Orange
+      doc.roundedRect(14 + (cardWidth + gap) * 2, yPos, cardWidth, cardHeight, 3, 3, 'F');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Ticket Médio', 16 + (cardWidth + gap) * 2, yPos + 6);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${ticketMedio.toFixed(2)}`, 16 + (cardWidth + gap) * 2, yPos + 17);
+
+      // Card 4 - Pedidos Pendentes
+      doc.setFillColor(168, 85, 247); // Purple
+      doc.roundedRect(14 + (cardWidth + gap) * 3, yPos, cardWidth, cardHeight, 3, 3, 'F');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Pendentes', 16 + (cardWidth + gap) * 3, yPos + 6);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(pedidosPendentes), 16 + (cardWidth + gap) * 3, yPos + 17);
+
+      // Reset cor
+      doc.setTextColor(0, 0, 0);
+
+      // Tabela de dados detalhados
+      yPos += cardHeight + 15;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Pedidos Detalhados', 14, yPos);
+
+      yPos += 5;
+
+      const tableData = filteredOrders.map(order => [
+        order.order_number ? `#${order.order_number}` : '-',
+        order.customer_name,
+        order.mini_sites?.name || '-',
+        `R$ ${(order.total_amount || 0).toFixed(2)}`,
+        getStatusLabel(order.status),
+        new Date(order.created_at).toLocaleDateString('pt-BR'),
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Pedido', 'Cliente', 'Estabelecimento', 'Valor', 'Status', 'Data']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+        },
+        columnStyles: {
+          0: { halign: 'center', cellWidth: 20 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 40 },
+          3: { halign: 'right', cellWidth: 25 },
+          4: { halign: 'center', cellWidth: 30 },
+          5: { halign: 'center', cellWidth: 25 },
+        },
+      });
+
+      // Salvar PDF
+      const fileName = `relatorio-pedidos-${new Date().getTime()}.pdf`;
+      doc.save(fileName);
+
+      toast({
+        title: "Relatório gerado!",
+        description: `PDF exportado com sucesso: ${fileName}`,
+      });
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="container mx-auto p-4 max-w-7xl">
@@ -309,7 +492,7 @@ export default function Orders() {
         </div>
 
       {/* Filters */}
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap gap-4 items-center">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[220px]">
             <SelectValue placeholder="Filtrar por status" />
@@ -324,6 +507,28 @@ export default function Orders() {
             <SelectItem value="cancelled">Cancelados</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Filtrar por período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os períodos</SelectItem>
+            <SelectItem value="today">Hoje</SelectItem>
+            <SelectItem value="7days">Últimos 7 dias</SelectItem>
+            <SelectItem value="30days">Últimos 30 dias</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          onClick={exportToPDF}
+          variant="outline"
+          className="ml-auto"
+          disabled={loading || filteredOrders.length === 0}
+        >
+          <FileDown className="h-4 w-4 mr-2" />
+          Exportar Relatório (PDF)
+        </Button>
       </div>
 
       {/* Orders List */}
