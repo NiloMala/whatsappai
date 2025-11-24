@@ -1140,11 +1140,10 @@ const PublicMiniSite = () => {
           {/* Logo overlay with pulse animation */}
           {miniSite.logo && (
             <div
-              className="z-40 animate-in zoom-in-95 fade-in-50"
+              className="z-40 animate-in zoom-in-95 fade-in-50 bottom-[104px] md:bottom-[82px]"
               style={{
                 position: 'absolute',
                 left: '50%',
-                bottom: '82px',
                 transform: 'translateX(-50%)',
                 animationDelay: '100ms',
                 animationFillMode: 'backwards'
@@ -1949,7 +1948,7 @@ const PublicMiniSite = () => {
       </Dialog>
 
       {/* Footer (compact, padded above mobile menu) */}
-      <footer className="mt-4 py-2 border-t" style={{ paddingBottom: 48 }}>
+      <footer className="mt-4 py-2 border-t pb-24 md:pb-12">
         <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
           <p>
             © {new Date().getFullYear()} {miniSite.name}. Todos os direitos reservados.
