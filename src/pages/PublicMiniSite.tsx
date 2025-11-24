@@ -22,7 +22,6 @@ const PublicMiniSite = () => {
   const [miniSite, setMiniSite] = useState<MiniSite | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
-  const [categoryOpen, setCategoryOpen] = useState(false);
   const [mobileCartVisible, setMobileCartVisible] = useState(false);
   
   // Carregar carrinho do localStorage na inicialização
@@ -1106,75 +1105,102 @@ const PublicMiniSite = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: miniSite?.background_color || undefined }}>
-      {/* Banner with overlayed company info card */}
+      {/* Banner with gradient overlay and animations */}
           {miniSite ? (
-        <div className="w-full relative">
+        <div className="w-full relative overflow-hidden">
           {miniSite.banner ? (
-            <>
+            <div className="relative">
               <img
                 src={miniSite.banner}
                 alt={`${miniSite.name} banner`}
                 loading="lazy"
-                className="w-full h-28 md:h-36 lg:h-40 object-cover"
+                className="w-full h-32 md:h-40 lg:h-48 object-cover"
               />
-            </>
+              {/* Gradient overlay for better text readability */}
+              <div
+                className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30"
+                style={{ pointerEvents: 'none' }}
+              />
+            </div>
           ) : (
             <div
-              className="w-full h-28 md:h-36 lg:h-40 flex items-center justify-center"
-              style={{ backgroundColor: miniSite.background_color || miniSite.theme_color }}
+              className="w-full h-32 md:h-40 lg:h-48 flex items-center justify-center bg-gradient-to-br"
+              style={{
+                backgroundImage: `linear-gradient(135deg, ${miniSite.theme_color}E6 0%, ${miniSite.theme_color} 100%)`
+              }}
             >
               <div className="text-center">
-                <h2 className="text-lg font-semibold" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>{miniSite.name}</h2>
+                <h2 className="text-xl md:text-2xl font-bold animate-in fade-in-50 zoom-in-95" style={{ color: miniSite.text_color || readableTextColor(miniSite.theme_color) }}>
+                  {miniSite.name}
+                </h2>
               </div>
             </div>
           )}
 
-          {/* Logo overlay centered at the base of the banner */}
+          {/* Logo overlay with pulse animation */}
           {miniSite.logo && (
-            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: '86px' }} className="z-40">
-              <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-md">
+            <div
+              className="z-40 animate-in zoom-in-95 fade-in-50"
+              style={{
+                position: 'absolute',
+                left: '50%',
+                bottom: '82px',
+                transform: 'translateX(-50%)',
+                animationDelay: '100ms',
+                animationFillMode: 'backwards'
+              }}
+            >
+              <div className="relative h-24 w-24 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-xl ring-4 ring-white/50 transition-transform hover:scale-105 hover:shadow-2xl">
                 <img src={miniSite.logo} alt={miniSite.name} loading="lazy" className="h-20 w-20 object-cover" />
+                {/* Subtle pulse effect */}
+                <div className="absolute inset-0 rounded-full bg-white/10 animate-pulse" style={{ animationDuration: '3s' }} />
               </div>
             </div>
           )}
 
-          {/* Business info — rendered as a simple block below the banner (no card) */}
-          <div className="w-full px-3 mt-0">
-            <div className="mx-auto w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-1/2 text-center py-1 px-2" style={{ color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color) }}>
+          {/* Business info with animations */}
+          <div className="w-full px-2 mt-0">
+            <div
+              className="mx-auto w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-1/2 text-center py-1 px-2 animate-in fade-in-50 slide-in-from-bottom-3"
+              style={{
+                color: miniSite.text_color || readableTextColor(miniSite.background_color || miniSite.theme_color),
+                animationDelay: '200ms',
+                animationFillMode: 'backwards'
+              }}
+            >
               {miniSite.logo ? (
-                // Centered layout: logo + text grouped and centered as a unit
-                <div className="flex items-center justify-center gap-3 mb-1 mx-auto" style={{ maxWidth: 420 }}>
-                      <div className="text-center">
-                        <h2 className="text-sm font-semibold leading-tight">{miniSite.name}</h2>
-                        {miniSite.description ? (
-                          <p className="text-xs mt-0">{miniSite.description}</p>
-                        ) : (
-                          <p className="text-xs mt-0">Bem vindo a {miniSite.name}</p>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-center justify-center gap-2 mb-1 mx-auto" style={{ maxWidth: 420 }}>
+                  <div className="text-center">
+                    <h2 className="text-sm md:text-base font-bold leading-tight">{miniSite.name}</h2>
+                    {miniSite.description ? (
+                      <p className="text-xs mt-0.5 opacity-90">{miniSite.description}</p>
+                    ) : (
+                      <p className="text-xs mt-0.5 opacity-90">Bem vindo a {miniSite.name}</p>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
-                  <h2 className="text-sm font-semibold">{miniSite.name}</h2>
+                  <h2 className="text-sm md:text-base font-bold">{miniSite.name}</h2>
                   {miniSite.description ? (
-                    <p className="text-xs mt-0">{miniSite.description}</p>
+                    <p className="text-xs mt-0.5 opacity-90">{miniSite.description}</p>
                   ) : (
-                    <p className="text-xs mt-0">Bem vindo a {miniSite.name}</p>
+                    <p className="text-xs mt-0.5 opacity-90">Bem vindo a {miniSite.name}</p>
                   )}
                 </>
               )}
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-1 text-xs">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 mt-1.5 text-sm">
                 {miniSite.whatsapp_number && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/50 backdrop-blur-sm transition-transform hover:scale-105">
                     <Phone className="h-3 w-3" />
-                    <span className="text-xs">{miniSite.whatsapp_number}</span>
+                    <span className="text-xs font-medium">{miniSite.whatsapp_number}</span>
                   </div>
                 )}
                 {miniSite.address && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/50 backdrop-blur-sm transition-transform hover:scale-105">
                     <MapPin className="h-3 w-3" />
-                    <span className="text-xs">{miniSite.address}</span>
+                    <span className="text-xs font-medium">{miniSite.address}</span>
                   </div>
                 )}
               </div>
@@ -1182,11 +1208,16 @@ const PublicMiniSite = () => {
           </div>
 
           {/* Desktop top-right menu: Home / Pedidos / Perfil (fixed while scrolling) */}
-          <div className="hidden md:flex fixed top-1 right-6 items-center gap-2 z-50">
+          <div className="hidden md:flex fixed top-2 right-6 items-center gap-2 z-50 animate-in slide-in-from-top-3 fade-in-50">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
-              style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: '1px solid', borderColor: miniSite?.theme_color }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+              style={{
+                backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                border: '2px solid',
+                borderColor: miniSite?.theme_color
+              }}
             >
               <HomeIcon className="h-4 w-4" />
               <span>Home</span>
@@ -1194,8 +1225,13 @@ const PublicMiniSite = () => {
 
             <button
               onClick={() => handleOpenOrders()}
-              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
-              style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 backdrop-blur-sm"
+              style={{
+                backgroundColor: miniSite?.card_color || 'rgba(255, 255, 255, 0.9)',
+                color: miniSite?.theme_color || '#374151',
+                border: '2px solid',
+                borderColor: miniSite?.theme_color
+              }}
             >
               <ListIcon className="h-4 w-4" />
               <span>Pedidos</span>
@@ -1203,8 +1239,13 @@ const PublicMiniSite = () => {
 
             <button
               onClick={() => setProfileModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2 rounded-md text-sm"
-              style={{ backgroundColor: miniSite?.card_color || undefined, color: miniSite?.theme_color || '#374151', border: '1px solid', borderColor: miniSite?.theme_color }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 backdrop-blur-sm"
+              style={{
+                backgroundColor: miniSite?.card_color || 'rgba(255, 255, 255, 0.9)',
+                color: miniSite?.theme_color || '#374151',
+                border: '2px solid',
+                borderColor: miniSite?.theme_color
+              }}
             >
               <UserIcon className="h-4 w-4" />
               <span>Perfil</span>
@@ -1217,50 +1258,35 @@ const PublicMiniSite = () => {
         <div className="grid gap-8">
           {/* Menu/Serviços */}
           <div className="space-y-6">
-            {/* Filtro de Categorias */}
-            {categories.length > 2 && (
+            {/* Filtro de Categorias - Pills horizontais */}
+            {categories.length > 1 && (
               <div className="border-b pb-4 -mx-4 px-4">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  {/* Dropdown para mobile e muitas categorias */}
-                  <div className="w-auto flex-shrink-0">
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory} onOpenChange={(open) => {
-                      setCategoryOpen(open);
-                      // when the select closes, remove focus from the trigger so it doesn't keep the focus outline
-                      if (!open) {
-                        setTimeout(() => {
-                          try {
-                            (document.activeElement as HTMLElement | null)?.blur();
-                          } catch (e) {
-                            // ignore
-                          }
-                        }, 0);
-                      }
-                    }}>
-                      <SelectTrigger
-                        className="w-[80px] sm:w-[100px] px-2 text-sm flex items-center justify-center text-center focus:outline-none focus:ring-0"
-                        style={{
-                          height: 'calc(2rem * 1.2)',
-                          backgroundColor: categoryOpen ? (miniSite?.button_color || miniSite?.theme_color) : (miniSite?.card_color || "#f3f4f6"),
-                          color: categoryOpen ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color)) : (miniSite?.theme_color || "#374151"),
-                          border: '1px solid',
-                          borderColor: miniSite?.theme_color
-                        }}
-                      >
-                        Menu
-                      </SelectTrigger>
-                      <SelectContent style={{ backgroundColor: miniSite?.card_color || undefined }}>
-                        {categories.map((category) => (
-                          <SelectItem
-                            key={category}
-                            value={category}
-                            style={{ color: miniSite?.theme_color }}
-                          >
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className="flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap backdrop-blur-sm hover:scale-105 active:scale-95"
+                      style={{
+                        backgroundColor: selectedCategory === category
+                          ? (miniSite?.button_color || miniSite?.theme_color)
+                          : 'rgba(255, 255, 255, 0.8)',
+                        color: selectedCategory === category
+                          ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color))
+                          : (miniSite?.theme_color || '#374151'),
+                        border: '2px solid',
+                        borderColor: selectedCategory === category
+                          ? (miniSite?.theme_color)
+                          : `${miniSite?.theme_color}40` || 'rgba(0, 0, 0, 0.1)',
+                        boxShadow: selectedCategory === category
+                          ? `0 4px 12px ${miniSite?.theme_color}40, 0 2px 4px rgba(0, 0, 0, 0.1)`
+                          : '0 2px 6px rgba(0, 0, 0, 0.08)'
+                      }}
+                    >
+                      {category === "Todos" && "📋 "}
+                      {category}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -1269,76 +1295,82 @@ const PublicMiniSite = () => {
             {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
             <div className="px-4">
               <div className="w-full flex justify-center">
-                <div className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 py-2 justify-items-center">
+                <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-4 justify-items-center">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={`skeleton-${i}`} className="w-full max-w-xs overflow-hidden">
-                        <div className="flex flex-col h-40 md:h-56 p-2">
-                          <div className="flex-1">
-                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse" />
-                            <div className="h-3 bg-gray-200 rounded w-1/3 mb-3 animate-pulse" />
-                            <div className="h-10 bg-gray-200 rounded w-full mb-2 animate-pulse" />
+                      <div
+                        key={`skeleton-${i}`}
+                        className="w-full max-w-xs bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
+                        style={{ animationDelay: `${i * 100}ms` }}
+                      >
+                        <div className="p-4 space-y-4">
+                          <div className="space-y-2">
+                            <div className="h-5 bg-gray-200 rounded w-3/4" />
+                            <div className="h-4 bg-gray-200 rounded w-1/2" />
                           </div>
-                          <div className="mt-2">
-                            <div className="h-8 bg-gray-200 rounded w-full animate-pulse" />
+                          <div className="h-3 bg-gray-200 rounded w-2/3" />
+                          <div className="pt-4 border-t border-gray-100">
+                            <div className="h-10 bg-gray-200 rounded-lg" />
                           </div>
                         </div>
                       </div>
                     ))}
                   </>
                 ) : (
-                  filteredItems.map((item) => (
-                    <Card key={item.id} className="w-full max-w-xs overflow-hidden" style={{ backgroundColor: miniSite?.card_color || undefined }}>
-                      <div className="flex flex-col">
-                        <div className="flex-1 flex flex-col justify-between p-1">
+                  filteredItems.map((item, index) => (
+                    <Card
+                      key={item.id}
+                      className="w-full max-w-xs overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-in fade-in-50 slide-in-from-bottom-5"
+                      style={{
+                        backgroundColor: miniSite?.card_color || undefined,
+                        animationDelay: `${index * 50}ms`,
+                        animationFillMode: 'backwards'
+                      }}
+                    >
+                      <div className="flex flex-col h-full">
+                        <div className="flex-1 flex flex-col justify-between p-3">
                           <div>
-                            <CardHeader>
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <CardTitle className="text-sm" style={{ color: miniSite?.theme_color }}>{item.title}</CardTitle>
+                            <div className="mb-3">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <h3 className="text-base font-semibold line-clamp-2" style={{ color: miniSite?.theme_color }}>
+                                    {item.title}
+                                  </h3>
                                   {item.duration && (
-                                    <Badge variant="outline" className="mt-1">
+                                    <Badge variant="outline" className="mt-1.5">
                                       <CalendarIcon className="h-3 w-3 mr-1" />
                                       {item.duration} min
                                     </Badge>
                                   )}
                                 </div>
-                                <span className="text-base font-semibold" style={{ color: miniSite?.theme_color }}>
-                                  R$ {item.price.toFixed(2)}
-                                </span>
+                                <div className="ml-2 flex flex-col items-end">
+                                  <span className="text-lg font-bold" style={{ color: miniSite?.theme_color }}>
+                                    R$ {item.price.toFixed(2)}
+                                  </span>
+                                </div>
                               </div>
-                            </CardHeader>
+                            </div>
 
                             {item.description && (
-                              <CardContent>
-                                <div className="w-full flex items-center justify-start gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => openDescModal(item.description)}
-                                    className="p-1 rounded hover:bg-accent/20 flex items-center text-primary"
-                                    aria-label="Abrir detalhes"
-                                    title="Detalhes"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => openDescModal(item.description)}
-                                    className="text-xs text-primary -ml-1"
-                                  >
-                                    Detalhes
-                                  </button>
-                                </div>
-                              </CardContent>
+                              <div className="mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() => openDescModal(item.description)}
+                                  className="flex items-center gap-1.5 text-xs hover:underline transition-colors"
+                                  style={{ color: miniSite?.theme_color }}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  <span>Ver detalhes</span>
+                                </button>
+                              </div>
                             )}
                            </div>
 
-                           <div className="mt-1">
+                           <div className="mt-auto pt-3 border-t" style={{ borderColor: `${miniSite?.theme_color}20` }}>
                             <Button
                               type="button"
-                              className="w-full px-2 py-1 text-sm rounded-md"
+                              className="w-full py-2.5 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
                               style={{
                                 backgroundColor: miniSite?.button_color || miniSite?.theme_color,
                                 color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
@@ -1347,7 +1379,7 @@ const PublicMiniSite = () => {
                               }}
                               onClick={() => handleAddClick(item)}
                             >
-                              {miniSite?.template === "delivery" ? "Adicionar" : "Agendar"}
+                              {miniSite?.template === "delivery" ? "🛒 Adicionar ao Carrinho" : "📅 Agendar Serviço"}
                             </Button>
                           </div>
                         </div>
@@ -1369,17 +1401,23 @@ const PublicMiniSite = () => {
       {/* Floating cart pill + cart modal */}
       {selectedItems.length > 0 && (
         <>
-              <div className="hidden md:block fixed bottom-4 right-4 md:top-20 md:right-6 md:bottom-auto z-50">
+              <div className="hidden md:block fixed bottom-4 right-4 md:top-20 md:right-6 md:bottom-auto z-50 animate-in slide-in-from-right-5 fade-in-50">
                 <button
                   onClick={() => setCartOpen(true)}
-                  className="inline-flex items-center gap-3 px-4 py-3 rounded-full shadow-lg text-sm touch-manipulation"
-                  style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color) }}
+                  className="inline-flex items-center gap-3 px-5 py-3 rounded-full shadow-xl text-sm touch-manipulation transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 group"
+                  style={{
+                    backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+                    color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+                    border: '2px solid white'
+                  }}
                   aria-label="Ver carrinho"
                 >
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="font-medium text-sm hidden sm:inline">Ver Carrinho</span>
-                  <span className="ml-2 font-semibold text-sm">R$ {totalPrice.toFixed(2)}</span>
-                  <span className="ml-2 inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
+                  <ShoppingCart className="h-5 w-5 transition-transform group-hover:scale-110" />
+                  <span className="font-semibold text-sm hidden sm:inline">Ver Carrinho</span>
+                  <span className="font-bold text-base">R$ {totalPrice.toFixed(2)}</span>
+                  <span className="inline-flex items-center justify-center bg-white text-black rounded-full h-7 w-7 text-xs font-bold shadow-md animate-pulse" style={{ animationDuration: '2s' }}>
+                    {totalItems}
+                  </span>
                 </button>
               </div>
 
@@ -1504,20 +1542,26 @@ const PublicMiniSite = () => {
 
       {/* Mobile cart bar (appears above footer) */}
       {selectedItems.length > 0 && mobileCartVisible && (
-        <div className="fixed bottom-16 left-4 right-4 z-50 md:hidden">
+        <div className="fixed bottom-16 left-4 right-4 z-50 md:hidden animate-in slide-in-from-bottom-5 fade-in-50">
           <button
             onClick={() => setCartOpen(true)}
             aria-label="Ver carrinho"
-            className="w-full px-3 py-2 rounded-lg shadow-lg flex items-center justify-between"
-            style={{ backgroundColor: miniSite?.button_color || miniSite?.theme_color, color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color), border: 'none' }}
+            className="w-full px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between transition-all duration-300 active:scale-95 group"
+            style={{
+              backgroundColor: miniSite?.button_color || miniSite?.theme_color,
+              color: miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color),
+              border: '2px solid white'
+            }}
           >
             <div className="flex items-center gap-3 font-semibold">
-              <ShoppingCart className="h-5 w-5" />
-              <span>Ver Carrinho</span>
+              <ShoppingCart className="h-5 w-5 transition-transform group-active:scale-110" />
+              <span className="text-sm">Ver Carrinho</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="font-semibold select-none" style={{ userSelect: 'none' }}>R$ {totalPrice.toFixed(2)}</span>
-              <span className="inline-flex items-center justify-center bg-white text-black rounded-full h-6 w-6 text-xs">{totalItems}</span>
+              <span className="font-bold text-base select-none" style={{ userSelect: 'none' }}>R$ {totalPrice.toFixed(2)}</span>
+              <span className="inline-flex items-center justify-center bg-white text-black rounded-full h-7 w-7 text-xs font-bold shadow-md animate-pulse" style={{ animationDuration: '2s' }}>
+                {totalItems}
+              </span>
             </div>
           </button>
         </div>
@@ -1525,18 +1569,33 @@ const PublicMiniSite = () => {
 
       {/* Mobile fixed footer with Home / Pedidos / Perfil (compact) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-        <div className="flex items-center justify-between px-6 py-1 bg-white border-t">
-          <button className="flex flex-col items-center text-xs text-muted-foreground ml-2" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Home">
-            <HomeIcon className="h-4 w-4" />
-            <span>Home</span>
+        <div className="flex items-center justify-around px-4 py-2 bg-white/95 backdrop-blur-md border-t-2 shadow-lg" style={{ borderColor: `${miniSite?.theme_color}20` }}>
+          <button
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 active:scale-95 active:bg-gray-100"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Home"
+            style={{ color: miniSite?.theme_color || '#6b7280' }}
+          >
+            <HomeIcon className="h-5 w-5" />
+            <span className="text-xs font-medium">Home</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground" onClick={() => handleOpenOrders()} aria-label="Pedidos">
-            <ListIcon className="h-4 w-4" />
-            <span>Pedidos</span>
+          <button
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 active:scale-95 active:bg-gray-100"
+            onClick={() => handleOpenOrders()}
+            aria-label="Pedidos"
+            style={{ color: miniSite?.theme_color || '#6b7280' }}
+          >
+            <ListIcon className="h-5 w-5" />
+            <span className="text-xs font-medium">Pedidos</span>
           </button>
-          <button className="flex flex-col items-center text-xs text-muted-foreground mr-2" onClick={() => setProfileModalOpen(true)} aria-label="Perfil">
-            <UserIcon className="h-4 w-4" />
-            <span>Perfil</span>
+          <button
+            className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-200 active:scale-95 active:bg-gray-100"
+            onClick={() => setProfileModalOpen(true)}
+            aria-label="Perfil"
+            style={{ color: miniSite?.theme_color || '#6b7280' }}
+          >
+            <UserIcon className="h-5 w-5" />
+            <span className="text-xs font-medium">Perfil</span>
           </button>
         </div>
       </div>
