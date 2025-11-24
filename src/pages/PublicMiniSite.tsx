@@ -1254,54 +1254,50 @@ const PublicMiniSite = () => {
         </div>
       ) : null}
 
-  <main className="container mx-auto px-4 py-8 pt-8">
-        <div className="grid gap-8">
-          {/* Menu/Serviços */}
-          <div className="space-y-6">
-            {/* Filtro de Categorias - Pills horizontais */}
-            {categories.length > 1 && (
-              <div className="border-b pb-4 -mx-4 px-4">
-                <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className="flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap backdrop-blur-sm hover:scale-105 active:scale-95"
-                      style={{
-                        backgroundColor: selectedCategory === category
-                          ? (miniSite?.button_color || miniSite?.theme_color)
-                          : 'rgba(255, 255, 255, 0.8)',
-                        color: selectedCategory === category
-                          ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color))
-                          : (miniSite?.theme_color || '#374151'),
-                        border: '2px solid',
-                        borderColor: selectedCategory === category
-                          ? (miniSite?.theme_color)
-                          : `${miniSite?.theme_color}40` || 'rgba(0, 0, 0, 0.1)',
-                        boxShadow: selectedCategory === category
-                          ? `0 4px 12px ${miniSite?.theme_color}40, 0 2px 4px rgba(0, 0, 0, 0.1)`
-                          : '0 2px 6px rgba(0, 0, 0, 0.08)'
-                      }}
-                    >
-                      {category === "Todos" && "📋 "}
-                      {category}
-                    </button>
-                  ))}
-                </div>
+  <main className="py-8 pt-8">
+          {/* Filtro de Categorias - Pills horizontais - Seção independente */}
+          {categories.length > 1 && (
+            <div className="border-b pb-4 px-4 mb-6">
+              <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className="flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap backdrop-blur-sm hover:scale-105 active:scale-95"
+                    style={{
+                      backgroundColor: selectedCategory === category
+                        ? (miniSite?.button_color || miniSite?.theme_color)
+                        : 'rgba(255, 255, 255, 0.8)',
+                      color: selectedCategory === category
+                        ? (miniSite?.text_color || readableTextColor(miniSite?.button_color || miniSite?.theme_color))
+                        : (miniSite?.theme_color || '#374151'),
+                      border: '2px solid',
+                      borderColor: selectedCategory === category
+                        ? (miniSite?.theme_color)
+                        : `${miniSite?.theme_color}40` || 'rgba(0, 0, 0, 0.1)',
+                      boxShadow: selectedCategory === category
+                        ? `0 4px 12px ${miniSite?.theme_color}40, 0 2px 4px rgba(0, 0, 0, 0.1)`
+                        : '0 2px 6px rgba(0, 0, 0, 0.08)'
+                    }}
+                  >
+                    {category === "Todos" && "📋 "}
+                    {category}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Grid de Produtos */}
-            {/* Grid responsivo: 1 coluna no mobile, 4 colunas no desktop */}
-            <div className="px-4">
-              <div className="w-full flex justify-center">
-                <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-4 justify-items-center">
+          {/* Grid de Produtos - Seção independente e centralizada */}
+          <div className="w-full flex justify-center py-4">
+            <div className="w-full max-w-md mx-auto sm:max-w-7xl px-4">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 sm:justify-items-center">
                 {filteredItems.length === 0 ? (
                   <>
                     {[1, 2, 3, 4].map((i) => (
                       <div
                         key={`skeleton-${i}`}
-                        className="w-full max-w-xs bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
+                        className="w-80 mx-auto sm:w-full sm:max-w-xs sm:mx-0 bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
                         style={{ animationDelay: `${i * 100}ms` }}
                       >
                         <div className="p-4 space-y-4">
@@ -1321,7 +1317,7 @@ const PublicMiniSite = () => {
                   filteredItems.map((item, index) => (
                     <Card
                       key={item.id}
-                      className="w-full max-w-xs overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-in fade-in-50 slide-in-from-bottom-5"
+                      className="w-80 mx-auto sm:w-full sm:max-w-xs sm:mx-0 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 animate-in fade-in-50 slide-in-from-bottom-5"
                       style={{
                         backgroundColor: miniSite?.card_color || undefined,
                         animationDelay: `${index * 50}ms`,
@@ -1387,15 +1383,12 @@ const PublicMiniSite = () => {
                     </Card>
                   ))
                 )}
-                </div>
               </div>
             </div>
-
 
           </div>
 
           {/* right column intentionally removed — cart is accessible via floating pill/modal */}
-        </div>
       </main>
 
       {/* Floating cart pill + cart modal */}
