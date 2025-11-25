@@ -189,8 +189,7 @@ serve(async (req) => {
                 p_user_id: connection.user_id,
                 p_contact_phone: contactPhone,
                 p_contact_name: messageData.pushName || contactPhone,
-                p_last_message: messageText.substring(0, 500),
-                p_last_message_at: new Date().toISOString()
+                p_agent_id: null // Agent ID é opcional, será associado depois se necessário
               });
 
             if (convError) {
