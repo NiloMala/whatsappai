@@ -182,7 +182,7 @@ export class DeliveryWorkflowGenerator {
               {
                 keyName: 'customer_phone',
                 condition: 'eq',
-                keyValue: "={{ $('Edit Fields').item.json.Telefone }}"
+                keyValue: "={{ (() => { const digits = $('Edit Fields').item.json.Telefone.replace(/\\\\D/g, ''); return digits.startsWith('55') ? digits : '55' + digits; })() }}"
               },
               {
                 keyName: 'mini_site_id',
@@ -206,13 +206,21 @@ export class DeliveryWorkflowGenerator {
       };
       this.workflow.nodes.push(searchOrdersNode);
     } else {
-      // Atualizar mini_site_id
+      // Atualizar mini_site_id e customer_phone
       if (searchOrdersNode.parameters?.filters?.conditions) {
         const miniSiteCondition = searchOrdersNode.parameters.filters.conditions.find(
           (c: any) => c.keyName === 'mini_site_id'
         );
         if (miniSiteCondition) {
           miniSiteCondition.keyValue = this.config.miniSiteId;
+        }
+
+        // Atualizar customer_phone para usar formato E.164
+        const phoneCondition = searchOrdersNode.parameters.filters.conditions.find(
+          (c: any) => c.keyName === 'customer_phone'
+        );
+        if (phoneCondition) {
+          phoneCondition.keyValue = "={{ (() => { const digits = $('Edit Fields').item.json.Telefone.replace(/\\\\D/g, ''); return digits.startsWith('55') ? digits : '55' + digits; })() }}";
         }
       }
     }
