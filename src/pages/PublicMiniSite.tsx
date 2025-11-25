@@ -536,12 +536,16 @@ const PublicMiniSite = () => {
       const localProfileRaw = typeof window !== 'undefined' ? localStorage.getItem('user_profile') : null;
       const localProfile = localProfileRaw ? JSON.parse(localProfileRaw) : null;
 
+      // Formatar telefone para salvar: apenas números com código do país (55)
+      const phoneDigits = checkoutData.phone.replace(/\D/g, '');
+      const formattedPhone = phoneDigits.startsWith('55') ? phoneDigits : '55' + phoneDigits;
+
       const orderRecord: any = {
         mini_site_id: miniSite.id,
         user_id: uid,
         profile_id: localProfile?.id || null,
         customer_name: checkoutData.name,
-        customer_phone: checkoutData.phone,
+        customer_phone: formattedPhone,
         customer_address: checkoutData.address,
         customer_neighborhood: checkoutData.neighborhood || null,
         delivery_fee: deliveryFee,
