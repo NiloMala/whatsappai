@@ -26,10 +26,15 @@ export function MessageUsageCard() {
   const fetchUsage = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('MessageUsageCard: Usuário não autenticado');
+        return;
+      }
+
+      console.log('MessageUsageCard: Buscando dados para user_id:', user.id);
 
       // Buscar plano do usuário com informações de uso
-      const { data: userPlan } = await supabase
+      const { data: userPlan, error: planError } = await supabase
         .from('user_plans')
         .select(`
           messages_used_current_month,
@@ -39,10 +44,19 @@ export function MessageUsageCard() {
         .eq('user_id', user.id)
         .single();
 
+      if (planError) {
+        console.error('MessageUsageCard: Erro ao buscar plano:', planError);
+        return;
+      }
+
+      console.log('MessageUsageCard: Dados recebidos:', userPlan);
+
       if (userPlan) {
         const used = userPlan.messages_used_current_month || 0;
         const limit = userPlan.messages_limit || 1000;
         const remaining = Math.max(0, limit - used);
+
+        console.log('MessageUsageCard: Calculado - usado:', used, 'limite:', limit, 'restante:', remaining);
 
         setUsage({ used, limit, remaining });
 
@@ -53,9 +67,11 @@ export function MessageUsageCard() {
           business: 'Business'
         };
         setPlanName(planNames[userPlan.plan_type] || userPlan.plan_type);
+      } else {
+        console.warn('MessageUsageCard: Nenhum plano encontrado para o usuário');
       }
     } catch (error) {
-      console.error('Erro ao buscar uso de mensagens:', error);
+      console.error('MessageUsageCard: Erro ao buscar uso de mensagens:', error);
     } finally {
       setLoading(false);
     }
