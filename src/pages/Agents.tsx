@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -465,7 +465,7 @@ const Agents = () => {
           miniSiteName: 'nosso estabelecimento', // Nome genérico - será atualizado ao vincular ao mini-site
           instanceName: instanceName,
           whatsappNumber: '', // Será preenchido quando vincular ao mini-site
-          webhookUrl: `${import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.tech/webhook'}`,
+          webhookUrl: `${import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://webhook.auroratech.online/webhook'}`,
           userId: user.id,
           miniSiteAddress: undefined,
           scheduleConfig: scheduleConfig.scheduling_enabled ? scheduleConfig : undefined,
@@ -716,7 +716,7 @@ const Agents = () => {
               body: {
                 workflow: workflow,
                 workflowName: `Agent: ${formData.name} (${instanceName})`,
-                n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
+                n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.online',
                 n8nApiKey: import.meta.env.VITE_N8N_API_KEY,
                 workflowId: editingAgent.workflow_id,
                 instanceApiKey: instanceApiKey,
@@ -837,7 +837,7 @@ const Agents = () => {
             body: {
               workflow: workflow,
               workflowName: `Agent: ${formData.name} (${instanceName})`,
-              n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
+              n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.online',
               n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY',
               instanceApiKey: instanceApiKey,
               instanceName: instanceName,
@@ -995,7 +995,7 @@ const Agents = () => {
         const { error: n8nError } = await supabase.functions.invoke('n8n-delete-workflow', {
           body: {
             workflowId: agent.workflow_id,
-            n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.tech',
+            n8nUrl: import.meta.env.VITE_N8N_URL || 'https://n8n.auroratech.online',
             n8nApiKey: import.meta.env.VITE_N8N_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY',
           }
         });

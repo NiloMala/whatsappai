@@ -1,4 +1,4 @@
-# Script para reconfigurar webhook após reconexão
+﻿# Script para reconfigurar webhook após reconexão
 # Execute este script sempre que desconectar e reconectar o WhatsApp
 
 $INSTANCE_NAME = "instance_c1676e45_1761016520734"
@@ -9,7 +9,7 @@ $body = @"
 {
   "webhook": {
     "enabled": true,
-    "url": "https://webhook.auroratech.tech/webhook/$WEBHOOK_PATH",
+    "url": "https://webhook.auroratech.online/webhook/$WEBHOOK_PATH",
     "webhook_by_events": false,
     "webhook_base64": false,
     "events": ["MESSAGES_UPSERT"]
@@ -20,7 +20,7 @@ $body = @"
 Write-Host "Reconfigurando webhook para $INSTANCE_NAME..." -ForegroundColor Yellow
 
 try {
-    $result = Invoke-RestMethod -Uri "https://evo.auroratech.tech/webhook/set/$INSTANCE_NAME" `
+    $result = Invoke-RestMethod -Uri "https://evo.auroratech.online/webhook/set/$INSTANCE_NAME" `
         -Method POST `
         -Headers @{"Content-Type"="application/json"; "apikey"=$EVOLUTION_API_KEY} `
         -Body $body

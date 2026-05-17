@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const env = Deno.env;
-    const EVOLUTION_URL = env.get("EVOLUTION_API_URL") || env.get("VITE_EVOLUTION_URL") || "https://evo.auroratech.tech";
+    const EVOLUTION_URL = env.get("EVOLUTION_API_URL") || env.get("VITE_EVOLUTION_URL") || "https://evo.auroratech.online";
     const EVOLUTION_API_KEY = env.get("EVOLUTION_API_KEY") || env.get("VITE_EVOLUTION_API_KEY");
 
     if (!EVOLUTION_API_KEY) {

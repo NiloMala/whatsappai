@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -81,7 +81,7 @@ Seja sempre cordial e use emojis para deixar a conversa amigável! 😊`;
     console.log('✅ Agente criado:', agent.id);
 
     // 2. Importar workflow no n8n
-    const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.tech';
+    const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.online';
     const n8nApiKey = Deno.env.get('N8N_API_KEY');
     
     if (!n8nApiKey) {
@@ -107,7 +107,7 @@ Seja sempre cordial e use emojis para deixar a conversa amigável! 😊`;
       console.log('✅ Workflow criado:', workflowData?.workflowId);
       
       // Extrair webhook URL do workflow criado
-      const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.tech';
+      const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.online';
       const webhookPath = workflow.nodes.find((n: any) => n.type === 'n8n-nodes-base.webhook')?.parameters?.path;
       const fullWebhookUrl = webhookPath ? `${n8nUrl}/webhook/${webhookPath}` : webhookUrl;
       

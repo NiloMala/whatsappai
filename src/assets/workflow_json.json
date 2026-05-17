@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "Atendimentos Streman copy",
   "nodes": [
     {
@@ -643,7 +643,7 @@
     },
     {
       "parameters": {
-        "sseEndpoint": "https://webhook.auroratech.tech/mcp/testestreman/sse",
+        "sseEndpoint": "https://webhook.auroratech.online/mcp/testestreman/sse",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",

@@ -1,5 +1,5 @@
-// Domínio principal da aplicação SaaS
-export const APP_DOMAIN = 'ia.auroratech.tech';
+﻿// Domínio principal da aplicação SaaS
+export const APP_DOMAIN = 'ia.auroratech.online';
 
 // Domínio para os mini sites públicos
 export const PUBLIC_DOMAIN = 'teatende.online';

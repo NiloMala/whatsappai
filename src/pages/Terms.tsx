@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
@@ -10,7 +10,7 @@ export function TermsContent({ onClose }: { onClose?: () => void }) {
       <header className="mb-8 text-center">
         <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">🧾 Termos de Uso — WhatsappIA</h1>
         <p className="mt-3 text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Última atualização: 31 de outubro de 2025</p>
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Bem-vindo ao WhatsappIA (https://ia.auroratech.tech), uma plataforma desenvolvida e mantida por AuroraTech.</p>
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Bem-vindo ao WhatsappIA (https://ia.auroratech.online), uma plataforma desenvolvida e mantida por AuroraTech.</p>
       </header>
 
       <div className="space-y-6">
@@ -67,7 +67,7 @@ export function TermsContent({ onClose }: { onClose?: () => void }) {
 
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">10. Contato</h2>
-          <p className="text-gray-600 dark:text-gray-300">Em caso de dúvidas ou solicitações, entre em contato: <a href="mailto:suporte@auroratech.tech" className="text-blue-600 dark:text-blue-400">suporte@auroratech.tech</a></p>
+          <p className="text-gray-600 dark:text-gray-300">Em caso de dúvidas ou solicitações, entre em contato: <a href="mailto:suporte@auroratech.online" className="text-blue-600 dark:text-blue-400">suporte@auroratech.online</a></p>
         </section>
 
         {/* Privacy Policy */}
@@ -103,7 +103,7 @@ export function TermsContent({ onClose }: { onClose?: () => void }) {
 
             <div>
               <h3 className="font-semibold">6. Direitos do Titular</h3>
-              <p className="mt-1">Nos termos da LGPD, o usuário pode solicitar acesso, correção ou exclusão de seus dados; revogar consentimento; solicitar portabilidade; ou limitar o tratamento. Solicitações podem ser feitas via <a href="mailto:suporte@auroratech.tech" className="text-blue-600 dark:text-blue-400">suporte@auroratech.tech</a>.</p>
+              <p className="mt-1">Nos termos da LGPD, o usuário pode solicitar acesso, correção ou exclusão de seus dados; revogar consentimento; solicitar portabilidade; ou limitar o tratamento. Solicitações podem ser feitas via <a href="mailto:suporte@auroratech.online" className="text-blue-600 dark:text-blue-400">suporte@auroratech.online</a>.</p>
             </div>
 
             <div>
@@ -123,7 +123,7 @@ export function TermsContent({ onClose }: { onClose?: () => void }) {
 
             <div>
               <h3 className="font-semibold">10. Contato</h3>
-              <p className="mt-1">Dúvidas sobre esta Política podem ser enviadas para: <a href="mailto:suporte@auroratech.tech" className="text-blue-600 dark:text-blue-400">suporte@auroratech.tech</a></p>
+              <p className="mt-1">Dúvidas sobre esta Política podem ser enviadas para: <a href="mailto:suporte@auroratech.online" className="text-blue-600 dark:text-blue-400">suporte@auroratech.online</a></p>
             </div>
           </div>
         </section>

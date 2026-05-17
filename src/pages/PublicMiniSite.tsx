@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getSlugFromHostname, isPublicMiniSite } from "@/config/constants";
 import { supabase } from "@/integrations/supabase/client";
@@ -1960,7 +1960,7 @@ const PublicMiniSite = () => {
           <p className="mt-1">
             Powered by{" "}
             <a
-              href="https://ia.auroratech.tech"
+              href="https://ia.auroratech.online"
               target="_blank"
               rel="noopener noreferrer"
               className="underline"

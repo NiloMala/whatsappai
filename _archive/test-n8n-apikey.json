@@ -1,4 +1,4 @@
-{
+﻿{
   "workflow": {
     "nodes": [
       {
@@ -20,6 +20,6 @@
     "staticData": null
   },
   "workflowName": "Test Workflow API Key",
-  "n8nUrl": "https://n8n.auroratech.tech",
+  "n8nUrl": "https://n8n.auroratech.online",
   "n8nApiKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ZjY5NzFkOS0zNjJkLTRkNjMtYmU2ZS1hNmIyZGFiYjgzMzYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYwNzQ5Mzg1fQ._KFFXp-uHl6bik-aePj4owBt6Oog_rOj_3VJa2xCHpY"
 }

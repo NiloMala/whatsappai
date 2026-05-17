@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isPublicMiniSite, getSlugFromHostname } from '@/config/constants';
 
 /**
  * Componente que redireciona baseado no domínio acessado
- * - Se for ia.auroratech.tech → não faz nada (usa rotas normais)
+ * - Se for ia.auroratech.online → não faz nada (usa rotas normais)
  * - Se for *.teatende.online → redireciona para /public/:slug
  */
 export const DomainRouter = ({ children }: { children: React.ReactNode }) => {

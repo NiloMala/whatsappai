@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -169,7 +169,7 @@ serve(async (req) => {
     };
 
     // Construir URL do webhook: usar webhook_url se existir, senão construir a partir de workflow_id
-    const webhookUrl = agent.webhook_url || `https://webhook.auroratech.tech/webhook/${agent.workflow_id}`;
+    const webhookUrl = agent.webhook_url || `https://webhook.auroratech.online/webhook/${agent.workflow_id}`;
 
     console.log('🔗 Enviando para webhook:', webhookUrl);
     console.log('📦 Payload:', JSON.stringify(webhookPayload, null, 2));

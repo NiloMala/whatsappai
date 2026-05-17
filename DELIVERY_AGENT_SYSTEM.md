@@ -1,4 +1,4 @@
-# Sistema de Agentes de Delivery - Documentação
+﻿# Sistema de Agentes de Delivery - Documentação
 
 ## 📋 Visão Geral
 
@@ -35,7 +35,7 @@ DeliveryWorkflowGenerator.generate({
   miniSiteId: '...',
   miniSiteName: 'Pastelaria do Zé',
   instanceName: 'instance_123',
-  webhookUrl: 'https://webhook.auroratech.tech/webhook'
+  webhookUrl: 'https://webhook.auroratech.online/webhook'
 })
 ```
 

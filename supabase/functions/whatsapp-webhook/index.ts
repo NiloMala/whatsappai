@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const N8N_URL = 'https://n8n.auroratech.tech';
+const N8N_URL = 'https://n8n.auroratech.online';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -61,7 +61,7 @@ serve(async (req) => {
     console.log('🔗 =================================');
 
     // Formato correto do webhook n8n testado e validado
-    const n8nWebhookUrl = `https://webhook.auroratech.tech/webhook/${webhookPath}`;
+    const n8nWebhookUrl = `https://webhook.auroratech.online/webhook/${webhookPath}`;
 
     console.log('🔄 ===== ENCAMINHAMENTO =====');
     console.log('🔄 URL do n8n:', n8nWebhookUrl);

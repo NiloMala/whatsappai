@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +15,7 @@ serve(async (req) => {
     const { workflowId, updatedPrompt, agentName } = await req.json();
 
     // Ler credenciais das secrets do Supabase
-    const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.tech';
+    const n8nUrl = Deno.env.get('N8N_URL') || 'https://n8n.auroratech.online';
     const n8nApiKey = Deno.env.get('N8N_API_KEY');
 
     console.log('🔄 Atualizando prompt do workflow:', workflowId);

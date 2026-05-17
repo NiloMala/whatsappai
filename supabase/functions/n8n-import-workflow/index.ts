@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +16,7 @@ serve(async (req) => {
     const { workflow, workflowName, workflowId, instanceName } = requestBody;
 
     // Ler credenciais das secrets do Supabase (produção) ou do request (local)
-    const n8nUrl = Deno.env.get('N8N_URL') || requestBody.n8nUrl || 'https://n8n.auroratech.tech';
+    const n8nUrl = Deno.env.get('N8N_URL') || requestBody.n8nUrl || 'https://n8n.auroratech.online';
     const n8nApiKey = Deno.env.get('N8N_API_KEY') || requestBody.n8nApiKey;
 
     console.log('🔧 Importando workflow:', workflowName);
